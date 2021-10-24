@@ -16,7 +16,6 @@ sniffio==1.2.0
 starlette==0.16.0
 typing-extensions==3.10.0.2
 urllib3==1.26.7
-uvicorn==0.15.0
-uvloop==0.16.0
+uvicorn[standard]
 watchgod==0.7
 websockets==10.0
