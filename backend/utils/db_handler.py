@@ -1,10 +1,4 @@
-import re
-from urllib.parse import urlencode
 import requests
-import json
-from datetime import datetime, timedelta
-
-from requests import exceptions
 
 
 PLUGIN_ID = ""
@@ -15,6 +9,7 @@ class DataStorage:
     """
     Helper Class as a layer of communication between plugin and db on zc_core
     """
+
     def __init__(self, request=None):
         self.read_api = (
             "https://api.zuri.chat/data/read/{pgn_id}/{collec_name}/{org_id}?{query}"
@@ -37,11 +32,11 @@ class DataStorage:
     async def write(self, collection_name, data):
         """
         Function to write into db
-        
+
         Args:
             collection_name (str): Name of Collection
             data (dict): payload
-            
+
         Returns:
             None; cannot connect to db
             data: list; on success
@@ -55,23 +50,21 @@ class DataStorage:
         )
         try:
             response = requests.post(url=self.write_api, json=body)
-        except requests.exceptions.RequestException as e:
-            print(e)
+        except requests.exceptions.RequestException as exception:
+            print(exception)
             return None
         if response.status_code == 201:
             return response.json()
-        else:
-            return {"status_code": response.status_code, "message": response.reason}
+
+        return {"status_code": response.status_code, "message": response.reason}
 
     async def update(self, collection_name, document_id, data):
         """
         Function to update data from db.
-        
         Args:
             collection_name (str): Name of collection
             Document_ID (str): Resource ID
             data (dict): payload
-            
         Returns:
             None; cannot connect to db
             data: json object; on success
@@ -86,31 +79,29 @@ class DataStorage:
         )
         try:
             response = requests.put(url=self.write_api, json=body)
-        except requests.exceptions.RequestException as e:
-            print(e)
+        except requests.exceptions.RequestException as exception:
+            print(exception)
             return None
         if response.status_code == 200:
             return response.json()
-        else:
-            return {"status_code": response.status_code, "message": response.reason}
+
+        return {"status_code": response.status_code, "message": response.reason}
 
     # NB: refactoring read_query into read, DB.read now has functionality of read and read_query
     async def read(
         self,
         collection_name: str,
+        query: dict,
+        options: dict,
         resource_id: str = None,
-        query: dict = {},
-        options: dict = {},
     ):
         """
         Function to read data flexibly from db, with the option to query, filter and more
-        
         Args:
             Collection_name (str): Name of COllection,
             Resource_id (str): Document ID,
             query (dict): Filter query
             options (dict):
-            
         Returns:
             None: cannot connect to db
             data: list; on success
@@ -127,22 +118,22 @@ class DataStorage:
 
         try:
             response = requests.post(url=self.read_query_api, json=request_body)
-        except requests.exceptions.RequestException as e:
-            print(e)
+        except requests.exceptions.RequestException as exception:
+            print(exception)
             return None
         if response.status_code == 200:
             return response.json().get("data")
-        else:
-            return {"status_code": response.status_code, "message": response.reason}
+
+        return {"status_code": response.status_code, "message": response.reason}
 
     async def delete(self, collection_name, document_id):
         """
         Function to del data resource from db.
-        
+
         Args:
             collection_name (str): Name of collection
             Document_ID (str): Resource ID
-            
+
         Returns:
             None: cannot connect to db
             data: Json object; on success
@@ -156,13 +147,13 @@ class DataStorage:
         )
         try:
             response = requests.post(url=self.delete_api, json=body)
-        except requests.exceptions.RequestException as e:
-            print(e)
+        except requests.exceptions.RequestException as exception:
+            print(exception)
             return None
         if response.status_code == 200:
             return response.json()
-        else:
-            return {"status_code": response.status_code, "message": response.reason}
+
+        return {"status_code": response.status_code, "message": response.reason}
+
 
 DB = DataStorage()
-

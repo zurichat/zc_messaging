@@ -1,7 +1,7 @@
-import requests
 from typing import Any, Dict, Optional
-from requests.exceptions import RequestException
 from enum import Enum
+from requests.exceptions import RequestException
+import requests
 
 
 CENTRIFUGO_HOST = "https://realtime.zuri.chat/api"
@@ -59,7 +59,7 @@ class CentrifugoHandler:
                 url=self.address, headers=self.headers, json=command
             )
         except requests.RequestException as error:
-            raise RequestException(error)
+            raise RequestException(error) from error
 
         return {"status_code": response.status_code, "message": response.json()}
 
@@ -69,7 +69,6 @@ class CentrifugoHandler:
         event: Events,
         data: Dict[str, str],
         plugin_url: str = "messaging.zuri.chat",
-        skip_history=False,
     ) -> Dict[str, Any]:
         """Publish data into a room.
 
@@ -95,12 +94,11 @@ class CentrifugoHandler:
             "params": {
                 "channel": room,
                 "data": data_publish,
-                "skip_history": skip_history,
             },
         }
         try:
             response = await self._send_command(command)
-        except:
+        except RequestException:
             return {"status": 400, "message": "Invalid Request"}
         else:
             if response and response.get("status_code") == 200:
@@ -125,7 +123,7 @@ class CentrifugoHandler:
         }
         try:
             response = self._send_command(command)
-        except:
+        except RequestException:
             return {"status": 400, "message": "Invalid Request"}
         else:
             if response and response.get("status_code") == 200:
