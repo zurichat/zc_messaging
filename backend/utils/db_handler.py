@@ -1,10 +1,4 @@
-import re
-from urllib.parse import urlencode
 import requests
-import json
-from datetime import datetime, timedelta
-
-from requests import exceptions
 
 
 PLUGIN_ID = ""
@@ -56,13 +50,13 @@ class DataStorage:
         )
         try:
             response = requests.post(url=self.write_api, json=body)
-        except requests.exceptions.RequestException as e:
-            print(e)
+        except requests.exceptions.RequestException as exception:
+            print(exception)
             return None
         if response.status_code == 201:
             return response.json()
-        else:
-            return {"status_code": response.status_code, "message": response.reason}
+
+        return {"status_code": response.status_code, "message": response.reason}
 
     async def update(self, collection_name, document_id, data):
         """
@@ -87,21 +81,21 @@ class DataStorage:
         )
         try:
             response = requests.put(url=self.write_api, json=body)
-        except requests.exceptions.RequestException as e:
-            print(e)
+        except requests.exceptions.RequestException as exception:
+            print(exception)
             return None
         if response.status_code == 200:
             return response.json()
-        else:
-            return {"status_code": response.status_code, "message": response.reason}
+
+        return {"status_code": response.status_code, "message": response.reason}
 
     # NB: refactoring read_query into read, DB.read now has functionality of read and read_query
     async def read(
         self,
         collection_name: str,
+        query: dict,
+        options: dict,
         resource_id: str = None,
-        query: dict = {},
-        options: dict = {},
     ):
         """
         Function to read data flexibly from db, with the option to query, filter and more
@@ -128,13 +122,13 @@ class DataStorage:
 
         try:
             response = requests.post(url=self.read_query_api, json=request_body)
-        except requests.exceptions.RequestException as e:
-            print(e)
+        except requests.exceptions.RequestException as exception:
+            print(exception)
             return None
         if response.status_code == 200:
             return response.json().get("data")
-        else:
-            return {"status_code": response.status_code, "message": response.reason}
+
+        return {"status_code": response.status_code, "message": response.reason}
 
     async def delete(self, collection_name, document_id):
         """
@@ -157,13 +151,13 @@ class DataStorage:
         )
         try:
             response = requests.post(url=self.delete_api, json=body)
-        except requests.exceptions.RequestException as e:
-            print(e)
+        except requests.exceptions.RequestException as exception:
+            print(exception)
             return None
         if response.status_code == 200:
             return response.json()
-        else:
-            return {"status_code": response.status_code, "message": response.reason}
+
+        return {"status_code": response.status_code, "message": response.reason}
 
 
 DB = DataStorage()

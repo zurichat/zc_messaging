@@ -1,9 +1,14 @@
 [MASTER]
-jobs=4 #number of processes to use
+jobs=1 #number of processes to use
 
 [BASIC]
 good-names=ZuriMessaging #names to be considered ok
 
 [pre-commit-hook]
 command=custom_pylint
-disable=E0401, C0301
+# W0401 wildcard-import
+# W0614 unused-wildcard-import
+# C0114 missing-module-docstring
+# R0903 too-few-public-methods
+# R0902 too-many-instance-attributes
+disable=E0401, C0301, W0401, W0614, C0114, R0903, R0902
