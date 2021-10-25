@@ -1,0 +1,4 @@
+#!/bin/sh
+
+black ./backend
+python ./backend/lint.py -p ./backend/
