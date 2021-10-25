@@ -37,10 +37,15 @@ class DataStorage:
     async def write(self, collection_name, data):
     """
     Function to write into db
-    :params - collection_name, data (payload to add to db)
-    :returns - None; cannot connect to db
-               data: list; on success
-               data: dict; on api call fails or errors
+    
+    Args:
+        collection_name (str): Name of Collection
+        data (dict): payload
+        
+    Returns:
+        None; cannot connect to db
+        data: list; on success
+        data: dict; on api call fails or errors
     """
         body = dict(
             plugin_id=self.plugin_id,
@@ -61,10 +66,16 @@ class DataStorage:
     async def update(self, collection_name, document_id, data):
     """
     Function to update data from db.
-    :params - collection_name, resource_id (doc_id), data (update to be made)
-    :returns - None; cannot connect to db
-               data: json object; on success
-               data: dict; on api call fails or errors
+    
+    Args:
+        collection_name (str): Name of collection
+        Document_ID (str): Resource ID
+        data (dict): payload
+        
+    Returns:
+        None; cannot connect to db
+        data: json object; on success
+        data: dict; on api call fails or errors
     """
         body = dict(
             plugin_id=self.plugin_id,
@@ -83,32 +94,6 @@ class DataStorage:
         else:
             return {"status_code": response.status_code, "message": response.reason}
 
-    # async def read(self, collection_name, filter={}):
-        # try:
-            # query = urlencode(filter)
-        # except Exception as e:
-            # print(e)
-            # return None
-
-        # url = self.read_api.format(
-            # pgn_id=self.plugin_id,
-            # org_id=self.organization_id,
-            # collec_name=collection_name,
-            # query=query,
-        # )
-
-        # try:
-            # response = await requests.get(url=url)
-        # except requests.exceptions.RequestException as e:
-            # print(e)
-            # return None
-        # if response.status_code == 200:
-            # return response.json().get("data")
-        # else:
-            # return {"status_code": response.status_code, "message": response.reason}
-            
-            
-
     # NB: refactoring read_query into read, DB.read now has functionality of read and read_query
     async def read(
         self,
@@ -119,10 +104,17 @@ class DataStorage:
     ):
     """
     Function to read data flexibly from db, with the option to query, filter and more
-    :params - collection_name, resource_id (doc_id), query (optional), options(optional)
-    :returns - None; cannot connect to db
-               data: list; on success
-               data: dict; on api call fails or errors
+    
+    Args:
+        Collection_name (str): Name of COllection,
+        Resource_id (str): Document ID,
+        query (dict): Filter query
+        options (dict):
+        
+    Returns:
+        None: cannot connect to db
+        data: list; on success
+        data: dict; on api call fails or errors
     """
         request_body = {
             "collection_name": collection_name,
@@ -146,10 +138,15 @@ class DataStorage:
     async def delete(self, collection_name, document_id):
     """
     Function to del data resource from db.
-    :params - collection_name, resource_id (document_id)
-    :returns - None; cannot connect to db
-               data: Json object; on success
-               data: dict; on api call fails or errors
+    
+    Args:
+        collection_name (str): Name of collection
+        Document_ID (str): Resource ID
+        
+    Returns:
+        None: cannot connect to db
+        data: Json object; on success
+        data: dict; on api call fails or errors
     """
         body = dict(
             plugin_id=self.plugin_id,
