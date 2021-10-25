@@ -11,4 +11,4 @@ command=custom_pylint
 # C0114 missing-module-docstring
 # R0903 too-few-public-methods
 # R0902 too-many-instance-attributes
-disable=E0401, C0301, W0401, W0614, C0114, R0903, R0902
+disable=E0401, C0301, C0114, R0903, R0902
