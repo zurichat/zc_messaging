@@ -21,8 +21,9 @@ Depending on your track, you are to work in the folder that concerns you.
     ```sh startup.sh```
 6. For Windows: Run the startup.sh script to install dependencies and start up server by typing out this command on your console
     ```startup.sh```
-7. For Windows (using git bash): Run the startup.sh script to install dependencies and start up server by typing out this command on your console 
+7. For Windows (using git bash): Run the startup.sh script to install dependencies and start up server by typing out this command on your console
     ```source startup.sh```
+
 ## Technologies Used
 
 1. Backend: FastApi
