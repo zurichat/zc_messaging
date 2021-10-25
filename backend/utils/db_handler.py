@@ -22,7 +22,6 @@ def login_user():
 
 PLUGIN_ID = "61696380b2cc8a9af4833d80"
 ORG_ID = "61695d8bb2cc8a9af4833d46"
-CENTRIFUGO_TOKEN = "58c2400b-831d-411d-8fe8-31b6e337738b"
 ROOMS = "dm_rooms"
 MESSAGES = "dm_messages"
 header = {"Authorization": f"Bearer {login_user()}"}
@@ -183,3 +182,6 @@ class DataStorage:
             return response.json()
         else:
             return {"status_code": response.status_code, "message": response.reason}
+
+DB = DataStorage()
+
