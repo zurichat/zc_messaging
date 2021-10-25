@@ -4,27 +4,11 @@ import requests
 import json
 from datetime import datetime, timedelta
 
-
 from requests import exceptions
 
 
-def login_user():
-    data = {"email": "sam@gmail.com", "password": "Owhondah"}
-    try:
-        response = requests.post(url="https://api.zuri.chat/auth/login", json=data)
-    except requests.exceptions.RequestException as e:
-        return e
-    if response.status_code == 200:
-        return response.json()["data"]["user"]["token"]
-    else:
-        return None
-
-
-PLUGIN_ID = "61696380b2cc8a9af4833d80"
+PLUGIN_ID = ""
 ORG_ID = "61695d8bb2cc8a9af4833d46"
-ROOMS = "dm_rooms"
-MESSAGES = "dm_messages"
-header = {"Authorization": f"Bearer {login_user()}"}
 
 
 class DataStorage:
