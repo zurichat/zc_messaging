@@ -15,6 +15,7 @@ class DataStorage:
     """
     Helper Class as a layer of communication between plugin and db on zc_core
     """
+
     def __init__(self, request=None):
         self.read_api = (
             "https://api.zuri.chat/data/read/{pgn_id}/{collec_name}/{org_id}?{query}"
@@ -35,18 +36,18 @@ class DataStorage:
             self.organization_id = request.get("ORG_ID")
 
     async def write(self, collection_name, data):
-    """
-    Function to write into db
-    
-    Args:
-        collection_name (str): Name of Collection
-        data (dict): payload
-        
-    Returns:
-        None; cannot connect to db
-        data: list; on success
-        data: dict; on api call fails or errors
-    """
+        """
+        Function to write into db
+
+        Args:
+            collection_name (str): Name of Collection
+            data (dict): payload
+
+        Returns:
+            None; cannot connect to db
+            data: list; on success
+            data: dict; on api call fails or errors
+        """
         body = dict(
             plugin_id=self.plugin_id,
             organization_id=self.organization_id,
@@ -64,19 +65,19 @@ class DataStorage:
             return {"status_code": response.status_code, "message": response.reason}
 
     async def update(self, collection_name, document_id, data):
-    """
-    Function to update data from db.
-    
-    Args:
-        collection_name (str): Name of collection
-        Document_ID (str): Resource ID
-        data (dict): payload
-        
-    Returns:
-        None; cannot connect to db
-        data: json object; on success
-        data: dict; on api call fails or errors
-    """
+        """
+        Function to update data from db.
+
+        Args:
+            collection_name (str): Name of collection
+            Document_ID (str): Resource ID
+            data (dict): payload
+
+        Returns:
+            None; cannot connect to db
+            data: json object; on success
+            data: dict; on api call fails or errors
+        """
         body = dict(
             plugin_id=self.plugin_id,
             organization_id=self.organization_id,
@@ -102,20 +103,20 @@ class DataStorage:
         query: dict = {},
         options: dict = {},
     ):
-    """
-    Function to read data flexibly from db, with the option to query, filter and more
-    
-    Args:
-        Collection_name (str): Name of COllection,
-        Resource_id (str): Document ID,
-        query (dict): Filter query
-        options (dict):
-        
-    Returns:
-        None: cannot connect to db
-        data: list; on success
-        data: dict; on api call fails or errors
-    """
+        """
+        Function to read data flexibly from db, with the option to query, filter and more
+
+        Args:
+            Collection_name (str): Name of COllection,
+            Resource_id (str): Document ID,
+            query (dict): Filter query
+            options (dict):
+
+        Returns:
+            None: cannot connect to db
+            data: list; on success
+            data: dict; on api call fails or errors
+        """
         request_body = {
             "collection_name": collection_name,
             "filter": query,
@@ -136,18 +137,18 @@ class DataStorage:
             return {"status_code": response.status_code, "message": response.reason}
 
     async def delete(self, collection_name, document_id):
-    """
-    Function to del data resource from db.
-    
-    Args:
-        collection_name (str): Name of collection
-        Document_ID (str): Resource ID
-        
-    Returns:
-        None: cannot connect to db
-        data: Json object; on success
-        data: dict; on api call fails or errors
-    """
+        """
+        Function to del data resource from db.
+
+        Args:
+            collection_name (str): Name of collection
+            Document_ID (str): Resource ID
+
+        Returns:
+            None: cannot connect to db
+            data: Json object; on success
+            data: dict; on api call fails or errors
+        """
         body = dict(
             plugin_id=self.plugin_id,
             organization_id=self.organization_id,
@@ -164,5 +165,5 @@ class DataStorage:
         else:
             return {"status_code": response.status_code, "message": response.reason}
 
-DB = DataStorage()
 
+DB = DataStorage()
