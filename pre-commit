@@ -1,4 +1,0 @@
-#!/bin/sh
-
-black ./backend
-python lint.py -p ./backend/

@@ -3,7 +3,7 @@ if [[ -f ./.git/hooks/pre-commit ]]
 then
     echo "pre-commit already setup"
 else
-    cp ./pre-commit ./.git/hooks
+    cp ./backend/pre-commit ./.git/hooks
     chmod +x ./.git/hooks/pre-commit
 fi
 
