@@ -1,8 +1,7 @@
-from typing import Any, Dict, Optional
 from enum import Enum
+from typing import Any, Dict, Optional
 from requests.exceptions import RequestException
 import requests
-
 
 CENTRIFUGO_HOST = "https://realtime.zuri.chat/api"
 CENTRIFUGO_API_TOKEN = "58c2400b-831d-411d-8fe8-31b6e337738b"
@@ -77,7 +76,6 @@ class CentrifugoHandler:
             event (Events): The event associated with the data being published
             data (Dict[str, str]): Custom JSON data to publish into the room
             plugin_url (str): The plugin url to where the data will be used
-            skip_history (bool, optional): Skip adding publication for this request. Defaults to False.
 
         Returns:
             Dict[str, Any]: The formatted response after executing the command sent
@@ -98,7 +96,7 @@ class CentrifugoHandler:
         }
         try:
             response = await self._send_command(command)
-        except RequestException:
+        except requests.RequestException:
             return {"status": 400, "message": "Invalid Request"}
         else:
             if response and response.get("status_code") == 200:
@@ -111,7 +109,8 @@ class CentrifugoHandler:
         Args:
             user (str): The id of a user inside the current room
             room (str): The name of the room where to unsubscribe the user
-            client (Optional[str], optional): Specific client ID to unsubscribe (user still required to be set). Defaults to None.
+            client (Optional[str], optional): Specific client ID to unsubscribe
+            (user still required to be set). Defaults to None.
 
         Returns:
             [type]: The response from Centrifugo after executing the command sent
@@ -123,7 +122,7 @@ class CentrifugoHandler:
         }
         try:
             response = self._send_command(command)
-        except RequestException:
+        except requests.RequestException:
             return {"status": 400, "message": "Invalid Request"}
         else:
             if response and response.get("status_code") == 200:
