@@ -1,3 +1,4 @@
+cd backend
 pip install -r requirements.txt
 
 if [[ -f ./.git/hooks/pre-commit ]]
