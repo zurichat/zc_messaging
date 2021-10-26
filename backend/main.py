@@ -19,8 +19,6 @@ app.add_middleware(
 )
 
 
-
-
 app.include_router(
     messages.router, prefix=settings.API_V1_STR, tags=["messages"]
 )  # include urls from message.py
@@ -38,4 +36,4 @@ app.include_router(
 )  # include urls from sync.py
 
 
-app.mount("/", StaticFiles(directory="../frontend", html = True), name="static")
+app.mount("/", StaticFiles(directory="../frontend", html=True), name="static")

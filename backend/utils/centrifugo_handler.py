@@ -68,7 +68,7 @@ class CentrifugoHandler:
         room: str,
         event: Events,
         data: Dict[str, str],
-        plugin_url: str = "messaging.zuri.chat",
+        plugin_url: tr = "messaging.zuri.chat",
         skip_history=False,
     ) -> Dict[str, Any]:
         """Publish data into a room.
