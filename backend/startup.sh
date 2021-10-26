@@ -3,9 +3,10 @@ cd -
 if [[ -f ./.git/hooks/pre-commit ]]
 then
     echo "pre-commit already setup"
+    cd backend
 else
     cd backend
     pre-commit install
 fi
-cd backend
+
 uvicorn main:app --reload
