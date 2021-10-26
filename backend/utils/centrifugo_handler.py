@@ -1,8 +1,7 @@
-import requests
+from enum import Enum
 from typing import Any, Dict, Optional
 from requests.exceptions import RequestException
-from enum import Enum
-
+import requests
 
 CENTRIFUGO_HOST = "https://realtime.zuri.chat/api"
 CENTRIFUGO_API_TOKEN = "58c2400b-831d-411d-8fe8-31b6e337738b"
@@ -59,7 +58,7 @@ class CentrifugoHandler:
                 url=self.address, headers=self.headers, json=command
             )
         except requests.RequestException as error:
-            raise RequestException(error)
+            raise RequestException(error) from error
 
         return {"status_code": response.status_code, "message": response.json()}
 
@@ -68,8 +67,7 @@ class CentrifugoHandler:
         room: str,
         event: Events,
         data: Dict[str, str],
-        plugin_url: tr = "messaging.zuri.chat",
-        skip_history=False,
+        plugin_url: str = "messaging.zuri.chat",
     ) -> Dict[str, Any]:
         """Publish data into a room.
 
@@ -78,7 +76,6 @@ class CentrifugoHandler:
             event (Events): The event associated with the data being published
             data (Dict[str, str]): Custom JSON data to publish into the room
             plugin_url (str): The plugin url to where the data will be used
-            skip_history (bool, optional): Skip adding publication for this request. Defaults to False.
 
         Returns:
             Dict[str, Any]: The formatted response after executing the command sent
@@ -95,12 +92,11 @@ class CentrifugoHandler:
             "params": {
                 "channel": room,
                 "data": data_publish,
-                "skip_history": skip_history,
             },
         }
         try:
             response = await self._send_command(command)
-        except:
+        except requests.RequestException:
             return {"status": 400, "message": "Invalid Request"}
         else:
             if response and response.get("status_code") == 200:
@@ -113,7 +109,8 @@ class CentrifugoHandler:
         Args:
             user (str): The id of a user inside the current room
             room (str): The name of the room where to unsubscribe the user
-            client (Optional[str], optional): Specific client ID to unsubscribe (user still required to be set). Defaults to None.
+            client (Optional[str], optional): Specific client ID to unsubscribe
+            (user still required to be set). Defaults to None.
 
         Returns:
             [type]: The response from Centrifugo after executing the command sent
@@ -125,7 +122,7 @@ class CentrifugoHandler:
         }
         try:
             response = self._send_command(command)
-        except:
+        except requests.RequestException:
             return {"status": 400, "message": "Invalid Request"}
         else:
             if response and response.get("status_code") == 200:
