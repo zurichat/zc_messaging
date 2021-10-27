@@ -18,6 +18,13 @@ repos:
     hooks:
       - id: black
 
+  - repo: https://github.com/timothycrosley/isort
+    rev: 4.3.21-2
+    hooks:
+    - id: isort
+      args: [--filter-files]
+      files: \.py$
+
   - repo: https://github.com/PyCQA/flake8
     rev: 4.0.1
     hooks:

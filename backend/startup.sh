@@ -8,5 +8,5 @@ else
     cd backend
     pre-commit install
 fi
-
+pytest
 uvicorn main:app --reload
