@@ -1,14 +1,13 @@
 from enum import Enum
 from typing import Any, Dict, Optional
-from requests.exceptions import RequestException
-import requests
 
+import httpx
 
 CENTRIFUGO_HOST = "https://realtime.zuri.chat/api"
 CENTRIFUGO_API_TOKEN = "58c2400b-831d-411d-8fe8-31b6e337738b"
 
 
-class Events(str, Enum):
+class Events(Enum):
     """
     An enumeration of all events to be used in centrifugo
     """
@@ -55,13 +54,18 @@ class CentrifugoHandler:
         """
 
         try:
-            response = requests.post(
-                url=self.address, headers=self.headers, json=command
-            )
-        except requests.RequestException as error:
-            raise RequestException(error) from error
-
-        return {"status_code": response.status_code, "message": response.json()}
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    url=self.address, json=command, headers=self.headers
+                )
+                print(response)
+                return {"status_code": response.status_code, "message": response.json()}
+            # response = requests.post(
+            #     url=self.address, headers=self.headers, json=command
+            # )
+            # return {"status_code": response.status_code, "message": response.json()}
+        except httpx.RequestError as error:
+            raise httpx.RequestError(error) from error
 
     async def publish(
         self,
@@ -74,7 +78,7 @@ class CentrifugoHandler:
 
         Args:
             room (str): The name of the room where to publish the data
-            event (Events): The event associated with the data being published
+            event (Events): Event enum obj associated with the data being published
             data (Dict[str, str]): Custom JSON data to publish into the room
             plugin_url (str): The plugin url to where the data will be used
 
@@ -83,7 +87,7 @@ class CentrifugoHandler:
         """
         data_publish = {
             "status": 200,
-            "event": event,
+            "event": event.value,
             "plugin_url": plugin_url,
             "data": data,
         }
@@ -97,14 +101,16 @@ class CentrifugoHandler:
         }
         try:
             response = await self._send_command(command)
-        except requests.RequestException:
+        except httpx.RequestError:
             return {"status": 400, "message": "Invalid Request"}
         else:
             if response and response.get("status_code") == 200:
                 return data_publish
             return {"status": 424, "message": "centrifugo failed"}
 
-    def unsubscribe(self, user: str, room: str, client: Optional[str] = None) -> None:
+    async def unsubscribe(
+        self, user: str, room: str, client: Optional[str] = None
+    ) -> None:
         """Unsubscribe a user from a room
 
         Args:
@@ -122,7 +128,7 @@ class CentrifugoHandler:
         }
         try:
             response = self._send_command(command)
-        except requests.RequestException:
+        except httpx.RequestError:
             return {"status": 400, "message": "Invalid Request"}
         else:
             if response and response.get("status_code") == 200:
