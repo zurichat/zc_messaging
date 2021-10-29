@@ -15,21 +15,38 @@ Depending on your track, you are to work in the folder that concerns you.
 
 ### Backend
 
-1. Fork this repository to have a copy of it in your own github account
-2. Clone the forked repo to your PC, this gives you access to the repo locally
-3. Install Python from <https://www.python.org/downloads/> if you haven't
-4. cd into the project folder
-5. cd into the backend folder
-6. Ensure a virtual environment has been created and activated
-7. For Linux: Run the startup.sh script to install dependencies and start up server by typing out this command on your terminal
-    ```sh startup.sh```
-8. For Windows: Run the startup.sh script to install dependencies and start up server by typing out this command on your console
-    ```startup.sh```
-9. For Windows (using git bash): Run the startup.sh script to install dependencies and start up server by typing out this command on your console
-    ```source startup.sh```
+- Fork this repository to have a copy of it in your own github account
+- Clone the forked repo to your PC, this gives you access to the repo locally
+- Install Python from <https://www.python.org/downloads/> if you haven't
+- cd into the project folder
+- cd into the backend folder
+- Ensure a virtual environment has been created and activated by either using
+  - For pipenv
 
-10. Server can be manually started by using the following command
-    ```uvicorn main:app --reload```
+    ```bash
+    pipenv shell #creates and activates a virtual environment
+    ```
+
+  - For venv
+
+    ```bash
+    python -m venv venv # to create a virtualenv
+    source venv/bin/activate # activate for linux
+    venv\Scripts\activate # activate for windows
+    ```
+
+- Run the startup.sh script to install dependencies and start up server by typing out this command on your terminal(Linux, Mac) or Git bash (Windows)
+
+    ```bash
+    sh startup.sh venv # starts script to use virtualenv
+    sh startup.sh pipenv # starts script to use pipenv
+    ```
+
+- Server can also be manually started by using the following command
+
+    ```bash
+    uvicorn main:app --reload
+    ```
 
 ### Frontend
 
