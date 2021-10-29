@@ -1,0 +1,64 @@
+{
+  "name": "zuri-messaging",
+  "version": "2.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zurichat/zc_messaging"
+  },
+  "license": "MIT",
+  "scripts": {
+    "start": "serve -s root-config/dist/ -p 9001",
+    "open": "opener http://localhost:9000",
+    "dev:root": "npm run dev --prefix root-config",
+    "dev:messaging": "npm run dev --prefix zc_messaging",
+    "dev": "npm-run-all --parallel \"dev:*\" \"open\"",
+    "lint": "concurrently yarn:lint:*",
+    "lint:messaging": "eslint zc_messaging/src",
+    "lint:root": "eslint root-config/src",
+    "prettify": "prettier -w .",
+    "prepare": "husky install",
+    "setup": "concurrently yarn:setup:*",
+    "setup:root": "cd root-config && yarn",
+    "setup:messaging": "cd zc_messaging && yarn",
+    "clean:fresh": "rimraf node_modules root-config/node_modules root-config/yarn.lock zc_messaging/node_modules zc_messaging/yarn.lock",
+    "clean": "rimraf dist",
+    "build": "concurrently --kill-others-on-fail -m 1 \"yarn run clean\" \"yarn:build:*\"",
+    "build:root": "cd root-config && yarn build",
+    "build:messaging": "cd zc_messaging && yarn build",
+    "precommit": "lint-staged --debug"
+  },
+  "devDependencies": {
+    "concurrently": "^6.2.1",
+    "eslint-config-important-stuff": "^1.1.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-css-modules": "^2.11.0",
+    "eslint-plugin-react": "^7.26.1",
+    "husky": "^7.0.2",
+    "jest": "^27.0.6",
+    "jest-cli": "^27.0.6",
+    "lint-staged": ">=10",
+    "opener": "^1.5.2",
+    "prettier": "^2.3.2",
+    "pretty-quick": "^3.1.1",
+    "rimraf": "^3.0.2",
+    "serve": "^12.0.0",
+    "stylelint": "^13.13.1",
+    "stylelint-config-standard": "^22.0.0",
+    "yarn-run-all": "^3.1.1"
+  },
+  "dependencies": {
+    "eslint": "^8.0.1"
+  },
+  "lint-staged": {
+    "linters": {
+      "zc_messaging/src/*.js": [
+        "eslint --fix",
+        "git add"
+      ],
+      "root-config/src/*.js": [
+        "eslint --fix",
+        "git add"
+      ]
+    }
+  }
+}
