@@ -111,7 +111,8 @@ disable=raw-checker-failed,
         import-outside-toplevel,
         too-many-function-args,
         duplicate-code,
-        inconsistent-return-statements
+        inconsistent-return-statements,
+        too-many-instance-attributes
 
 
 # Enable the message, report, category or checker with the given id(s). You can

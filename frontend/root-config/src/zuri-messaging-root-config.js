@@ -1,3 +1,5 @@
+/* eslint-disable   no-undef */
+
 import { registerApplication, start } from 'single-spa';
 
 registerApplication({
