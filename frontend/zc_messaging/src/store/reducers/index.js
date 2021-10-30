@@ -1,9 +1,9 @@
-import { combineReducers } from "redux"
-import template from "./template"
+import { combineReducers } from 'redux';
+import template from './template';
 
 const reducers = combineReducers({
-  //Return reducers
-  temp: template
-})
+  // Return reducers
+  temp: template,
+});
 
-export default reducers
+export default reducers;

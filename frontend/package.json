@@ -13,10 +13,9 @@
     "dev:messaging": "npm run dev --prefix zc_messaging",
     "dev": "npm-run-all --parallel \"dev:*\" \"open\"",
     "lint": "concurrently yarn:lint:*",
-    "lint:messaging": "eslint zc_messaging/src",
-    "lint:root": "eslint root-config/src",
+    "lint:messaging": "eslint zc_messaging/src --fix",
+    "lint:root": "eslint root-config/src --fix",
     "prettify": "prettier -w .",
-    "prepare": "husky install",
     "setup": "concurrently yarn:setup:*",
     "setup:root": "cd root-config && yarn",
     "setup:messaging": "cd zc_messaging && yarn",
@@ -24,19 +23,21 @@
     "clean": "rimraf dist",
     "build": "concurrently --kill-others-on-fail -m 1 \"yarn run clean\" \"yarn:build:*\"",
     "build:root": "cd root-config && yarn build",
-    "build:messaging": "cd zc_messaging && yarn build",
-    "precommit": "lint-staged --debug"
+    "build:messaging": "cd zc_messaging && yarn build"
   },
   "devDependencies": {
     "concurrently": "^6.2.1",
+    "eslint-config-airbnb": "18.2.1",
     "eslint-config-important-stuff": "^1.1.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-css-modules": "^2.11.0",
-    "eslint-plugin-react": "^7.26.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-react": "^7.21.5",
+    "eslint-plugin-react-hooks": "^1.7.0",
     "husky": "^7.0.2",
     "jest": "^27.0.6",
     "jest-cli": "^27.0.6",
-    "lint-staged": ">=10",
     "opener": "^1.5.2",
     "prettier": "^2.3.2",
     "pretty-quick": "^3.1.1",
@@ -47,18 +48,6 @@
     "yarn-run-all": "^3.1.1"
   },
   "dependencies": {
-    "eslint": "^8.0.1"
-  },
-  "lint-staged": {
-    "linters": {
-      "zc_messaging/src/*.js": [
-        "eslint --fix",
-        "git add"
-      ],
-      "root-config/src/*.js": [
-        "eslint --fix",
-        "git add"
-      ]
-    }
+    "eslint": "^7.2.0"
   }
 }

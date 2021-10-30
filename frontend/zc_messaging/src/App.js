@@ -1,5 +1,5 @@
-import React from "react"
-import Hello from "./component/Hello"
+import React from 'react';
+import Hello from './component/Hello';
 
 export default function App() {
   return (
@@ -17,5 +17,5 @@ export default function App() {
         <li>Use comments where needed so we can understand what is written</li>
       </ul>
     </div>
-  )
+  );
 }

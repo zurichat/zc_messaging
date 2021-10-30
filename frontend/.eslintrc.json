@@ -10,7 +10,9 @@
     "eslint:recommended",
     "plugin:react/recommended",
     "important-stuff",
-    "prettier"
+    "prettier",
+    "airbnb",
+    "airbnb/hooks"
   ],
   "parserOptions": {
     "ecmaFeatures": {
@@ -21,7 +23,6 @@
   },
   "plugins": ["react", "eslint-plugin-css-modules"],
   "rules": {
-    "react/react-in-jsx-scope": [0, "off"],
     "react/display-name": ["off"],
     "react/prop-types": [0, "off"],
     "react/no-unescaped-entities": ["off"],
