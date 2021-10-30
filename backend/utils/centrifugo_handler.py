@@ -127,7 +127,7 @@ class CentrifugoHandler:
             "params": {"channel": room, "user": user, "client": client},
         }
         try:
-            response = self._send_command(command)
+            response = await self._send_command(command)
         except httpx.RequestError:
             return {"status": 400, "message": "Invalid Request"}
         else:
