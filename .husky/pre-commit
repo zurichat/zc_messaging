@@ -2,4 +2,4 @@
 . "$(dirname "$0")/_/husky.sh"
 
 yarn lint:frontend
-pylint ./backend/**/*.py
+cd backend && black . && pylint ./**/*.py
