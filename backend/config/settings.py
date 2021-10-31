@@ -1,4 +1,5 @@
 import secrets
+
 from pydantic import BaseSettings
 
 

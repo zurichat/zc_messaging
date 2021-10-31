@@ -1,4 +1,5 @@
 import pytest
+
 from utils.centrifugo_handler import Events, centrifugo_client
 
 
