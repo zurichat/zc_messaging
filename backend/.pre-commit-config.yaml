@@ -10,6 +10,7 @@ repos:
       - id: check-merge-conflict
       - id: requirements-txt-fixer
       - id: no-commit-to-branch
+      - id: pretty-format-json
 
 
   - repo: https://github.com/psf/black
