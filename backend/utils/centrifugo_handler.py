@@ -9,7 +9,8 @@ CENTRIFUGO_API_TOKEN = "58c2400b-831d-411d-8fe8-31b6e337738b"
 
 class Events(Enum):
     """
-    An enumeration of all events to be used in centrifugo
+    An enumeration of all events to 
+    be used in centrifugo
     """
 
     MESSAGE_CREATE = "message_create"
@@ -27,10 +28,12 @@ class Events(Enum):
 
 
 class CentrifugoHandler:
-    """A helper class to handle communication with the Centrifugo server."""
+    """A helper class to handle communication
+     with the Centrifugo server."""
 
     def __init__(self) -> None:
-        """Initialize CentrifugoHandler with `address` and `api_key` values."""
+        """Initialize CentrifugoHandler with 
+        `address` and `api_key` values."""
         self.address = CENTRIFUGO_HOST
         self.api_key = CENTRIFUGO_API_TOKEN
 
@@ -40,17 +43,21 @@ class CentrifugoHandler:
         }
 
     async def _send_command(self, command: Dict[str, Any]) -> Dict[int, Any]:
-        """Connects to the Centrifugo server and sends command to execute via Centrifugo Server API.
+        """Connects to the Centrifugo server and sends 
+           command to execute via Centrifugo Server API.
 
             Args:
-                command (Dict[int, Any]): The command to be sent to Centrifugo
+                command (Dict[int, Any]): The command 
+                to be sent to Centrifugo
 
             Raises:
-                RequestException: There was an ambiguous exception that occurred while handling the
+                RequestException: There was an ambiguous 
+                exception that occurred while handling the
         request
 
             Returns:
-                Dict[int, Any]: The response from Centrifugo after executing the command sent
+                Dict[int, Any]: The response from 
+                Centrifugo after executing the command sent
         """
 
         try:
@@ -77,13 +84,18 @@ class CentrifugoHandler:
         """Publish data into a room.
 
         Args:
-            room (str): The name of the room where to publish the data
-            event (Events): Event enum obj associated with the data being published
-            data (Dict[str, str]): Custom JSON data to publish into the room
-            plugin_url (str): The plugin url to where the data will be used
+            room (str): The name of the room where to 
+            publish the data
+            event (Events): Event enum obj associated 
+            with the data being published
+            data (Dict[str, str]): Custom JSON data to 
+            publish into the room
+            plugin_url (str): The plugin url to where 
+            the data will be used
 
         Returns:
-            Dict[str, Any]: The formatted response after executing the command sent
+            Dict[str, Any]: The formatted response 
+            after executing the command sent
         """
         data_publish = {
             "status": 200,
@@ -114,12 +126,16 @@ class CentrifugoHandler:
         """Unsubscribe a user from a room
 
         Args:
-            user (str): The id of a user inside the current room
-            room (str): The name of the room where to unsubscribe the user
-            client (Optional[str]) Specific client ID to unsubscribe. Defaults to None.
+            user (str): The id of a user inside 
+            the current room
+            room (str): The name of the room where
+             to unsubscribe the user
+            client (Optional[str]) Specific client 
+            ID to unsubscribe. Defaults to None.
 
         Returns:
-            [type]: The response from Centrifugo after executing the command sent
+            [type]: The response from Centrifugo 
+            after executing the command sent
         """
 
         command = {
