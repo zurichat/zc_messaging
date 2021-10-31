@@ -2,4 +2,4 @@
 . "$(dirname "$0")/_/husky.sh"
 
 yarn lint:frontend
-cd backend && black . && isort . &&  flake8 . --exit-zero  && pylint ./**/*.py
+cd backend && black . && isort . &&  flake8 . && pylint ./**/*.py
