@@ -66,15 +66,12 @@ class CentrifugoHandler:
                     url=self.address, json=command, headers=self.headers
                 )
                 print(response)
-                return {
-                    "status_code": response.status_code,
-                    "message": response.json()
-                }
+                return {"status_code": response.status_code, "message": response.json()}
             # response = requests.post(
-            #     url=self.address, 
+            #     url=self.address,
             #   headers=self.headers, json=command
             # )
-            # return {"status_code": 
+            # return {"status_code":
             # response.status_code, "message": response.json()}
         except httpx.RequestError as error:
             raise httpx.RequestError(error) from error
