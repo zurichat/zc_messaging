@@ -5,7 +5,6 @@
   },
   "scripts": {
     "prepare": "husky install",
-    "lint:frontend": "cd ./frontend && yarn lint",
-    "lint:backend": "pylint ./backend/**/*.py"
+    "lint:frontend": "cd ./frontend && yarn lint"
   }
 }
