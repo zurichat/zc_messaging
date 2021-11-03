@@ -3,9 +3,14 @@
     "browser": true,
     "es2021": true
   },
+  "globals": {
+    "process": true
+  },
   "extends": [
     "eslint:recommended",
     "plugin:react/recommended",
+    "important-stuff",
+    "prettier",
     "airbnb",
     "airbnb/hooks"
   ],
@@ -16,10 +21,9 @@
     "ecmaVersion": 12,
     "sourceType": "module"
   },
-  "plugins": ["react"],
+  "plugins": ["react", "eslint-plugin-css-modules"],
   "rules": {
-    "import/prefer-default-export": "off",
-    "react/jsx-filename-extension": "off",
+    "react/jsx-filename-extension": [0, "off"],
     "react/react-in-jsx-scope": [0, "off"],
     "react/display-name": ["off"],
     "react/prop-types": [0, "off"],
@@ -30,5 +34,10 @@
         "allow": ["warn", "error"]
       }
     ]
+  },
+  "settings": {
+    "react": {
+      "version": "detect" // React version. "detect" automatically picks the version you have installed.
+    }
   }
 }
