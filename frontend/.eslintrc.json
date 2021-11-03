@@ -28,6 +28,7 @@
     "react/display-name": ["off"],
     "react/prop-types": [0, "off"],
     "react/no-unescaped-entities": ["off"],
+    "import/prefer-default-export": ["off"],
     "no-console": [
       "error",
       {
