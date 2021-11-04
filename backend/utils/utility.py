@@ -1,7 +1,5 @@
 import requests
-from db_handler import DataStorage
-
-helper = DataStorage()
+from utils.db_handler import DB
 
 
 async def get_rooms(member_id, org_id):
@@ -11,11 +9,10 @@ async def get_rooms(member_id, org_id):
     Returns:
         [List]: [description]
     """
-
-    helper.organization_id = org_id
+    DB.organization_id = org_id
     query = {"room_members": member_id}
     options = {"sort": {"created_at": -1}}
-    response = await helper.read("rooms", query=query, options=options)
+    response = await DB.read("rooms", query=query, options=options)
 
     if response and "status_code" not in response:
         return response

@@ -26,5 +26,5 @@ class Room(BaseModel):
     created_at: str = str(datetime.now())
     room_members: Dict[str, RoomMember]
     is_default: bool = False
-    is_private: bool
+    is_private: bool = True
     archived: bool = False
