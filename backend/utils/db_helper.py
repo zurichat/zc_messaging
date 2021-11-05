@@ -10,25 +10,15 @@ class DataStorage:
     data between plugin and db on zc_core
     """
 
-    def __init__(self, request=None):
-        self.read_api = (
-            "https://api.zuri.chat/data/read/{pgn_id}/{collec_name}/{org_id}?{query}"
-        )
-        # self.upload_test_api = "http://127.0.0.1:8000/api/v1/testapi/{pgn_id}"
+    def __init__(
+        self, plugin_id: str = PLUGIN_ID, organization_id: str = ORG_ID
+    ) -> None:
         self.write_api = "https://api.zuri.chat/data/write"
         self.delete_api = "https://api.zuri.chat/data/delete"
-        self.upload_api = "https://api.zuri.chat/upload/file/{pgn_id}"
-        self.upload_multiple_api = "https://api.zuri.chat/upload/files/{pgn_id}"
-        self.delete_file_api = "https://api.zuri.chat/delete/file/{pgn_id}"
         self.read_query_api = "https://api.zuri.chat/data/read"
         self.get_member_api = "https://api.zuri.chat/organizations/{org_id}/members/"
-
-        if request is None:
-            self.plugin_id = PLUGIN_ID
-            self.organization_id = ORG_ID
-        else:
-            self.plugin_id = request.get("PLUGIN_ID", PLUGIN_ID)
-            self.organization_id = request.get("ORG_ID")
+        self.plugin_id = plugin_id
+        self.organization_id = organization_id
 
     async def write(self, collection_name, data):
         """
@@ -198,6 +188,11 @@ class FileStorage:
     Helper Class as a layer for communication of plugin
     files between plugin and db on zc_core
     """
+
+    def __init__(self) -> None:
+        self.upload_api = "https://api.zuri.chat/upload/file/{pgn_id}"
+        self.upload_multiple_api = "https://api.zuri.chat/upload/files/{pgn_id}"
+        self.delete_file_api = "https://api.zuri.chat/delete/file/{pgn_id}"
 
 
 DB = DataStorage()
