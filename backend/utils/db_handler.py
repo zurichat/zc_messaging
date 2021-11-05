@@ -167,7 +167,7 @@ class DataStorage:
             response = requests.get(url=self.get_member_api, json=body)
         except requests.exceptions.RequestException as exception:
             print(exception)
-            return list
+            return []
         if response.status_code == 200:
             return response.json()["data"]
 
@@ -184,12 +184,12 @@ class DataStorage:
             members = requests.get(url=self.get_member_api, json=body)
         except requests.exceptions.RequestException as exception:
             print(exception)
-            return dict
+            return {}
         if members.status_code == 200:
             for member in members:
                 if member["_id"] == member_id:
                     return member
-        return dict
+        return {}
 
 
 DB = DataStorage()

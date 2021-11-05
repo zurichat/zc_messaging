@@ -43,17 +43,13 @@ async def create_room(
         HTTP_424_FAILED_DEPENDENCY: room creation unsuccessful
     """
     room_data = request.dict()
-    room_member_ids = room_data["room_members"]
-    user_rooms = await get_rooms(member_id, org_id)
-    print("rooms", user_rooms)
+    user_rooms = await get_rooms(org_id)  # add member_id after adding it to function
     if isinstance(user_rooms, list):
         for room in user_rooms:
-            room_users = room["room_members"]
-            if dict(room_users).keys == dict(room_member_ids).keys:
+            if set(room["room_members"]) == set(room_data["room_members"]):
                 return JSONResponse(
                     content={"room_id": room["_id"]}, status_code=status.HTTP_200_OK
                 )
-
     elif user_rooms is None:
         return JSONResponse(
             content="unable to read database", status=status.HTTP_424_FAILED_DEPENDENCY
@@ -65,7 +61,7 @@ async def create_room(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
         )
 
-    response = await DB.write("dm_rooms", data=room_data)
+    response = await DB.write("rooms", data=room_data)
     if response and response.get("status") == 200:
         room_id = {"room_id": response.get("data").get("object_id")}
         other_info = await extra_room_info(room_data)
@@ -81,9 +77,7 @@ async def create_room(
             event=Events.SIDEBAR_UPDATE,
             data=response_output,
         )  # publish to centrifugo in the background
-        return JSONResponse(
-            content={"room_id": room_id}, status_code=status.HTTP_201_CREATED
-        )
+        return JSONResponse(content=room_id, status_code=status.HTTP_201_CREATED)
     return JSONResponse(
         content=f"unable to create room, Reason: {response}",
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
