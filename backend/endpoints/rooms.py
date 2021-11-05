@@ -1,29 +1,11 @@
 from fastapi import APIRouter, BackgroundTasks, status
 from fastapi.responses import JSONResponse
 from schema.room import Room
-from utils.centrifugo_handler import Events, centrifugo_client
-from utils.db_handler import DB
-from utils.utility import get_rooms, sidebar_emitter
+from utils.centrifugo_helper import Events, centrifugo_client
+from utils.db_helper import DB
+from utils.utility import extra_room_info, get_rooms, sidebar_emitter
 
 router = APIRouter()
-
-
-async def extra_room_info(room_data: dict):
-    """provides some extra room information to be displayed on the sidebar
-    Args:
-        room_data {dict}: {object of newly created room}
-    Returns:
-        {dict}
-
-    """
-
-    if room_data["plugin_name"] == "channels":
-        return {
-            "category": "channel",
-            "group_name": "channel",
-            "room_name": room_data["room_name"],
-        }
-    return {"category": "direct messagine", "group_name": "dm", "room_name": None}
 
 
 @router.post("/org/{org_id}/members/{member_id}/room")

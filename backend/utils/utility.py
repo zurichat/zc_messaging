@@ -1,4 +1,4 @@
-from utils.db_handler import DB
+from utils.db_helper import DB
 
 
 async def get_rooms(member_id, org_id):
@@ -16,6 +16,24 @@ async def get_rooms(member_id, org_id):
     if response and "status_code" not in response:
         return response
     return []
+
+
+async def extra_room_info(room_data: dict):
+    """provides some extra room information to be displayed on the sidebar
+    Args:
+        room_data {dict}: {object of newly created room}
+    Returns:
+        {dict}
+
+    """
+
+    if room_data["plugin_name"] == "channels":
+        return {
+            "category": "channel",
+            "group_name": "channel",
+            "room_name": room_data["room_name"],
+        }
+    return {"category": "direct messagine", "group_name": "dm", "room_name": None}
 
 
 async def sidebar_emitter(

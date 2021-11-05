@@ -6,7 +6,8 @@ ORG_ID = "61695d8bb2cc8a9af4833d46"
 
 class DataStorage:
     """
-    Helper Class as a layer of communication between plugin and db on zc_core
+    Helper Class as a layer for communication of plugin
+    data between plugin and db on zc_core
     """
 
     def __init__(self, request=None):
@@ -190,6 +191,13 @@ class DataStorage:
                 if member["_id"] == member_id:
                     return member
         return dict
+
+
+class FileStorage:
+    """
+    Helper Class as a layer for communication of plugin
+    files between plugin and db on zc_core
+    """
 
 
 DB = DataStorage()

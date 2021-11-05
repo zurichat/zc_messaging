@@ -1,5 +1,5 @@
 import pytest
-from utils.centrifugo_handler import Events, centrifugo_client
+from utils.centrifugo_helper import Events, centrifugo_client
 
 
 @pytest.mark.anyio
