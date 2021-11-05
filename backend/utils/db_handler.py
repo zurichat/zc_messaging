@@ -20,6 +20,7 @@ class DataStorage:
         self.upload_multiple_api = "https://api.zuri.chat/upload/files/{pgn_id}"
         self.delete_file_api = "https://api.zuri.chat/delete/file/{pgn_id}"
         self.read_query_api = "https://api.zuri.chat/data/read"
+        self.get_member_api = "https://api.zuri.chat/organizations/{org_id}/members/"
 
         if request is None:
             self.plugin_id = PLUGIN_ID
@@ -153,6 +154,42 @@ class DataStorage:
             return response.json()
 
         return {"status_code": response.status_code, "message": response.reason}
+
+    async def get_all_members(self):
+        """Gets a list of all members registered in an organisation
+        Args:
+            org_id (str): The organization's id
+        Returns:
+            [List]: [list of objects]
+        """
+        body = dict(org_id=self.organization_id)
+        try:
+            response = requests.get(url=self.get_member_api, json=body)
+        except requests.exceptions.RequestException as exception:
+            print(exception)
+            return list
+        if response.status_code == 200:
+            return response.json()["data"]
+
+    async def get_member(self, member_id: str):
+        """Get info of a single registered member in an organisation
+        Args:
+            org_id (str): The organization's id,
+            member_id (str): The member's id
+        Returns:
+            {dict}: {dict containing user info}
+        """
+        body = dict(org_id=self.organization_id)
+        try:
+            members = requests.get(url=self.get_member_api, json=body)
+        except requests.exceptions.RequestException as exception:
+            print(exception)
+            return dict
+        if members.status_code == 200:
+            for member in members:
+                if member["_id"] == member_id:
+                    return member
+        return dict
 
 
 DB = DataStorage()

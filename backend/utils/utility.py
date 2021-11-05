@@ -1,4 +1,3 @@
-import requests
 from utils.db_handler import DB
 
 
@@ -19,38 +18,6 @@ async def get_rooms(member_id, org_id):
     return []
 
 
-async def get_all_organization_members(org_id: str):
-    """Gets a list of all members registered in an organisation
-    Args:
-        org_id (str): The organization's id
-    Returns:
-        [List]: [list of objects]
-    """
-    try:
-        response = requests.get(
-            f"https://api.zuri.chat/organizations/{org_id}/members/"
-        )
-        if response.status_code == 200:
-            return response.json()["data"]
-    except requests.exceptions.RequestException as exception:
-        print(exception)
-        return list
-
-
-async def get_member(members: list, member_id: str):
-    """Get info of a registered member in an organisation
-    Args:
-        org_id (str): The organization's id,
-        member_id (str): The member's id
-    Returns:
-        {dict}: {dict containing user info}
-    """
-    for member in members:
-        if member["_id"] == member_id:
-            return member
-    return dict
-
-
 async def sidebar_emitter(
     org_id, member_id, category: str, group_name: str
 ):  # group_room_name = None or a String of Names
@@ -68,8 +35,6 @@ async def sidebar_emitter(
     rooms = []
     starred_rooms = []
     user_rooms = await get_rooms(member_id=member_id, org_id=org_id)
-    members = await get_all_organization_members(org_id)
-
     if user_rooms is not None:
         for room in user_rooms:
             room_profile = {}
@@ -79,7 +44,7 @@ async def sidebar_emitter(
                 user_id_set = set(room["room_user_ids"]).difference({member_id})
                 partner_id = list(user_id_set)[0]
 
-                profile = await get_member(members, partner_id)
+                profile = await DB.get_member(org_id, partner_id)
 
                 if "user_name" in profile and profile["user_name"] != "":
                     if profile["user_name"]:
@@ -111,8 +76,6 @@ async def sidebar_emitter(
                 starred_rooms.append(room_profile)
 
     side_bar = {
-        "event": "sidebar_update",
-        "plugin_id": "messaging.zuri.chat",
         "data": {
             "name": "Messaging",
             "description": "Sends messages between users in a dm or channel",
