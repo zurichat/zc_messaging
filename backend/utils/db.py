@@ -83,7 +83,7 @@ class DataStorage:
         self,
         collection_name: str,
         query: dict,
-        options: dict,
+        options: dict = None,
         resource_id: str = None,
     ):
         """
@@ -189,10 +189,15 @@ class FileStorage:
     files between plugin and db on zc_core
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self, plugin_id: str = PLUGIN_ID, organization_id: str = ORG_ID
+    ) -> None:
         self.upload_api = "https://api.zuri.chat/upload/file/{pgn_id}"
         self.upload_multiple_api = "https://api.zuri.chat/upload/files/{pgn_id}"
         self.delete_file_api = "https://api.zuri.chat/delete/file/{pgn_id}"
+        self.plugin_id = plugin_id
+        self.organization_id = organization_id
 
 
 DB = DataStorage()
+fileStore = FileStorage()

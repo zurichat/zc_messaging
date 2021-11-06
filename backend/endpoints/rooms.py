@@ -1,9 +1,9 @@
 from fastapi import APIRouter, BackgroundTasks, status
 from fastapi.responses import JSONResponse
 from schema.room import Room
-from utils.centrifugo_helper import Events, centrifugo_client
-from utils.db_helper import DB
-from utils.utility import extra_room_info, get_rooms, sidebar_emitter
+from utils.centrifugo import Events, centrifugo_client
+from utils.db import DB
+from utils.room_utils import extra_room_info, get_rooms, sidebar_emitter
 
 router = APIRouter()
 
