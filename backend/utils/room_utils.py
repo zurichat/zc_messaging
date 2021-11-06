@@ -115,7 +115,6 @@ async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> boo
     query = {"_id": room_id}
     response = await DB.read("rooms", query=query)
     if response and "status_code" not in response:
-        print(response["room_members"][member_id]["starred"])
         return response["room_members"][member_id]["starred"]
     raise Exception("Room not found")
 
