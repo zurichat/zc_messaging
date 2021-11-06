@@ -28,3 +28,4 @@ class Room(BaseModel):
     is_default: bool = False
     is_private: bool = True
     archived: bool = False
+    description: Optional[str] = None

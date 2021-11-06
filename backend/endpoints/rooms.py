@@ -23,7 +23,7 @@ async def extra_room_info(room_data: dict):
             "group_name": "channel",
             "room_name": room_data["room_name"],
         }
-    return {"category": "direct messagine", "group_name": "dm", "room_name": None}
+    return {"category": "direct messaging", "group_name": "dm", "room_name": None}
 
 
 @router.post("/org/{org_id}/members/{member_id}/room")
@@ -41,12 +41,19 @@ async def create_room(
         HTTP_200_OK (room already exist): {room_id}
         HTTP_201_CREATED (new room created): {room_id}
         HTTP_424_FAILED_DEPENDENCY: room creation unsuccessful
+        HTTP_406_NOT_ACCEPTABLE: max number of dm users exceeded
     """
     room_data = request.dict()
+    room_members = set(room_data["room_members"])
+    if len(room_members) > 9:
+        return JSONResponse(
+            content={"message": "Cannot have more than 9 users in a DM"},
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        )
     user_rooms = await get_rooms(org_id)  # add member_id after adding it to function
     if isinstance(user_rooms, list):
         for room in user_rooms:
-            if set(room["room_members"]) == set(room_data["room_members"]):
+            if room_members == set(room_data["room_members"]):
                 return JSONResponse(
                     content={"room_id": room["_id"]}, status_code=status.HTTP_200_OK
                 )
