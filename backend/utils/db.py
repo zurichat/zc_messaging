@@ -153,16 +153,16 @@ class DataStorage:
         Returns:
             [List]: [list of objects]
         """
-        body = dict(org_id=self.organization_id)
+        url = self.get_member_api.format(org_id=self.organization_id)
         try:
-            response = requests.get(url=self.get_member_api, json=body)
+            response = requests.get(url=url)
         except requests.exceptions.RequestException as exception:
             print(exception)
             return list
         if response.status_code == 200:
             return response.json()["data"]
 
-    async def get_member(self, member_id: str):
+    async def get_member(self, member_id: str, members: list):
         """Get info of a single registered member in an organisation
         Args:
             org_id (str): The organization's id,
@@ -170,13 +170,7 @@ class DataStorage:
         Returns:
             {dict}: {dict containing user info}
         """
-        body = dict(org_id=self.organization_id)
-        try:
-            members = requests.get(url=self.get_member_api, json=body)
-        except requests.exceptions.RequestException as exception:
-            print(exception)
-            return dict
-        if members.status_code == 200:
+        if members:
             for member in members:
                 if member["_id"] == member_id:
                     return member

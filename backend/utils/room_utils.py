@@ -1,16 +1,38 @@
 from utils.db import DB
 
+DEFAULT_DM_IMG = (
+    "https://cdn.iconscout.com/icon/free/png-256/"
+    "account-avatar-profile-human-man-user-30448.png"
+)
 
-async def get_org_rooms(org_id: str, category: str = None) -> list:
+
+async def get_org_rooms(
+    org_id: str,
+    category: str = None,
+    is_private: bool = None,
+    is_default: bool = None,
+    is_archived: bool = None,
+) -> list:
     """Get all rooms in an organization
+
     Args:
         org_id (str): The organization id
         category (Optional(str): The category of the room (channel, dm)
+
     Returns:
         [List]: returns a list of all rooms within that organisation
     """
     DB.organization_id = org_id
-    query = {"plugin_name": category} if category else {}
+    query = {"$and": [{"organization_id": org_id}]}
+    if category is not None:
+        query["$and"].append({"plugin_name": category})
+    if is_private is not None:
+        query["$and"].append({"is_private": is_private})
+    if is_default is not None:
+        query["$and"].append({"is_default": is_default})
+    if is_archived is not None:
+        query["$and"].append({"archived": is_archived})
+
     options = {"sort": {"created_at": -1}}
     response = await DB.read("rooms", query=query, options=options)
     if response and "status_code" not in response:
@@ -38,7 +60,7 @@ async def get_user_rooms(org_id: str, member_id: str, category: str = None) -> l
         if category
         else {f"room_members.{member_id}": {"$exists": True}}
     )
-    print(query)
+
     options = {"sort": {"created_at": -1}}
     response = await DB.read("rooms", query=query, options=options)
 
@@ -71,14 +93,14 @@ async def get_room_members(org_id: str, room_id: str) -> dict:
         org_id (str): The organization's id
         room_id (str): The room id
     Returns:
-        [List]: list of dictionary of member data in the room
+        [Dict]: key value
     """
     DB.organization_id = org_id
     query = {"_id": room_id}
     options = {"sort": {"created_at": -1}, "projection": {"room_members": 1, "_id": 0}}
     response = await DB.read("rooms", query=query, options=options)
     if response and "status_code" not in response:
-        return response["room_members"]
+        return response.get("room_members", {})
     return {}
 
 
@@ -119,97 +141,179 @@ async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> boo
     raise Exception("Room not found")
 
 
-async def extra_room_info(room_data: dict):
-    """provides some extra room information to be displayed on the sidebar
-    Args:
-        room_data {dict}: {object of newly created room}
-    Returns:
-        {dict}
-
+class Sidebar:
+    """
+    Sidebar class helps makes faster connection to core,
+    sorts out data, and creates the sidebar data format
+    for the frontend
     """
 
-    if room_data["plugin_name"] == "channels":
-        return {
-            "category": "channel",
-            "group_name": "channel",
-            "room_name": room_data["room_name"],
-        }
-    return {"category": "direct messagine", "group_name": "dm", "room_name": None}
+    async def __get_room_members(
+        self, member_id: str, room: dict, org_members: list
+    ) -> dict:
+        """gets the room members excluding the current user
 
+        Args:
+            member_id (str): member_id of the current user
+            room (dict): room object data
+            org_members (list): list of all members in the organization
 
-async def sidebar_emitter(
-    org_id, member_id, category: str, group_name: str
-):  # group_room_name = None or a String of Names
-    """Get sidebar info of rooms a registered member belongs to.
-    Args:
-        org_id (str): The organization's id,
-        member_id (str): The member's id,
-        category (str): category of the plugin (direct message or channel)
-        group_name: name of plugin
-        room_name: title of the room if any
-    Returns:
-        {dict}: {dict containing user info}
-    """
+        Returns:
+            [dict]: key value pair of room members
+                    example: {'member_id': {
+                                'username': str
+                                'image_url': str
+                                'starred': bool
+                                'role': str}
+                            }
+        """
+        room_members = room["room_members"]
+        room_members.pop(member_id)  # remove self from room members
+        room_members_ids = room_members.keys()
+        for room_member_id in room_members_ids:
+            member_data = await DB.get_member(room_member_id, org_members)
+            username = member_data["user_name"] or "no user name"
+            image_url = member_data["image_url"] or DEFAULT_DM_IMG
+            room_members[room_member_id].update(username=username, image_url=image_url)
+        return room_members
 
-    rooms = []
-    starred_rooms = []
-    user_rooms = await get_user_rooms(member_id=member_id, org_id=org_id)
-    if user_rooms is not None:
+    def __get_dm_room_name(self, room_members: dict) -> str:
+        """concatenates the room members names to create the room name
+
+        Args:
+            room_members (dict): key value pair of room members
+
+        Returns: string representation of room name
+        """
+        user_names = [member["username"] for member in room_members.values()]
+        return ",".join(user_names)
+
+    async def __get_dm_room_image_url(self, room_members: dict) -> str:
+        """gets the room image url from the first member in the room
+
+        Args:
+            room_members (dict): key value pair of room members
+
+        Returns:
+            [str]: image url of the first member in the room
+        """
+        return list(room_members.values())[0]["image_url"]
+
+    async def __get_room_profile(
+        self, member_id: str, room: dict, org_members: list
+    ) -> dict:
+        """stores the room profile data for the sidebar
+
+        Args:
+            member_id (str): member_id of the current user
+            room (dict): room object data
+            org_members (list): list of all members in the organization
+
+        Returns:
+            dict: key value pair of room profile
+        """
+        room_profile = {}
+        if room["plugin_name"] == "dm":
+            room_members = await self.__get_room_members(member_id, room, org_members)
+        room_profile["room_id"] = room["_id"]
+        room_profile["room_url"] = f"/{room['plugin_name']}/{room['_id']}"
+        room_profile["room_name"] = (
+            await self.__get_dm_room_name(room_members)
+            if room["plugin_name"] == "dm"
+            else room["room_name"]
+        )
+        room_profile["image_url"] = (
+            await self.__get_dm_room_image_url(room_members)
+            if room["plugin_name"] == "dm"
+            else ""
+        )
+        return room_profile
+
+    async def __get_joined_rooms(
+        self, member_id: str, user_rooms: list, org_members: list
+    ) -> dict:
+        """gets the profiles for all rooms for the sidebar
+
+        Args:
+            member_id (str): member_id of the current user
+            user_rooms (list): list of all rooms of the current user
+            org_members (list): list of all members in the organization
+
+        Returns:
+            dict: contains data as key value store of room profiles
+            sample_data: {"rooms": list,
+                          "starred_rooms":list
+                          }
+        """
+        rooms = []
+        starred_rooms = []
         for room in user_rooms:
-            room_profile = {}
-            if len(room["room_user_ids"]) == 2:
-                room_profile["room_id"] = room["_id"]
-                room_profile["room_url"] = f"/dm/{room['_id']}"
-                user_id_set = set(room["room_user_ids"]).difference({member_id})
-                partner_id = list(user_id_set)[0]
-
-                profile = await DB.get_member(org_id, partner_id)
-
-                if "user_name" in profile and profile["user_name"] != "":
-                    if profile["user_name"]:
-                        room_profile["room_name"] = profile["user_name"]
-                    else:
-                        room_profile["room_name"] = "no user name"
-                    if profile["image_url"]:
-                        room_profile["room_image"] = profile["image_url"]
-                    else:
-                        room_profile["room_image"] = (
-                            "https://cdn.iconscout.com/icon/free/png-256/"
-                            "account-avatar-profile-human-man-user-30448.png"
-                        )
-
-                else:
-                    room_profile["room_name"] = "no user name"
-                    room_profile["room_image"] = (
-                        "https://cdn.iconscout.com/icon/free/png-256/"
-                        "account-avatar-profile-human-man-user-30448.png"
-                    )
-            else:
-                room_profile["room_name"] = room["room_name"]
-                room_profile["room_id"] = room["_id"]
-                room_profile["room_url"] = f"/dm/{room['_id']}"
-
+            room_profile = await self.__get_room_profile(member_id, room, org_members)
             rooms.append(room_profile)
-
-            if room["room_members"]["starred"] is True:
+            if room["room_members"].get(member_id, {}).get("starred", False) is True:
                 starred_rooms.append(room_profile)
+        return {"rooms": rooms, "starred_rooms": starred_rooms}
 
-    side_bar = {
-        "data": {
-            "name": "Messaging",
-            "description": "Sends messages between users in a dm or channel",
-            "plugin_id": "messaging.zuri.chat",
-            "organisation_id": f"{org_id}",
-            "user_id": f"{member_id}",
-            "group_name": f"{group_name}",
-            "category": f"{category}",
-            "show_group": False,
-            "button_url": f"/{category}",
-            "public_rooms": [],
-            "starred_rooms": starred_rooms,
-            "joined_rooms": rooms,
+    async def __get_public_rooms(
+        self, member_id: str, org_id: str, org_members: list
+    ) -> dict:
+        """gets the public rooms for the sidebar
+
+        Args:
+            member_id (str): member_id of the current user
+            org_members (list): list of all members in the organization
+
+        Returns:
+            dict: contains data as key value store of room profiles
+            sample_data: key value pair of room profile
+        """
+        rooms = []
+        public_rooms = await get_org_rooms(org_id, is_private=False)
+        if public_rooms:
+            for room in public_rooms:
+                room_profile = await self.__get_room_profile(
+                    member_id, room, org_members
+                )
+                rooms.append(room_profile)
+        return rooms
+
+    async def sidebar_format(
+        self, org_id: str, member_id: str, category: str, group_name: str
+    ) -> dict:
+        """Get sidebar info of rooms a registered member belongs to.
+        Args:
+            org_id (str): The organization's id,
+            member_id (str): The member's id,
+            category (str): category of the plugin (direct message or channel)
+            group_name: name of plugin
+            room_name: title of the room if any
+        Returns:
+            {dict}: {dict containing user info}
+        """
+
+        DB.organization_id = org_id
+        user_rooms = await get_user_rooms(
+            member_id=member_id, org_id=org_id, category=category
+        )
+        org_members = await DB.get_all_members()
+        rooms_data = await self.__get_joined_rooms(member_id, user_rooms, org_members)
+        public_rooms = await self.__get_public_rooms(member_id, org_id, org_members)
+        return {
+            "data": {
+                "name": "Messaging",
+                "description": "Sends messages between users in a dm or channel",
+                "plugin_id": "messaging.zuri.chat",
+                "organisation_id": f"{org_id}",
+                "user_id": f"{member_id}",
+                "group_name": f"{group_name}",
+                "category": f"{category}",
+                "show_group": False,
+                "button_url": f"/{category}",
+                "public_rooms": public_rooms,
+                "starred_rooms": rooms_data["starred_rooms"],
+                "joined_rooms": rooms_data["rooms"],
+            }
         }
-        # List of rooms/channels created whenever a user starts a DM chat with another user
-        # This is what will be displayed by Zuri Main
-    }
-    return side_bar
+
+
+sidebar = Sidebar()
