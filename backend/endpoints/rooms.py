@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from schema.room import Room
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DB
-from utils.room_utils import extra_room_info, get_rooms, sidebar_emitter
+from utils.room_utils import get_user_rooms, sidebar
 
 router = APIRouter()
 
@@ -26,8 +26,17 @@ async def create_room(
     """
     room_data = request.dict()
     room_member_ids = room_data["room_members"]
-    user_rooms = await get_rooms(member_id, org_id)
+    user_rooms = await get_user_rooms(org_id, member_id)
     print("rooms", user_rooms)
+
+    if user_rooms:
+        for room in user_rooms:
+            if room["room_members"] == room_member_ids:
+                return JSONResponse(
+                    status_code=status.HTTP_200_OK,
+                    content={"room_id": room["room_id"]},
+                )
+
     if isinstance(user_rooms, list):
         for room in user_rooms:
             room_users = room["room_members"]
@@ -50,8 +59,8 @@ async def create_room(
     response = await DB.write("dm_rooms", data=room_data)
     if response and response.get("status") == 200:
         room_id = {"room_id": response.get("data").get("object_id")}
-        other_info = await extra_room_info(room_data)
-        response_output = await sidebar_emitter(
+        other_info = {}
+        response_output = await sidebar(
             org_id,
             member_id,
             category=other_info["category"],
