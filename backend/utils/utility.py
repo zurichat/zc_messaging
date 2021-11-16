@@ -1,7 +1,9 @@
 from utils.db_handler import DB
 
 
-async def get_rooms(member_id, org_id):
+async def get_rooms(
+    org_id, query: dict = None
+):  # add member_id after figuing query process
     """Get the rooms a user is in
     Args:
         member_id (str): The user id
@@ -9,10 +11,8 @@ async def get_rooms(member_id, org_id):
         [List]: [description]
     """
     DB.organization_id = org_id
-    query = {"room_members": member_id}
     options = {"sort": {"created_at": -1}}
-    response = await DB.read("rooms", query=query, options=options)
-
+    response = await DB.read("rooms", query, options)
     if response and "status_code" not in response:
         return response
     return []
@@ -34,17 +34,19 @@ async def sidebar_emitter(
 
     rooms = []
     starred_rooms = []
-    user_rooms = await get_rooms(member_id=member_id, org_id=org_id)
+    user_rooms = await get_rooms(
+        org_id=org_id
+    )  # add member_id after adding it to function
     if user_rooms is not None:
         for room in user_rooms:
             room_profile = {}
-            if len(room["room_user_ids"]) == 2:
+            if len(room["room_members"]) == 2:
                 room_profile["room_id"] = room["_id"]
                 room_profile["room_url"] = f"/dm/{room['_id']}"
-                user_id_set = set(room["room_user_ids"]).difference({member_id})
+                user_id_set = set(room["room_members"]).difference({member_id})
                 partner_id = list(user_id_set)[0]
 
-                profile = await DB.get_member(org_id, partner_id)
+                profile = await DB.get_member(partner_id)
 
                 if "user_name" in profile and profile["user_name"] != "":
                     if profile["user_name"]:
@@ -72,10 +74,10 @@ async def sidebar_emitter(
 
             rooms.append(room_profile)
 
-            if room["room_members"]["starred"] is True:
-                starred_rooms.append(room_profile)
+    #       if room["room_members"][member_id]["starred"] is True:
+    #           starred_rooms.append(room_profile)
 
-    side_bar = {
+    sidebar = {
         "data": {
             "name": "Messaging",
             "description": "Sends messages between users in a dm or channel",
@@ -89,8 +91,7 @@ async def sidebar_emitter(
             "public_rooms": [],
             "starred_rooms": starred_rooms,
             "joined_rooms": rooms,
-        }
-        # List of rooms/channels created whenever a user starts a DM chat with another user
+        }  # List of rooms/channels created whenever a user starts a DM chat with another user
         # This is what will be displayed by Zuri Main
     }
-    return side_bar
+    return sidebar
