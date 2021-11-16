@@ -22,10 +22,26 @@ class Room(BaseModel):
     org_id: str
     plugin_name: str
     plugin_id: str
-    room_name: Optional[str]
-    created_at: str = str(datetime.now())
     room_members: Dict[str, RoomMember]
+    created_at: str = str(datetime.now())
+
+
+class Channel(BaseModel):
+    """Describes the request model for fields specific to
+    a channel
+    """
+
+    description: Optional[str] = None
+    topic: Optional[str] = None
+    room_name: str
     is_default: bool = False
     is_private: bool = True
     archived: bool = False
-    description: Optional[str] = None
+
+
+class RoomResponse(BaseModel):
+    """Describes the fields returned upon
+    calling the create_room endpoint
+    """
+
+    room_id: str

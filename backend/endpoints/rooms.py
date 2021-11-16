@@ -1,6 +1,6 @@
-from fastapi import APIRouter, BackgroundTasks, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
-from schema.room import Room
+from schema.room import Room, RoomResponse
 from utils.centrifugo_handler import Events, centrifugo_client
 from utils.db_handler import DB
 from utils.utility import get_rooms, sidebar_emitter
@@ -10,63 +10,72 @@ router = APIRouter()
 
 async def extra_room_info(room_data: dict):
     """provides some extra room information to be displayed on the sidebar
+
     Args:
         room_data {dict}: {object of newly created room}
+
     Returns:
-        {dict}
+        A dict mapping keys to their corresponding value
+            {"category": "str", "group_name": str}
 
     """
 
-    if room_data["plugin_name"] == "channels":
+    if room_data["plugin_name"] == "channel":
         return {
             "category": "channel",
             "group_name": "channel",
             "room_name": room_data["room_name"],
         }
-    return {"category": "direct messaging", "group_name": "dm", "room_name": None}
+    return {"category": "direct messaging", "group_name": "dm"}
 
 
-@router.post("/org/{org_id}/members/{member_id}/room")
+@router.post(
+    "/org/{org_id}/members/{member_id}/room",
+    status_code=201,
+    response_model=RoomResponse,
+    responses={200: {"model": RoomResponse}},
+)
 async def create_room(
     org_id: str, member_id: str, request: Room, background_tasks: BackgroundTasks
 ):
     """Creates a room between users.
-    It takes the id of the users involved, sends a write request to the database .
-    Then returns the room id when a room is successfully created
+
+    Registers a new document to the database collection.
+    Returns the document id if the room is successfully created or already exist
+    while publishing to the user sidebar in the background
+
     Args:
-        org_id (str): id of organisation
-        request: room schema
-        member_id: id of room_creator
+        org_id (str): A unique identifier of an organisation
+        request: A pydantic schema that defines the room request parameters
+        member_id: A unique identifier of the member creating the room
+
     Returns:
-        HTTP_200_OK (room already exist): {room_id}
-        HTTP_201_CREATED (new room created): {room_id}
-        HTTP_424_FAILED_DEPENDENCY: room creation unsuccessful
-        HTTP_406_NOT_ACCEPTABLE: max number of dm users exceeded
+        A dict mapping the key room_id to the unique identifier (id) value of the room
+            {"room_id: "_id"}
+
+    Raises:
+        HTTP_424_FAILED_DEPENDENCY: "room creation unsuccessful" or
+            "unable to read database"
+        HTTP_406_NOT_ACCEPTABLE: raised when the maximium number of allowed users is exceeded
     """
     room_data = request.dict()
     room_members = set(room_data["room_members"])
     if len(room_members) > 9:
-        return JSONResponse(
-            content={"message": "Cannot have more than 9 users in a DM"},
-            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        raise HTTPException(
+            status_code=424, detail="Cannot have more than 9 users in a DM"
         )
-    user_rooms = await get_rooms(org_id)  # add member_id after adding it to function
+    query = {}  # yet to figure out the exact query format
+    user_rooms = await get_rooms(
+        org_id, query
+    )  # add member_id after adding it to function
     if isinstance(user_rooms, list):
         for room in user_rooms:
             if room_members == set(room_data["room_members"]):
                 return JSONResponse(
                     content={"room_id": room["_id"]}, status_code=status.HTTP_200_OK
                 )
-    elif user_rooms is None:
-        return JSONResponse(
-            content="unable to read database", status=status.HTTP_424_FAILED_DEPENDENCY
-        )
-
-    elif user_rooms.get("status_code") != 404 or user_rooms.get("status_code") != 200:
-        return JSONResponse(
-            content="unable to read database",
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-        )
+    elif user_rooms is None or user_rooms.get("status_code") != 404:
+        raise HTTPException(status_code=424, detail="unable to read database")
 
     response = await DB.write("rooms", data=room_data)
     if response and response.get("status") == 200:
@@ -85,7 +94,4 @@ async def create_room(
             data=response_output,
         )  # publish to centrifugo in the background
         return JSONResponse(content=room_id, status_code=status.HTTP_201_CREATED)
-    return JSONResponse(
-        content=f"unable to create room, Reason: {response}",
-        status_code=status.HTTP_424_FAILED_DEPENDENCY,
-    )
+    raise HTTPException(status_code=424, detail="unable to create room")

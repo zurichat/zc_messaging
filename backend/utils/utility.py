@@ -1,7 +1,9 @@
 from utils.db_handler import DB
 
 
-async def get_rooms(org_id):  # add member_id after figuing query process
+async def get_rooms(
+    org_id, query: dict = None
+):  # add member_id after figuing query process
     """Get the rooms a user is in
     Args:
         member_id (str): The user id
@@ -9,9 +11,8 @@ async def get_rooms(org_id):  # add member_id after figuing query process
         [List]: [description]
     """
     DB.organization_id = org_id
-    query = {}  # I will use member_id to filter my querry here
     options = {"sort": {"created_at": -1}}
-    response = await DB.read("rooms", query=query, options=options)
+    response = await DB.read("rooms", query, options)
     if response and "status_code" not in response:
         return response
     return []
