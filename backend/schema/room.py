@@ -3,7 +3,6 @@ from enum import Enum
 from typing import Dict, Optional
 
 from pydantic import BaseModel, ValidationError, root_validator
-from utils.room_utils import get_org_rooms
 
 
 class Role(str, Enum):
@@ -20,8 +19,8 @@ class Plugin(str, Enum):
     Provides list of choices for plugin name
     """
 
-    DM = "dm"
-    CHANNEL = "channel"
+    DM = "DM"
+    CHANNEL = "Channel"
 
 
 class RoomMember(BaseModel):
@@ -49,39 +48,39 @@ class Room(BaseModel):
     is_private: bool = True
     archived: bool = False
 
-    @root_validator(always=True)
-    @classmethod
-    async def is_channel_exist(cls, values):
-        """
-        Checks if the plugin_name is channel
-        """
-        plugin_name = values.get("plugin_name")
-        room_name = values.get("room_name")
-        org_id = values.get("org_id")
-        rooms = await get_org_rooms(org_id, plugin_name)
+    # @root_validator(always=True)
+    # @classmethod
+    # async def is_channel_exist(cls, values):
+    #     """
+    #     Checks if the plugin_name is channel
+    #     """
+    #     plugin_name = values.get("plugin_name")
+    #     room_name = values.get("room_name")
+    #     org_id = values.get("org_id")
+    #     rooms = await get_org_rooms(org_id, plugin_name)
 
-        if plugin_name == "channel" and room_name in [
-            room["room_name"] for room in rooms
-        ]:
-            raise ValidationError("Channel with this name already exists")
-        return values
+    #     if plugin_name == "channel" and room_name in [
+    #         room["room_name"] for room in rooms
+    #     ]:
+    #         raise ValidationError("Channel with this name already exists")
+    #     return values
 
-    @root_validator(always=True)
-    @classmethod
-    async def is_dm_exist(cls, values):
-        """
-        Checks if the plugin_name is dm
-        """
-        plugin_name = values.get("plugin_name")
-        room_members = values.get("room_members", {})
-        org_id = values.get("org_id")
-        rooms = await get_org_rooms(org_id, plugin_name)
+    # @root_validator(always=True)
+    # @classmethod
+    # async def is_dm_exist(cls, values):
+    #     """
+    #     Checks if the plugin_name is dm
+    #     """
+    #     plugin_name = values.get("plugin_name")
+    #     room_members = values.get("room_members", {})
+    #     org_id = values.get("org_id")
+    #     rooms = await get_org_rooms(org_id, plugin_name)
 
-        if plugin_name == "dm" and set(room_members.keys()) in [
-            set(room["room_members"].keys()) for room in rooms
-        ]:
-            raise ValidationError("DM already exists")
-        return values
+    #     if plugin_name == "dm" and set(room_members.keys()) in [
+    #         set(room["room_members"].keys()) for room in rooms
+    #     ]:
+    #         raise ValidationError("DM already exists")
+    #     return values
 
     @root_validator(always=True)
     @classmethod

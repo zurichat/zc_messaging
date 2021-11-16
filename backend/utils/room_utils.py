@@ -8,10 +8,10 @@ DEFAULT_DM_IMG = (
 
 async def get_org_rooms(
     org_id: str,
-    category: str = None,
+    member_id: str = None,
+    plugin: str = None,
     is_private: bool = None,
     is_default: bool = None,
-    is_archived: bool = None,
 ) -> list:
     """Get all rooms in an organization
 
@@ -24,49 +24,20 @@ async def get_org_rooms(
     """
     DB.organization_id = org_id
     query = {"$and": [{"organization_id": org_id}]}
-    if category is not None:
-        query["$and"].append({"plugin_name": category})
+    if member_id is not None:
+        query["$and"].append({f"room_members.{member_id}": {"$exists": True}})
+    if plugin is not None:
+        query["$and"].append({"plugin_name": plugin})
     if is_private is not None:
         query["$and"].append({"is_private": is_private})
     if is_default is not None:
         query["$and"].append({"is_default": is_default})
-    if is_archived is not None:
-        query["$and"].append({"archived": is_archived})
 
     options = {"sort": {"created_at": -1}}
     response = await DB.read("rooms", query=query, options=options)
     if response and "status_code" not in response:
         return response
-    return []
-
-
-async def get_user_rooms(org_id: str, member_id: str, category: str = None) -> list:
-    """Get all the rooms a user is in
-    Args:
-        org_id (str): The organization id
-        member_id (str): The member id
-        category (Optional (str)): The category of the room (channel, dm)
-    Returns:
-        [List]: returns a list of all rooms the user is in within that organisation
-    """
-    DB.organization_id = org_id
-    query = (
-        {
-            "$and": [
-                {f"room_members.{member_id}": {"$exists": True}},
-                {"plugin_name": category},
-            ]
-        }
-        if category
-        else {f"room_members.{member_id}": {"$exists": True}}
-    )
-
-    options = {"sort": {"created_at": -1}}
-    response = await DB.read("rooms", query=query, options=options)
-
-    if response and "status_code" not in response:
-        return response
-    return []
+    return None
 
 
 async def get_room(org_id: str, room_id: str) -> dict:
@@ -277,9 +248,7 @@ class Sidebar:
                 rooms.append(room_profile)
         return rooms
 
-    async def sidebar_format(
-        self, org_id: str, member_id: str, category: str, group_name: str
-    ) -> dict:
+    async def format(self, org_id: str, member_id: str, plugin: str) -> dict:
         """Get sidebar info of rooms a registered member belongs to.
         Args:
             org_id (str): The organization's id,
@@ -292,8 +261,8 @@ class Sidebar:
         """
 
         DB.organization_id = org_id
-        user_rooms = await get_user_rooms(
-            member_id=member_id, org_id=org_id, category=category
+        user_rooms = await get_org_rooms(
+            member_id=member_id, org_id=org_id, plugin=plugin
         )
         org_members = await DB.get_all_members()
         rooms_data = await self.__get_joined_rooms(member_id, user_rooms, org_members)
@@ -305,10 +274,10 @@ class Sidebar:
                 "plugin_id": "messaging.zuri.chat",
                 "organisation_id": f"{org_id}",
                 "user_id": f"{member_id}",
-                "group_name": f"{group_name}",
-                "category": f"{category}",
+                "group_name": f"{plugin}",
+                "category": "channels" if plugin == "Channel" else "direct messages",
                 "show_group": False,
-                "button_url": f"/{category}",
+                "button_url": "/channels" if plugin == "Channel" else "/dm",
                 "public_rooms": public_rooms,
                 "starred_rooms": rooms_data["starred_rooms"],
                 "joined_rooms": rooms_data["rooms"],
