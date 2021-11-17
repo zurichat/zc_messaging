@@ -10,12 +10,12 @@ router = APIRouter()
 
 
 @router.post(
-    "/org/{org_id}/members/{member_id}rooms",
+    "/org/{org_id}/members/{member_id}/rooms",
     response_model=ResponseModel,
     status_code=status.HTTP_201_CREATED,
     responses={
-        200: {"model": ResponseModel},
-        424: {"description": "ZC Core Failed"},
+        200: {"detail": {"room_id": "room_id"}},
+        424: {"detail": "ZC Core Failed"},
     },
 )
 async def create_room(
@@ -48,20 +48,16 @@ async def create_room(
         if plugin_name == Plugin.CHANNEL.value and room_name.casefold() in [
             room["room_name"].casefold() for room in rooms
         ]:
-            return JSONResponse(
-                ResponseModel.fail("room already exist", data={"room_name": room_name}),
-                status_code=status.HTTP_200_OK,
+            raise HTTPException(
+                status_code=status.HTTP_200_OK, detail={"room_name": room_name}
             )
 
         if plugin_name == Plugin.DM.value:
             for room in rooms:
                 if set(room["room_members"].keys()) == set(room_member_ids):
-
-                    return JSONResponse(
-                        content=ResponseModel.fail(
-                            "room already exist", data={"room_id": room["room_id"]}
-                        ),
+                    raise HTTPException(
                         status_code=status.HTTP_200_OK,
+                        detail={"room_id": room["room_id"]},
                     )
 
         response = await DB.write("rooms", data=room_data)
