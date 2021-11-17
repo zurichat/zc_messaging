@@ -1,7 +1,7 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
-from schema.room import Room
+from schema.room import Plugin, Room
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DB
 from utils.room_utils import get_org_rooms, sidebar
@@ -13,6 +13,10 @@ router = APIRouter()
     "/org/{org_id}/members/{member_id}rooms",
     response_model=ResponseModel,
     status_code=status.HTTP_201_CREATED,
+    responses={
+        200: {"model": ResponseModel},
+        424: {"description": "ZC Core Failed"},
+    },
 )
 async def create_room(
     org_id: str, member_id: str, request: Room, background_tasks: BackgroundTasks
@@ -27,17 +31,17 @@ async def create_room(
     Returns:
         HTTP_200_OK (room already exist): {room_id}
         HTTP_201_CREATED (new room created): {room_id}
+    Raises
         HTTP_424_FAILED_DEPENDENCY: room creation unsuccessful
     """
     room_data = request.dict()
     plugin_name = room_data.get("plugin_name")
     room_name = room_data.get("room_name")
-    room_member_ids = list(room_data.get("room_member_ids").keys())
-    rooms = await get_org_rooms(org_id=org_id, category=plugin_name)
-    print("rooms", rooms)
+    room_member_ids = list(room_data.get("room_members").keys())
+    rooms = await get_org_rooms(org_id=org_id, plugin=plugin_name)
 
-    if rooms:
-        if plugin_name == "channel" and room_name.casefold() in [
+    if rooms is not None:
+        if plugin_name == Plugin.CHANNEL.value and room_name.casefold() in [
             room["room_name"].casefold() for room in rooms
         ]:
             return JSONResponse(
@@ -45,7 +49,7 @@ async def create_room(
                 status_code=status.HTTP_200_OK,
             )
 
-        if plugin_name == "dm":
+        if plugin_name == Plugin.DM.value:
             for room in rooms:
                 if set(room["room_members"].keys()) == set(room_member_ids):
 
@@ -56,7 +60,7 @@ async def create_room(
                         status_code=status.HTTP_200_OK,
                     )
 
-        response = await DB.write("dm_rooms", data=room_data)
+        response = await DB.write("rooms", data=room_data)
         if response and response.get("status") == 200:
             room_id = {"room_id": response.get("data").get("object_id")}
             centrifugo_data = await sidebar.format(

@@ -2,7 +2,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, Optional
 
-from pydantic import BaseModel, ValidationError, root_validator
+from fastapi import HTTPException
+from pydantic import BaseModel, root_validator
 
 
 class Role(str, Enum):
@@ -48,49 +49,17 @@ class Room(BaseModel):
     is_private: bool = True
     archived: bool = False
 
-    # @root_validator(always=True)
-    # @classmethod
-    # async def is_channel_exist(cls, values):
-    #     """
-    #     Checks if the plugin_name is channel
-    #     """
-    #     plugin_name = values.get("plugin_name")
-    #     room_name = values.get("room_name")
-    #     org_id = values.get("org_id")
-    #     rooms = await get_org_rooms(org_id, plugin_name)
-
-    #     if plugin_name == "channel" and room_name in [
-    #         room["room_name"] for room in rooms
-    #     ]:
-    #         raise ValidationError("Channel with this name already exists")
-    #     return values
-
-    # @root_validator(always=True)
-    # @classmethod
-    # async def is_dm_exist(cls, values):
-    #     """
-    #     Checks if the plugin_name is dm
-    #     """
-    #     plugin_name = values.get("plugin_name")
-    #     room_members = values.get("room_members", {})
-    #     org_id = values.get("org_id")
-    #     rooms = await get_org_rooms(org_id, plugin_name)
-
-    #     if plugin_name == "dm" and set(room_members.keys()) in [
-    #         set(room["room_members"].keys()) for room in rooms
-    #     ]:
-    #         raise ValidationError("DM already exists")
-    #     return values
-
-    @root_validator(always=True)
+    @root_validator(pre=True)
     @classmethod
     def check_group_dm(cls, values):
         """
         Checks if the plugin_name is group_dm
         """
         if (
-            values["plugin_name"] == "dm"
-            and len(values.get("room_members", {}).keys()) > 9
+            values["plugin_name"] == Plugin.DM.value
+            and len(list(values.get("room_members", {}).keys())) > 9
         ):
-            raise ValidationError("Cannot have more than 9 users in a DM")
+            raise HTTPException(
+                status_code=400, detail="Group DM cannot have more than 9 members"
+            )
         return values

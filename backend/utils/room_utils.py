@@ -1,4 +1,4 @@
-from utils.db import DB
+from utils.db import COLLECTION_NAME, DB
 
 DEFAULT_DM_IMG = (
     "https://cdn.iconscout.com/icon/free/png-256/"
@@ -23,7 +23,7 @@ async def get_org_rooms(
         [List]: returns a list of all rooms within that organisation
     """
     DB.organization_id = org_id
-    query = {"$and": [{"organization_id": org_id}]}
+    query = {"$and": [{"org_id": org_id}]}
     if member_id is not None:
         query["$and"].append({f"room_members.{member_id}": {"$exists": True}})
     if plugin is not None:
@@ -34,8 +34,10 @@ async def get_org_rooms(
         query["$and"].append({"is_default": is_default})
 
     options = {"sort": {"created_at": -1}}
-    response = await DB.read("rooms", query=query, options=options)
-    if response and "status_code" not in response:
+    response = await DB.read(COLLECTION_NAME, query=query, options=options)
+    if response is None:
+        return []
+    if "status_code" not in response:
         return response
     return None
 
