@@ -22,12 +22,16 @@ async def create_room(
     org_id: str, member_id: str, request: Room, background_tasks: BackgroundTasks
 ):
     """Creates a room between users.
-    It takes the id of the users involved, sends a write request to the database .
-    Then returns the room id when a room is successfully created
+
+    Registers a new document to the database collection.
+    Returns the document id if the room is successfully created or already exist
+    while publishing to the user sidebar in the background
+
     Args:
-        org_id (str): id of organisation
-        request: room schema
-        member_id: id of room_creator
+        org_id (str): A unique identifier of an organisation
+        request: A pydantic schema that defines the room request parameters
+        member_id: A unique identifier of the member creating the room
+
     Returns:
         HTTP_200_OK (room already exist): {room_id}
         HTTP_201_CREATED (new room created): {room_id}

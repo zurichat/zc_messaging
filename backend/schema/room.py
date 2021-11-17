@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Dict, Optional
 
 from fastapi import HTTPException
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, root_validator, validator
 
 
 class Role(str, Enum):
@@ -42,9 +42,12 @@ class Room(BaseModel):
     org_id: str
     plugin_name: Plugin
     plugin_id: str
-    room_name: Optional[str]
-    created_at: str = str(datetime.now())
     room_members: Dict[str, RoomMember]
+    created_at: str = str(datetime.now())
+    created_by: str = None
+    description: Optional[str] = None
+    topic: Optional[str] = None
+    room_name: str
     is_default: bool = False
     is_private: bool = True
     archived: bool = False
@@ -55,11 +58,41 @@ class Room(BaseModel):
         """
         Checks if the plugin_name is group_dm
         """
-        if (
-            values["plugin_name"] == Plugin.DM.value
-            and len(list(values.get("room_members", {}).keys())) > 9
-        ):
+        plugin_name = values.get("plugin_name")
+        room_members = values.get("room_members", {})
+        topic = values.get("topic")
+        description = values.get("description")
+        created_by = values.get("created_by")
+
+        if plugin_name == Plugin.DM.value and len(list(room_members.keys())) > 9:
             raise HTTPException(
                 status_code=400, detail="Group DM cannot have more than 9 members"
             )
+
+        if plugin_name == Plugin.DM.value and topic is not None:
+            raise HTTPException(status_code=400, detail="DM should not have a topic")
+
+        if plugin_name == Plugin.DM.value and description is not None:
+            raise HTTPException(
+                status_code=400, detail="DM should not have a description"
+            )
+
+        if plugin_name == Plugin.DM.value and created_by is not None:
+            raise HTTPException(
+                status_code=400, detail="DM should not have a created by"
+            )
+
         return values
+
+    @validator("room_members", always=True)
+    @classmethod
+    def check_room_members(cls, value):
+        """
+        Checks if the room_members has at least two members
+        """
+        if len(list(value.keys())) < 2:
+            raise HTTPException(
+                status_code=400, detail="Room must have at least 2 members"
+            )
+
+        return value

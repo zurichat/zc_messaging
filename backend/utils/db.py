@@ -159,7 +159,7 @@ class DataStorage:
             response = requests.get(url=url)
         except requests.exceptions.RequestException as exception:
             print(exception)
-            return list
+            return []
         if response.status_code == 200:
             return response.json()["data"]
 
@@ -175,7 +175,7 @@ class DataStorage:
             for member in members:
                 if member["_id"] == member_id:
                     return member
-        return dict
+        return {}
 
 
 class FileStorage:
