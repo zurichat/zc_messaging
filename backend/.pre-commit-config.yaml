@@ -45,4 +45,3 @@ repos:
         - --disable=C0301
         - --disable=R0902
         - --disable=R0903
-        - --disable=R0201
