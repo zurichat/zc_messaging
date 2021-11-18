@@ -45,14 +45,14 @@ async def create_room(
     rooms = await get_org_rooms(org_id=org_id, plugin=plugin_name)
 
     if rooms is not None:
-        if plugin_name == Plugin.CHANNEL.value and room_name.casefold() in [
+        if plugin_name == Plugin.CHANNEL and room_name.casefold() in [
             room["room_name"].casefold() for room in rooms
         ]:
             raise HTTPException(
                 status_code=status.HTTP_200_OK, detail={"room_name": room_name}
             )
 
-        if plugin_name == Plugin.DM.value:
+        if plugin_name == Plugin.DM:
             for room in rooms:
                 if set(room["room_members"].keys()) == set(room_member_ids):
                     raise HTTPException(

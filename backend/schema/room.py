@@ -7,21 +7,33 @@ from pydantic import BaseModel, root_validator, validator
 
 
 class Role(str, Enum):
-    """
-    Enum for the roles of a user in a room.
+    """Provides choices for the roles of a user in a room.
+
+    ADMIN ['admin'] -> The admin role is the only one that can add or remove users from a room.
+    MEMBER ['member'] -> The member role cannot add or remove users from a room
     """
 
     ADMIN = "admin"
     MEMBER = "member"
 
+    def __str__(self):
+        return self.value
+
 
 class Plugin(str, Enum):
-    """
-    Provides list of choices for plugin name
+    """Provides choices of plugins.
+
+    Provides class level constants for the plugins.
+    DM ['DM'] -> direct message plugin
+    CHANNEL ['Channel'] -> channel plugin
     """
 
     DM = "DM"
     CHANNEL = "Channel"
+
+    def __str__(self):
+        """returns string representation of enum choice"""
+        return self.value
 
 
 class RoomMember(BaseModel):
