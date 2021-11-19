@@ -61,9 +61,9 @@ async def create_room(
                     )
 
         response = await DB.write("rooms", data=room_data)
-        if response and response.get("status") == 200:
+        if response and response.get("status_code", None) is None:
             room_id = {"room_id": response.get("data").get("object_id")}
-            centrifugo_data = await sidebar.format(
+            sidebar_data = await sidebar.format_data(
                 org_id,
                 member_id,
                 plugin=plugin_name,
@@ -73,7 +73,7 @@ async def create_room(
                 centrifugo_client.publish,
                 room=f"{org_id}_{member_id}_sidebar",
                 event=Events.SIDEBAR_UPDATE,
-                data=centrifugo_data,
+                data=sidebar_data,
             )  # publish to centrifugo in the background
             room_data.update(room_id)  # adding the room id to the data
 

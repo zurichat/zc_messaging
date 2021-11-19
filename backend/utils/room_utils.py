@@ -1,4 +1,4 @@
-from db import COLLECTION_NAME, DB
+from utils.db import COLLECTION_NAME, DB
 
 DEFAULT_DM_IMG = (
     "https://cdn.iconscout.com/icon/free/png-256/"
@@ -35,6 +35,7 @@ async def get_org_rooms(
 
     options = {"sort": {"created_at": -1}}
     response = await DB.read(COLLECTION_NAME, query=query, options=options)
+    print(response)
     if response is None:
         return []
     if "status_code" not in response:
@@ -260,8 +261,9 @@ class Sidebar:
                 rooms.append(room_profile)
         return rooms
 
-    async def format(self, org_id: str, member_id: str, plugin: str) -> dict:
+    async def format_data(self, org_id: str, member_id: str, plugin: str) -> dict:
         """Get sidebar info of rooms a registered member belongs to.
+
         Args:
             org_id (str): The organization's id,
             member_id (str): The member's id,
