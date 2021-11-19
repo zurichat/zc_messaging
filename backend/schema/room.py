@@ -17,6 +17,7 @@ class Role(str, Enum):
     MEMBER = "member"
 
     def __str__(self):
+        """returns string representation of enum choice"""
         return self.value
 
 
@@ -47,9 +48,7 @@ class RoomMember(BaseModel):
 
 
 class Room(BaseModel):
-    """Describes the request model for creating
-    new room
-    """
+    """Describes the request model for creating new rooms."""
 
     org_id: str
     plugin_name: Plugin
@@ -66,9 +65,18 @@ class Room(BaseModel):
 
     @root_validator(pre=True)
     @classmethod
-    def check_group_dm(cls, values):
-        """
-        Checks if the plugin_name is group_dm
+    def validate_dm(cls, values):
+        """validates data required for a DM room
+        Args:
+            values [dict]: key value pair of all object data
+
+        Returns:
+            [dict]: key value pair of all object data
+
+        Raises:
+            HTTPException [400]: if group dm exceeds 9 members
+            HTTPException [400]: if DM has topic
+            HTTPException [400]: if DM has a description
         """
         plugin_name = values.get("plugin_name")
         room_members = values.get("room_members", {})
@@ -76,15 +84,15 @@ class Room(BaseModel):
         description = values.get("description")
         created_by = values.get("created_by")
 
-        if plugin_name == Plugin.DM.value and len(list(room_members.keys())) > 9:
+        if plugin_name == Plugin.DM and len(list(room_members.keys())) > 9:
             raise HTTPException(
                 status_code=400, detail="Group DM cannot have more than 9 members"
             )
 
-        if plugin_name == Plugin.DM.value and topic is not None:
+        if plugin_name == Plugin.DM and topic is not None:
             raise HTTPException(status_code=400, detail="DM should not have a topic")
 
-        if plugin_name == Plugin.DM.value and description is not None:
+        if plugin_name == Plugin.DM and description is not None:
             raise HTTPException(
                 status_code=400, detail="DM should not have a description"
             )
@@ -98,13 +106,21 @@ class Room(BaseModel):
 
     @validator("room_members", always=True)
     @classmethod
-    def check_room_members(cls, value):
+    def validates_room_members(cls, value):
+        """Checks if the room_members has at least two unique members
+
+        Args:
+            values [dict]: key value pair of all room members
+
+        Returns:
+            [dict]: key value pair of all object
+
+        Raises:
+            HTTPException [400]: if room_members has less than two unique members
         """
-        Checks if the room_members has at least two members
-        """
-        if len(list(value.keys())) < 2:
+        if len(set(value.keys())) < 2:
             raise HTTPException(
-                status_code=400, detail="Room must have at least 2 members"
+                status_code=400, detail="Room must have at least 2 unique members"
             )
 
         return value

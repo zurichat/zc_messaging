@@ -6,9 +6,11 @@ COLLECTION_NAME = "rooms"
 
 
 class DataStorage:
-    """
-    Helper Class as a layer for communication of plugin
-    data between plugin and db on zc_core
+    """Serves as a layer for communication for plugin data and server
+
+    Provides a layer of abstraction for communication between plugin
+    data and the database on zc_core
+
     """
 
     def __init__(
@@ -22,8 +24,7 @@ class DataStorage:
         self.organization_id = organization_id
 
     async def write(self, collection_name, data):
-        """
-        Function to write into db
+        """Function to write into db
 
         Args:
             collection_name (str): Name of Collection
@@ -51,8 +52,8 @@ class DataStorage:
         return {"status_code": response.status_code, "message": response.reason}
 
     async def update(self, collection_name, document_id, data):
-        """
-        Function to update data from db.
+        """Function to update data from db.
+
         Args:
             collection_name (str): Name of collection
             Document_ID (str): Resource ID
@@ -179,9 +180,10 @@ class DataStorage:
 
 
 class FileStorage:
-    """
-    Helper Class as a layer for communication of plugin
-    files between plugin and db on zc_core
+    """Serves as a layer for communication of plugin files and server
+
+    Provides a layer of abstraction for communication between plugin
+    files and the database on zc_core
     """
 
     def __init__(
@@ -194,5 +196,5 @@ class FileStorage:
         self.organization_id = organization_id
 
 
-DB = DataStorage()
-fileStore = FileStorage()
+DB = DataStorage()  # datastorage class object
+fileStore = FileStorage()  # filestorage class object

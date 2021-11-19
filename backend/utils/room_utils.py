@@ -1,4 +1,4 @@
-from utils.db import COLLECTION_NAME, DB
+from db import COLLECTION_NAME, DB
 
 DEFAULT_DM_IMG = (
     "https://cdn.iconscout.com/icon/free/png-256/"
@@ -62,9 +62,11 @@ async def get_room(org_id: str, room_id: str) -> dict:
 
 async def get_room_members(org_id: str, room_id: str) -> dict:
     """Get the members of a room
+
     Args:
         org_id (str): The organization's id
         room_id (str): The room id
+
     Returns:
         [Dict]: key value
     """
@@ -79,9 +81,11 @@ async def get_room_members(org_id: str, room_id: str) -> dict:
 
 async def get_member_starred_rooms(org_id: str, member_id: str) -> list:
     """Get all starred rooms of a user
+
     Args:
         org_id (str): The organization id
         member_id (str): The user id
+
     Returns:
         [List]: list of rooms that are starred by the user
     """
@@ -100,6 +104,7 @@ async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> boo
     Args:
         org_id (str): The organization id
         member_id (str): The user id
+
     Returns:
         bool: returns True if room is starred by user else returns False
 
@@ -115,14 +120,16 @@ async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> boo
 
 
 class Sidebar:
-    """
+    """Serves as a data source for the sidebar
+
     Sidebar class helps makes faster connection to core,
     sorts out data, and creates the sidebar data format
     for the frontend
     """
 
+    @classmethod
     async def __get_room_members(
-        self, member_id: str, room: dict, org_members: list
+        cls, member_id: str, room: dict, org_members: list
     ) -> dict:
         """gets the room members excluding the current user
 
@@ -150,7 +157,8 @@ class Sidebar:
             room_members[room_member_id].update(username=username, image_url=image_url)
         return room_members
 
-    def __get_dm_room_name(self, room_members: dict) -> str:
+    @classmethod
+    def __get_dm_room_name(cls, room_members: dict) -> str:
         """concatenates the room members names to create the room name
 
         Args:
@@ -161,7 +169,8 @@ class Sidebar:
         user_names = [member["username"] for member in room_members.values()]
         return ",".join(user_names)
 
-    async def __get_dm_room_image_url(self, room_members: dict) -> str:
+    @classmethod
+    async def __get_dm_room_image_url(cls, room_members: dict) -> str:
         """gets the room image url from the first member in the room
 
         Args:
@@ -220,6 +229,7 @@ class Sidebar:
         """
         rooms = []
         starred_rooms = []
+        user_rooms = user_rooms or []
         for room in user_rooms:
             room_profile = await self.__get_room_profile(member_id, room, org_members)
             rooms.append(room_profile)
