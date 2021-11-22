@@ -4,7 +4,8 @@ from schema.response import ResponseModel
 from schema.room import Plugin, Room
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DB
-from utils.room_utils import get_org_rooms, sidebar
+from utils.room_utils import get_org_rooms
+from utils.sidebar import sidebar
 
 router = APIRouter()
 
