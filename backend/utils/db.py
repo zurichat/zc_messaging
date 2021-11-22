@@ -1,7 +1,7 @@
 import requests
 
 PLUGIN_ID = "617db02f27c36150b422bc4d"
-ORG_ID = "619bc49e1a5f54782939d58c"
+ORG_ID = "619ba4671a5f54782939d384"
 COLLECTION_NAME = "rooms"
 BASE_URL = "https://staging.api.zuri.chat"
 
