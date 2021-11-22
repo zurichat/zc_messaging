@@ -1,0 +1,9 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo '🏗️👷 Linting, testing and building your project before committing'
+
+cd frontend && yarn lint-staged
+
+# If everything passes... Now we can commit
+echo '✅✅✅✅ I am committing this now. ✅✅✅✅'
