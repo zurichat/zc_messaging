@@ -39,4 +39,4 @@ app.include_router(
 )  # include urls from sync.py
 
 
-app.mount("/", StaticFiles(directory="../frontend", html=True), name="static")
+app.mount("/", StaticFiles(directory="../frontend/dist", html=True), name="static")
