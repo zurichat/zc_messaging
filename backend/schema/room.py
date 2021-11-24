@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Dict, Optional
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, root_validator
 from utils.room_utils import get_org_rooms
 
 
@@ -53,7 +53,6 @@ class RoomMember(BaseModel):
 class Room(BaseModel):
     """Describes the request model for creating new rooms."""
 
-    id: str = Field(None, alias="_id")
     org_id: str
     room_name: str
     room_type: RoomType

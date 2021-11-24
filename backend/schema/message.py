@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from pydantic import AnyHttpUrl, BaseModel, Field
+from pydantic import AnyHttpUrl, BaseModel
 
 
 class Reaction(BaseModel):
@@ -14,7 +14,6 @@ class Reaction(BaseModel):
 class Thread(BaseModel):
     """Provides a base model for all threads"""
 
-    id: str = Field(..., alias="_id")
     sender_id: str
     room_id: str
     text: str
