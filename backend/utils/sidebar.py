@@ -142,7 +142,7 @@ class Sidebar:
                 rooms.append(room_profile)
         return rooms
 
-    async def format_data(self, org_id: str, member_id: str, plugin: str) -> dict:
+    async def format_data(self, org_id: str, member_id: str, room_type: str) -> dict:
         """Get sidebar info of rooms a registered member belongs to.
 
         Args:
@@ -157,7 +157,7 @@ class Sidebar:
 
         DB.organization_id = org_id
         user_rooms = await get_org_rooms(
-            member_id=member_id, org_id=org_id, plugin=plugin
+            member_id=member_id, org_id=org_id, room_type=room_type
         )
         org_members = await DB.get_all_members()
         rooms_data = await self.__get_joined_rooms(member_id, user_rooms, org_members)
@@ -169,10 +169,10 @@ class Sidebar:
                 "plugin_id": "messaging.zuri.chat",
                 "organisation_id": f"{org_id}",
                 "user_id": f"{member_id}",
-                "group_name": f"{plugin}",
-                "category": "channels" if plugin == "Channel" else "direct messages",
+                "group_name": f"{room_type}",
+                "category": "channels" if room_type == "Channel" else "direct messages",
                 "show_group": False,
-                "button_url": "/channels" if plugin == "Channel" else "/dm",
+                "button_url": "/channels" if room_type == "Channel" else "/dm",
                 "public_rooms": public_rooms,
                 "starred_rooms": rooms_data["starred_rooms"],
                 "joined_rooms": rooms_data["rooms"],

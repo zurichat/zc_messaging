@@ -9,7 +9,7 @@ DEFAULT_DM_IMG = (
 async def get_org_rooms(
     org_id: str,
     member_id: str = None,
-    plugin: str = None,
+    room_type: str = None,
     is_private: bool = None,
     is_default: bool = None,
 ) -> list:
@@ -26,8 +26,8 @@ async def get_org_rooms(
     query = {"$and": [{"org_id": org_id}]}
     if member_id is not None:
         query["$and"].append({f"room_members.{member_id}": {"$exists": True}})
-    if plugin is not None:
-        query["$and"].append({"plugin_name": plugin})
+    if room_type is not None:
+        query["$and"].append({"room_type": room_type})
     if is_private is not None:
         query["$and"].append({"is_private": is_private})
     if is_default is not None:

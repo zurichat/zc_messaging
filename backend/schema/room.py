@@ -1,9 +1,11 @@
+import asyncio
 from datetime import datetime
 from enum import Enum
 from typing import Dict, Optional
 
-from fastapi import HTTPException
-from pydantic import BaseModel, root_validator, validator
+from fastapi import HTTPException, status
+from pydantic import BaseModel, Field, root_validator
+from utils.room_utils import get_org_rooms
 
 
 class Role(str, Enum):
@@ -21,7 +23,7 @@ class Role(str, Enum):
         return self.value
 
 
-class Plugin(str, Enum):
+class RoomType(str, Enum):
     """Provides choices of plugins.
 
     Provides class level constants for the plugins.
@@ -30,6 +32,7 @@ class Plugin(str, Enum):
     """
 
     DM = "DM"
+    GROUP_DM = "GROUP_DM"
     CHANNEL = "Channel"
 
     def __str__(self):
@@ -50,18 +53,18 @@ class RoomMember(BaseModel):
 class Room(BaseModel):
     """Describes the request model for creating new rooms."""
 
+    id: str = Field(None, alias="_id")
     org_id: str
-    plugin_name: Plugin
-    plugin_id: str
+    room_name: str
+    room_type: RoomType
     room_members: Dict[str, RoomMember]
-    created_at: str = str(datetime.now())
+    created_at: str = str(datetime.utcnow())
     created_by: str = None
     description: Optional[str] = None
     topic: Optional[str] = None
-    room_name: str
     is_default: bool = False
     is_private: bool = True
-    archived: bool = False
+    is_archived: bool = False
 
     @root_validator(pre=True)
     @classmethod
@@ -78,35 +81,57 @@ class Room(BaseModel):
             HTTPException [400]: if DM has topic
             HTTPException [400]: if DM has a description
         """
-        plugin_name = values.get("plugin_name")
+        room_type = values.get("room_type")
         room_members = values.get("room_members", {})
         topic = values.get("topic")
         description = values.get("description")
-        created_by = values.get("created_by")
+        org_id = values.get("org_id")
+        rooms = asyncio.run(get_org_rooms(org_id=org_id, room_type=room_type))
 
-        if plugin_name == Plugin.DM and len(list(room_members.keys())) > 9:
+        if (
+            room_type == RoomType.GROUP_DM
+            and len(set(room_members.keys())) > 9
+            and len(set(room_members.keys())) < 2
+        ):
             raise HTTPException(
-                status_code=400, detail="Group DM cannot have more than 9 members"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Group DM cannot have more than 9 unique members and less than 2 members",
             )
 
-        if plugin_name == Plugin.DM and topic is not None:
-            raise HTTPException(status_code=400, detail="DM should not have a topic")
-
-        if plugin_name == Plugin.DM and description is not None:
+        if room_type == RoomType.DM and len(set(room_members.keys())) != 2:
             raise HTTPException(
-                status_code=400, detail="DM should not have a description"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="DM can only have 2 unique members",
             )
 
-        if plugin_name == Plugin.DM.value and created_by is not None:
+        if room_type in (RoomType.GROUP_DM, RoomType.DM):
+            for room in rooms:
+                if set(room["room_members"].keys()) == set(room_members.keys()):
+                    raise HTTPException(
+                        status_code=status.HTTP_200_OK,
+                        detail={
+                            "message": "room already exists",
+                            "room_id": room["room_id"],
+                        },
+                    )
+
+        if room_type in (RoomType.GROUP_DM, RoomType.DM) and topic is not None:
             raise HTTPException(
-                status_code=400, detail="DM should not have a created by"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="DM or Group DM should not have a topic",
+            )
+
+        if room_type in (RoomType.GROUP_DM, RoomType.DM) and description is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="DM or Group DM should not have a description",
             )
 
         return values
 
-    @validator("room_members", always=True)
+    @root_validator(pre=True)
     @classmethod
-    def validates_room_members(cls, value):
+    def validates_channels(cls, values):
         """Checks if the room_members has at least two unique members
 
         Args:
@@ -118,9 +143,17 @@ class Room(BaseModel):
         Raises:
             HTTPException [400]: if room_members has less than two unique members
         """
-        if len(set(value.keys())) < 2:
+        room_type = values.get("room_type")
+        room_name = values.get("room_name")
+        org_id = values.get("org_id")
+
+        rooms = asyncio.run(get_org_rooms(org_id=org_id, room_type=room_type))
+
+        if room_type == RoomType.CHANNEL and room_name.casefold() in [
+            room["room_name"].casefold() for room in rooms
+        ]:
             raise HTTPException(
-                status_code=400, detail="Room must have at least 2 unique members"
+                status_code=status.HTTP_200_OK, detail="room name already exist"
             )
 
-        return value
+        return values
