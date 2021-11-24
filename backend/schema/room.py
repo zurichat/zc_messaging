@@ -1,10 +1,11 @@
 import asyncio
+import concurrent.futures
 from datetime import datetime
 from enum import Enum
 from typing import Dict, Optional
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, Field, root_validator
 from utils.room_utils import get_org_rooms
 
 
@@ -50,18 +51,15 @@ class RoomMember(BaseModel):
     closed: Optional[bool] = False
 
 
-class Room(BaseModel):
+class RoomRequest(BaseModel):
     """Describes the request model for creating new rooms."""
 
-    org_id: str
-    room_name: str
+    room_name: Optional[str] = None
     room_type: RoomType
     room_members: Dict[str, RoomMember]
     created_at: str = str(datetime.utcnow())
-    created_by: str = None
     description: Optional[str] = None
     topic: Optional[str] = None
-    is_default: bool = False
     is_private: bool = True
     is_archived: bool = False
 
@@ -80,51 +78,63 @@ class Room(BaseModel):
             HTTPException [400]: if DM has topic
             HTTPException [400]: if DM has a description
         """
-        room_type = values.get("room_type")
-        room_members = values.get("room_members", {})
-        topic = values.get("topic")
-        description = values.get("description")
-        org_id = values.get("org_id")
-        rooms = asyncio.run(get_org_rooms(org_id=org_id, room_type=room_type))
+        if values["room_type"] != RoomType.CHANNEL:
+            room_type = values.get("room_type")
+            room_members = values.get("room_members", {})
+            topic = values.get("topic")
+            description = values.get("description")
+            org_id = values.get("org_id")
 
-        if (
-            room_type == RoomType.GROUP_DM
-            and len(set(room_members.keys())) > 9
-            and len(set(room_members.keys())) < 2
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Group DM cannot have more than 9 unique members and less than 2 members",
-            )
+            with concurrent.futures.ThreadPoolExecutor(1) as executor:
+                future = executor.submit(
+                    asyncio.run, get_org_rooms(org_id=org_id, room_type=room_type)
+                )
+                rooms = future.result()
 
-        if room_type == RoomType.DM and len(set(room_members.keys())) != 2:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="DM can only have 2 unique members",
-            )
+            if rooms is None:  # check if connection is avaliable
+                raise HTTPException(
+                    status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                    detail="unable to read database",
+                )
 
-        if room_type in (RoomType.GROUP_DM, RoomType.DM):
-            for room in rooms:
-                if set(room["room_members"].keys()) == set(room_members.keys()):
-                    raise HTTPException(
-                        status_code=status.HTTP_200_OK,
-                        detail={
-                            "message": "room already exists",
-                            "room_id": room["room_id"],
-                        },
-                    )
+            if (
+                room_type == RoomType.GROUP_DM
+                and len(set(room_members.keys())) > 9
+                and len(set(room_members.keys())) < 2
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Group DM cannot have more than 9 and less than 2 unique members",
+                )
 
-        if room_type in (RoomType.GROUP_DM, RoomType.DM) and topic is not None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="DM or Group DM should not have a topic",
-            )
+            if room_type == RoomType.DM and len(set(room_members.keys())) != 2:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="DM can only have 2 unique members",
+                )
 
-        if room_type in (RoomType.GROUP_DM, RoomType.DM) and description is not None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="DM or Group DM should not have a description",
-            )
+            if room_type in (RoomType.GROUP_DM, RoomType.DM):
+                for room in rooms:
+                    if set(room["room_members"].keys()) == set(room_members.keys()):
+                        raise HTTPException(
+                            status_code=status.HTTP_200_OK,
+                            detail={
+                                "message": "room already exists",
+                                "room_id": room["room_id"],
+                            },
+                        )
+
+            if topic is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="DM or Group DM should not have a topic",
+                )
+
+            if description is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="DM or Group DM should not have a description",
+                )
 
         return values
 
@@ -142,17 +152,43 @@ class Room(BaseModel):
         Raises:
             HTTPException [400]: if room_members has less than two unique members
         """
-        room_type = values.get("room_type")
-        room_name = values.get("room_name")
-        org_id = values.get("org_id")
+        if values.get("room_type") == RoomType.CHANNEL:
+            room_type = values.get("room_type")
+            room_name = values.get("room_name")
+            org_id = values.get("org_id")
 
-        rooms = asyncio.run(get_org_rooms(org_id=org_id, room_type=room_type))
+            with concurrent.futures.ThreadPoolExecutor(1) as executor:
+                future = executor.submit(
+                    asyncio.run, get_org_rooms(org_id=org_id, room_type=room_type)
+                )
+                rooms = future.result()
 
-        if room_type == RoomType.CHANNEL and room_name.casefold() in [
-            room["room_name"].casefold() for room in rooms
-        ]:
-            raise HTTPException(
-                status_code=status.HTTP_200_OK, detail="room name already exist"
-            )
+            if rooms is None:  # check if connection is available
+                raise HTTPException(
+                    status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                    detail="unable to read database",
+                )
+
+            if room_name is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Channel name is required",
+                )
+
+            if room_name.casefold() in [room["room_name"].casefold() for room in rooms]:
+                raise HTTPException(
+                    status_code=status.HTTP_200_OK, detail="room name already exist"
+                )
 
         return values
+
+
+class Room(RoomRequest):
+    """Provide structure for the room schema
+
+    Class inherits from RooomRequest to hold data for the room schema
+    """
+
+    id: str = Field(None, alias="_id")
+    org_id: str
+    created_by: str = None

@@ -1,10 +1,9 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
-from schema.room import Room
+from schema.room import Room, RoomRequest
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DB
-from utils.room_utils import get_org_rooms
 from utils.sidebar import sidebar
 
 router = APIRouter()
@@ -20,7 +19,7 @@ router = APIRouter()
     },
 )
 async def create_room(
-    org_id: str, member_id: str, request: Room, background_tasks: BackgroundTasks
+    org_id: str, member_id: str, request: RoomRequest, background_tasks: BackgroundTasks
 ):
     """Creates a room between users.
 
@@ -39,53 +38,31 @@ async def create_room(
     Raises
         HTTP_424_FAILED_DEPENDENCY: room creation unsuccessful
     """
-    room_data = request.dict()
-    room_type = room_data.get("plugin_name")
-    rooms = await get_org_rooms(org_id=org_id, room_type=room_type)
 
-    if rooms is not None:
-        # if room_type == RoomType.CHANNEL and room_name.casefold() in [
-        #     room["room_name"].casefold() for room in rooms
-        # ]:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_200_OK, detail={"room_name": room_name}
-        #     )
+    room_obj = Room(**request.dict(), org_id=org_id, created_by=member_id)
+    response = await DB.write("rooms", data=room_obj.dict())
+    if response and response.get("status_code", None) is None:
+        room_id = {"room_id": response.get("data").get("object_id")}
+        sidebar_data = await sidebar.format_data(
+            org_id,
+            member_id,
+            room_type=request.room_type,
+        )  # getting the data to be published to the user sidebar
 
-        # if room_type == RoomType.DM:
-        #     for room in rooms:
-        #         if set(room["room_members"].keys()) == set(room_member_ids):
-        #             raise HTTPException(
-        #                 status_code=status.HTTP_200_OK,
-        #                 detail={"room_id": room["room_id"]},
-        #             )
+        background_tasks.add_task(
+            centrifugo_client.publish,
+            room=f"{org_id}_{member_id}_sidebar",
+            event=Events.SIDEBAR_UPDATE,
+            data=sidebar_data,
+        )  # publish to centrifugo in the background
 
-        response = await DB.write("rooms", data=room_data)
-        if response and response.get("status_code", None) is None:
-            room_id = {"room_id": response.get("data").get("object_id")}
-            sidebar_data = await sidebar.format_data(
-                org_id,
-                member_id,
-                room_type=room_type,
-            )  # getting the response data
-
-            background_tasks.add_task(
-                centrifugo_client.publish,
-                room=f"{org_id}_{member_id}_sidebar",
-                event=Events.SIDEBAR_UPDATE,
-                data=sidebar_data,
-            )  # publish to centrifugo in the background
-            room_data.update(room_id)  # adding the room id to the data
-
-            return JSONResponse(
-                content=ResponseModel.success(data=room_data, message="room created"),
-                status_code=status.HTTP_201_CREATED,
-            )
-
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail="unable to create room",
+        room_obj.id = room_id["room_id"]  # adding the room id to the data
+        return JSONResponse(
+            content=ResponseModel.success(data=room_obj.dict(), message="room created"),
+            status_code=status.HTTP_201_CREATED,
         )
 
     raise HTTPException(
-        status_code=status.HTTP_424_FAILED_DEPENDENCY, detail="unable to read database"
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail="unable to create room",
     )

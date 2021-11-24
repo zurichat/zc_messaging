@@ -1,12 +1,8 @@
+from config.settings import settings
+from endpoints import members, messages, rooms, sync, threads
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-
 from starlette.middleware.cors import CORSMiddleware
-
-from config.settings import settings
-
-from endpoints import rooms, members, messages, threads, sync
-
 
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
