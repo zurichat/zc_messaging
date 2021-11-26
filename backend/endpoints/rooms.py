@@ -42,11 +42,6 @@ async def create_room(
     response = await DB.write(ROOM_COLLECTION, data=room_obj.dict())
     if response and response.get("status_code", None) is None:
         room_id = {"room_id": response.get("data").get("object_id")}
-        # sidebar_data = await sidebar.format_data(
-        #     org_id,
-        #     member_id,
-        #     room_type=request.room_type,
-        # )  # getting the data to be published to the user sidebar
 
         background_tasks.add_task(
             sidebar.publish,
