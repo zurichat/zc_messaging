@@ -79,10 +79,10 @@ class Sidebar:
             dict: key value pair of room profile
         """
         room_profile = {}
-        if room.get("room_type") == "DM":
+        if room.get("room_type") == RoomType.DM:
             room_members = await self.__get_room_members(member_id, room, org_members)
         room_profile["room_id"] = room["_id"]
-        room_profile["room_url"] = f"/{room['room_type']}/{room['_id']}"
+        room_profile["room_url"] = f"/{room['room_type'].lower()}/{room['_id']}"
         room_profile["room_name"] = (
             await self.__get_dm_room_name(room_members)
             if room.get("room_type") == RoomType.DM
