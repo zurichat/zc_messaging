@@ -4,8 +4,10 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, Optional
 
+from bson.objectid import ObjectId
 from fastapi import HTTPException, status
 from pydantic import BaseModel, Field, root_validator
+from schema.custom import ObjId
 from utils.room_utils import get_org_rooms
 
 
@@ -56,7 +58,7 @@ class RoomRequest(BaseModel):
 
     room_name: Optional[str] = None
     room_type: RoomType
-    room_members: Dict[str, RoomMember]
+    room_members: Dict[ObjId, RoomMember]
     created_at: str = str(datetime.utcnow())
     description: Optional[str] = None
     topic: Optional[str] = None
@@ -191,4 +193,39 @@ class Room(RoomRequest):
 
     id: str = Field(None, alias="_id")
     org_id: str
-    created_by: str = None
+    created_by: str
+
+    @root_validator(pre=True)
+    @classmethod
+    def is_object_id(cls, values):
+        """validates if the id is a valid object id
+
+        Args:
+            values [dict]: key value pair of all object data
+
+        Returns:
+            [dict]: key value pair of all object data
+
+        Raises:
+            HTTPException [400]: if id is not a valid object id
+        """
+        if values.get("id") is not None:
+            if not ObjectId.is_valid(values.get("id")):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="id is not a valid object id",
+                )
+
+        if not ObjectId.is_valid(values.get("org_id")):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="org_id is not a valid object id",
+            )
+
+        if not ObjectId.is_valid(values.get("created_by")):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="created_by is not a valid object id",
+            )
+
+        return values

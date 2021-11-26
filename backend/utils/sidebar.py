@@ -1,3 +1,4 @@
+from utils.centrifugo import Events, centrifugo_client
 from utils.room_utils import DB, DEFAULT_DM_IMG, get_org_rooms
 
 
@@ -178,6 +179,28 @@ class Sidebar:
                 "joined_rooms": rooms_data["rooms"],
             }
         }
+
+    async def publish(self, org_id: str, member_id: str, room_type: str) -> dict:
+        """Get sidebar info of rooms a registered member belongs to.
+
+        Args:
+            org_id (str): The organization's id,
+            member_id (str): The member's id,
+            category (str): category of the plugin (direct message or channel)
+            group_name: name of plugin
+            room_name: title of the room if any
+
+        Returns:
+            {dict}: {dict containing user info}
+        """
+        sidebar_data = await self.format_data(org_id, member_id, room_type)
+
+        room = f"{org_id}_{member_id}_sidebar"
+        response = await centrifugo_client.publish(
+            event=Events.SIDEBAR_UPDATE, data=sidebar_data, room=room
+        )
+
+        return response
 
 
 sidebar = Sidebar()

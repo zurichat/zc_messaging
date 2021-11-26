@@ -2,8 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import Room, RoomRequest
-from utils.centrifugo import Events, centrifugo_client
-from utils.db import DB
+from utils.db import DB, ROOM_COLLECTION
 from utils.sidebar import sidebar
 
 router = APIRouter()
@@ -40,20 +39,20 @@ async def create_room(
     """
 
     room_obj = Room(**request.dict(), org_id=org_id, created_by=member_id)
-    response = await DB.write("rooms", data=room_obj.dict())
+    response = await DB.write(ROOM_COLLECTION, data=room_obj.dict())
     if response and response.get("status_code", None) is None:
         room_id = {"room_id": response.get("data").get("object_id")}
-        sidebar_data = await sidebar.format_data(
-            org_id,
-            member_id,
-            room_type=request.room_type,
-        )  # getting the data to be published to the user sidebar
+        # sidebar_data = await sidebar.format_data(
+        #     org_id,
+        #     member_id,
+        #     room_type=request.room_type,
+        # )  # getting the data to be published to the user sidebar
 
         background_tasks.add_task(
-            centrifugo_client.publish,
-            room=f"{org_id}_{member_id}_sidebar",
-            event=Events.SIDEBAR_UPDATE,
-            data=sidebar_data,
+            sidebar.publish,
+            org_id,
+            member_id,
+            room_obj.room_type,
         )  # publish to centrifugo in the background
 
         room_obj.id = room_id["room_id"]  # adding the room id to the data

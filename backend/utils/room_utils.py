@@ -1,4 +1,4 @@
-from utils.db import COLLECTION_NAME, DB
+from utils.db import DB, ROOM_COLLECTION
 
 DEFAULT_DM_IMG = (
     "https://cdn.iconscout.com/icon/free/png-256/"
@@ -34,8 +34,7 @@ async def get_org_rooms(
         query["$and"].append({"is_default": is_default})
 
     options = {"sort": {"created_at": -1}}
-    response = await DB.read(COLLECTION_NAME, query=query, options=options)
-    print(response)
+    response = await DB.read(ROOM_COLLECTION, query=query, options=options)
     if response is None:
         return []
     if "status_code" not in response:
@@ -54,7 +53,7 @@ async def get_room(org_id: str, room_id: str) -> dict:
     DB.organization_id = org_id
     query = {"_id": room_id}
     options = {"sort": {"created_at": -1}}
-    response = await DB.read("rooms", query=query, options=options)
+    response = await DB.read(ROOM_COLLECTION, query=query, options=options)
 
     if response and "status_code" not in response:
         return response
@@ -74,7 +73,7 @@ async def get_room_members(org_id: str, room_id: str) -> dict:
     DB.organization_id = org_id
     query = {"_id": room_id}
     options = {"sort": {"created_at": -1}, "projection": {"room_members": 1, "_id": 0}}
-    response = await DB.read("rooms", query=query, options=options)
+    response = await DB.read(ROOM_COLLECTION, query=query, options=options)
     if response and "status_code" not in response:
         return response.get("room_members", {})
     return {}
@@ -93,7 +92,7 @@ async def get_member_starred_rooms(org_id: str, member_id: str) -> list:
     DB.organization_id = org_id
     query = {f"room_members.{member_id}.starred": True}
     options = {"sort": {"created_at": -1}}
-    response = await DB.read("rooms", query=query, options=options)
+    response = await DB.read(ROOM_COLLECTION, query=query, options=options)
     if response and "status_code" not in response:
         return response
     return []
@@ -114,7 +113,7 @@ async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> boo
     """
     DB.organization_id = org_id
     query = {"_id": room_id}
-    response = await DB.read("rooms", query=query)
+    response = await DB.read(ROOM_COLLECTION, query=query)
     if response and "status_code" not in response:
         return response["room_members"][member_id]["starred"]
     raise Exception("Room not found")
