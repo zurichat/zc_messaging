@@ -14,7 +14,7 @@ class Sidebar:
     async def __get_room_members(
         cls, member_id: str, room: dict, org_members: list
     ) -> dict:
-        """gets the room members excluding the current user
+        """Gets the room members excluding the current user
 
         Args:
             member_id (str): member_id of the current user
@@ -23,14 +23,15 @@ class Sidebar:
 
         Returns:
             [dict]: key value pair of room members
-                    example: {'member_id': {
-                                'username': str
-                                'image_url': str
-                                'starred': bool
-                                'role': str}
+                    example: {'4551b653461237': {
+                                'username': 'xzenon',
+                                'image_url': 'https://avatars.zuri.net/images/avatar_default.png',
+                                'starred': True
+                                'role': 'admin'
+                                }
                             }
         """
-        room_members = room["room_members"]
+        room_members = room.get("room_members")
         room_members.pop(member_id)  # remove self from room members
         room_members_ids = room_members.keys()
         for room_member_id in room_members_ids:

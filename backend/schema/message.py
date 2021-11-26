@@ -12,7 +12,9 @@ class Reaction(BaseModel):
 
 
 class Thread(BaseModel):
-    """Provides a base model for all threads"""
+    """
+    Provides a base model for all threads
+    """
 
     sender_id: str
     room_id: str
@@ -30,7 +32,6 @@ class Message(Thread):
 
     Message inherits from Thread
     and adds a field for list of threads
-
     """
 
     threads: List[Thread] = []

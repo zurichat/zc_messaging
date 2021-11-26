@@ -87,6 +87,8 @@ class RoomRequest(BaseModel):
             description = values.get("description")
             org_id = values.get("org_id")
 
+            # runs the asynchronous get_org_rooms in a synchronous thread because
+            # it is used in a synchronous function
             with concurrent.futures.ThreadPoolExecutor(1) as executor:
                 future = executor.submit(
                     asyncio.run, get_org_rooms(org_id=org_id, room_type=room_type)
@@ -99,10 +101,8 @@ class RoomRequest(BaseModel):
                     detail="unable to read database",
                 )
 
-            if (
-                room_type == RoomType.GROUP_DM
-                and len(set(room_members.keys())) > 9
-                and len(set(room_members.keys())) < 2
+            if room_type == RoomType.GROUP_DM and (
+                len(set(room_members.keys())) > 9 or len(set(room_members.keys())) < 3
             ):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -122,7 +122,7 @@ class RoomRequest(BaseModel):
                             status_code=status.HTTP_200_OK,
                             detail={
                                 "message": "room already exists",
-                                "room_id": room["room_id"],
+                                "room_id": room["_id"],
                             },
                         )
 
@@ -159,6 +159,8 @@ class RoomRequest(BaseModel):
             room_name = values.get("room_name")
             org_id = values.get("org_id")
 
+            # runs the asynchronous get_org_rooms in a synchronous thread because
+            # it is used in a synchronous function
             with concurrent.futures.ThreadPoolExecutor(1) as executor:
                 future = executor.submit(
                     asyncio.run, get_org_rooms(org_id=org_id, room_type=room_type)
