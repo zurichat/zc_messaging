@@ -1,3 +1,4 @@
+from schema.room import RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.room_utils import DB, DEFAULT_DM_IMG, get_org_rooms
 
@@ -33,17 +34,16 @@ class Sidebar:
         """
         room_members = room.get("room_members")
         room_members.pop(member_id)  # remove self from room members
-        room_members_ids = room_members.keys()
-        for room_member_id in room_members_ids:
+        for room_member_id in room_members.keys():
             member_data = await DB.get_member(room_member_id, org_members)
-            username = member_data["user_name"] or "no user name"
-            image_url = member_data["image_url"] or DEFAULT_DM_IMG
+            username = member_data.get("user_name") or "no user name"
+            image_url = member_data.get("image_url") or DEFAULT_DM_IMG
             room_members[room_member_id].update(username=username, image_url=image_url)
         return room_members
 
     @classmethod
     def __get_dm_room_name(cls, room_members: dict) -> str:
-        """concatenates the room members names to create the room name
+        """Concatenates the room members names to create the room name
 
         Args:
             room_members (dict): key value pair of room members
@@ -55,7 +55,7 @@ class Sidebar:
 
     @classmethod
     async def __get_dm_room_image_url(cls, room_members: dict) -> str:
-        """gets the room image url from the first member in the room
+        """Gets the room image url from the first member in the room
 
         Args:
             room_members (dict): key value pair of room members
@@ -68,7 +68,7 @@ class Sidebar:
     async def __get_room_profile(
         self, member_id: str, room: dict, org_members: list
     ) -> dict:
-        """stores the room profile data for the sidebar
+        """Stores the room profile data for the sidebar
 
         Args:
             member_id (str): member_id of the current user
@@ -79,18 +79,18 @@ class Sidebar:
             dict: key value pair of room profile
         """
         room_profile = {}
-        if room["room_type"] == "dm":
+        if room.get("room_type") == "DM":
             room_members = await self.__get_room_members(member_id, room, org_members)
         room_profile["room_id"] = room["_id"]
         room_profile["room_url"] = f"/{room['room_type']}/{room['_id']}"
         room_profile["room_name"] = (
             await self.__get_dm_room_name(room_members)
-            if room["room_type"] == "dm"
+            if room.get("room_type") == RoomType.DM
             else room["room_name"]
         )
         room_profile["image_url"] = (
             await self.__get_dm_room_image_url(room_members)
-            if room["room_type"] == "dm"
+            if room.get("room_type") == RoomType.DM
             else ""
         )
         return room_profile
@@ -98,7 +98,7 @@ class Sidebar:
     async def __get_joined_rooms(
         self, member_id: str, user_rooms: list, org_members: list
     ) -> dict:
-        """gets the profiles for all rooms for the sidebar
+        """Gets the profiles for all rooms for the sidebar
 
         Args:
             member_id (str): member_id of the current user
@@ -117,14 +117,14 @@ class Sidebar:
         for room in user_rooms:
             room_profile = await self.__get_room_profile(member_id, room, org_members)
             rooms.append(room_profile)
-            if room["room_members"].get(member_id, {}).get("starred", False) is True:
+            if room.get("room_members").get(member_id, {}).get("starred", False):
                 starred_rooms.append(room_profile)
         return {"rooms": rooms, "starred_rooms": starred_rooms}
 
     async def __get_public_rooms(
         self, member_id: str, org_id: str, org_members: list
     ) -> dict:
-        """gets the public rooms for the sidebar
+        """Gets the public rooms for the sidebar
 
         Args:
             member_id (str): member_id of the current user
@@ -150,9 +150,7 @@ class Sidebar:
         Args:
             org_id (str): The organization's id,
             member_id (str): The member's id,
-            category (str): category of the plugin (direct message or channel)
-            group_name: name of plugin
-            room_name: title of the room if any
+            room_type (str): The room type.
         Returns:
             {dict}: {dict containing user info}
         """
@@ -172,9 +170,11 @@ class Sidebar:
                 "organisation_id": f"{org_id}",
                 "user_id": f"{member_id}",
                 "group_name": f"{room_type}",
-                "category": "channels" if room_type == "Channel" else "direct messages",
+                "category": "channels"
+                if room_type == RoomType.CHANNEL
+                else "direct messages",
                 "show_group": False,
-                "button_url": "/channels" if room_type == "Channel" else "/dm",
+                "button_url": "/channels" if room_type == RoomType.CHANNEL else "/dm",
                 "public_rooms": public_rooms,
                 "starred_rooms": rooms_data["starred_rooms"],
                 "joined_rooms": rooms_data["rooms"],

@@ -36,7 +36,7 @@ class RoomType(str, Enum):
 
     DM = "DM"
     GROUP_DM = "GROUP_DM"
-    CHANNEL = "Channel"
+    CHANNEL = "CHANNEL"
 
     def __str__(self):
         """returns string representation of enum choice"""

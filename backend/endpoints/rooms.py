@@ -2,7 +2,8 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import Room, RoomRequest
-from utils.db import DB, ROOM_COLLECTION
+from utils.db import DB
+from utils.room_utils import ROOM_COLLECTION
 from utils.sidebar import sidebar
 
 router = APIRouter()
