@@ -26,7 +26,7 @@ class Events(Enum):
         return str.__str__(self)
 
 
-class CentrifugoHandler:
+class CentrifugoHelper:
     """A helper class to handle communication with the Centrifugo server."""
 
     def __init__(self) -> None:
@@ -142,4 +142,4 @@ class CentrifugoHandler:
 
 # An instance of CentrifugoHandler
 # This will be used when importing the class
-centrifugo_client = CentrifugoHandler()
+centrifugo_client = CentrifugoHelper()

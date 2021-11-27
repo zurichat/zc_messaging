@@ -1,37 +1,30 @@
 import requests
 
-
-PLUGIN_ID = ""
-ORG_ID = "61695d8bb2cc8a9af4833d46"
+PLUGIN_ID = "617db02f27c36150b422bc4d"
+ORG_ID = "619ba4671a5f54782939d384"
+BASE_URL = "https://staging.api.zuri.chat"
 
 
 class DataStorage:
-    """
-    Helper Class as a layer of communication between plugin and db on zc_core
+    """Serves as a layer for communication for plugin data and server
+
+    Provides a layer of abstraction for communication between plugin
+    data and the database on zc_core
+
     """
 
-    def __init__(self, request=None):
-        self.read_api = (
-            "https://api.zuri.chat/data/read/{pgn_id}/{collec_name}/{org_id}?{query}"
-        )
-        # self.upload_test_api = "http://127.0.0.1:8000/api/v1/testapi/{pgn_id}"
-        self.write_api = "https://api.zuri.chat/data/write"
-        self.delete_api = "https://api.zuri.chat/data/delete"
-        self.upload_api = "https://api.zuri.chat/upload/file/{pgn_id}"
-        self.upload_multiple_api = "https://api.zuri.chat/upload/files/{pgn_id}"
-        self.delete_file_api = "https://api.zuri.chat/delete/file/{pgn_id}"
-        self.read_query_api = "https://api.zuri.chat/data/read"
-
-        if request is None:
-            self.plugin_id = PLUGIN_ID
-            self.organization_id = ORG_ID
-        else:
-            self.plugin_id = request.get("PLUGIN_ID", PLUGIN_ID)
-            self.organization_id = request.get("ORG_ID")
+    def __init__(
+        self, plugin_id: str = PLUGIN_ID, organization_id: str = ORG_ID
+    ) -> None:
+        self.write_api = f"{BASE_URL}/data/write"
+        self.delete_api = f"{BASE_URL}/data/delete"
+        self.read_query_api = f"{BASE_URL}/data/read"
+        self.get_member_api = f"{BASE_URL}/organizations/" + "{org_id}/members/"
+        self.plugin_id = plugin_id
+        self.organization_id = organization_id
 
     async def write(self, collection_name, data):
-        """
-        Function to write into db
+        """Function to write into db
 
         Args:
             collection_name (str): Name of Collection
@@ -59,8 +52,8 @@ class DataStorage:
         return {"status_code": response.status_code, "message": response.reason}
 
     async def update(self, collection_name, document_id, data):
-        """
-        Function to update data from db.
+        """Function to update data from db.
+
         Args:
             collection_name (str): Name of collection
             Document_ID (str): Resource ID
@@ -92,7 +85,7 @@ class DataStorage:
         self,
         collection_name: str,
         query: dict,
-        options: dict,
+        options: dict = None,
         resource_id: str = None,
     ):
         """
@@ -155,5 +148,53 @@ class DataStorage:
 
         return {"status_code": response.status_code, "message": response.reason}
 
+    async def get_all_members(self):
+        """Gets a list of all members registered in an organisation
+        Args:
+            org_id (str): The organization's id
+        Returns:
+            [List]: [list of objects]
+        """
+        url = self.get_member_api.format(org_id=self.organization_id)
+        try:
+            response = requests.get(url=url)
+        except requests.exceptions.RequestException as exception:
+            print(exception)
+            return []
+        if response.status_code == 200:
+            return response.json()["data"]
 
-DB = DataStorage()
+    async def get_member(self, member_id: str, members: list):
+        """Get info of a single registered member in an organisation
+        Args:
+            org_id (str): The organization's id,
+            member_id (str): The member's id
+        Returns:
+            {dict}: {dict containing user info}
+        """
+        if members:
+            for member in members:
+                if member["_id"] == member_id:
+                    return member
+        return {}
+
+
+class FileStorage:
+    """Serves as a layer for communication of plugin files and server
+
+    Provides a layer of abstraction for communication between plugin
+    files and the database on zc_core
+    """
+
+    def __init__(
+        self, plugin_id: str = PLUGIN_ID, organization_id: str = ORG_ID
+    ) -> None:
+        self.upload_api = f"{BASE_URL}/upload/file/" + "{pgn_id}"
+        self.upload_multiple_api = f"{BASE_URL}/upload/files/" + "{pgn_id}"
+        self.delete_file_api = f"{BASE_URL}/delete/file/" + "{pgn_id}"
+        self.plugin_id = plugin_id
+        self.organization_id = organization_id
+
+
+DB = DataStorage()  # datastorage class object
+fileStore = FileStorage()  # filestorage class object
