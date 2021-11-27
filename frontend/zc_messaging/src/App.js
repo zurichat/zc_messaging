@@ -1,21 +1,17 @@
 import React from "react"
-import Hello from "./component/Hello"
+import { Redirect, Route, Switch } from "react-router-dom"
+import AllDms from "./pages/all_dms/AllDms"
+
+// import css styles here
+import "bootstrap/dist/css/bootstrap.min.css"
 
 export default function App() {
   return (
-    <div>
-      <Hello text="Zuri people" />
-      <h2>App is not running on grace!!😊 let's keep it that way</h2>
-      <p>
-        <strong>Few guide lines</strong>
-      </p>
-      <ul>
-        <li>Make sure to remove console.logs after debugging </li>
-        <li>Don't repeat codes, create a reusable component</li>
-        <li>Avoid re-rendering!!!</li>
-        <li>Don't style elements globally please 😢</li>
-        <li>Use comments where needed so we can understand what is written</li>
-      </ul>
-    </div>
+    <Switch>
+      <Route exact path="/all-dms" component={AllDms} />
+      <Route exact path="*">
+        <Redirect to="/all-dms" />
+      </Route>
+    </Switch>
   )
 }
