@@ -72,8 +72,7 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
     Fetches the room which the member is removed from from the database collection
     Pops the member being removed from the room's members dict
     Updates the database collection with the new room
-    *Returns the room dict if member was removed successfully
-    *while publishing to the user sidebar in the background
+    Returns the room dict if member was removed successfully
 
     Args:
         org_id (str): A unique identifier of an organisation
@@ -116,7 +115,6 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="unable to remove room member",
         )
-
 
     remove_member = room_obj["room_members"].pop(mem_id, "not_found")
     
