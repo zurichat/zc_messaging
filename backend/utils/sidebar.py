@@ -54,7 +54,7 @@ class Sidebar:
         return ",".join(user_names)
 
     @classmethod
-    async def __get_dm_room_image_url(cls, room_members: dict) -> str:
+    def __get_dm_room_image_url(cls, room_members: dict) -> str:
         """Gets the room image url from the first member in the room
 
         Args:
@@ -84,13 +84,13 @@ class Sidebar:
         room_profile["room_id"] = room["_id"]
         room_profile["room_url"] = f"/{room['room_type'].lower()}/{room['_id']}"
         room_profile["room_name"] = (
-            await self.__get_dm_room_name(room_members)
-            if room.get("room_type") == RoomType.DM
+            self.__get_dm_room_name(room_members)
+            if room.get("room_type") in (RoomType.DM, RoomType.GROUP_DM)
             else room["room_name"]
         )
         room_profile["image_url"] = (
-            await self.__get_dm_room_image_url(room_members)
-            if room.get("room_type") == RoomType.DM
+            self.__get_dm_room_image_url(room_members)
+            if room.get("room_type") in (RoomType.DM, RoomType.GROUP_DM)
             else ""
         )
         return room_profile
@@ -117,7 +117,7 @@ class Sidebar:
         for room in user_rooms:
             room_profile = await self.__get_room_profile(member_id, room, org_members)
             rooms.append(room_profile)
-            if room.get("room_members").get(member_id, {}).get("starred", False):
+            if room.get("room_members").get(member_id, {}).get("starred", None):
                 starred_rooms.append(room_profile)
         return {"rooms": rooms, "starred_rooms": starred_rooms}
 
@@ -156,29 +156,37 @@ class Sidebar:
         """
 
         DB.organization_id = org_id
+        room_type_query = room_type
+        if room_type != RoomType.CHANNEL:
+            room_type_query = {"$ne": RoomType.CHANNEL}
+
         user_rooms = await get_org_rooms(
-            member_id=member_id, org_id=org_id, room_type=room_type
+            member_id=member_id, org_id=org_id, room_type=room_type_query
         )
+
         org_members = await DB.get_all_members()
-        rooms_data = await self.__get_joined_rooms(member_id, user_rooms, org_members)
-        public_rooms = await self.__get_public_rooms(member_id, org_id, org_members)
+        joined_rooms = await self.__get_joined_rooms(member_id, user_rooms, org_members)
+        public_rooms = (
+            await self.__get_public_rooms(member_id, org_id, org_members)
+            if room_type == RoomType.CHANNEL
+            else []
+        )
+
         return {
-            "data": {
-                "name": "Messaging",
-                "description": "Sends messages between users in a dm or channel",
-                "plugin_id": "messaging.zuri.chat",
-                "organisation_id": f"{org_id}",
-                "user_id": f"{member_id}",
-                "group_name": f"{room_type}",
-                "category": (
-                    "channels" if room_type == RoomType.CHANNEL else "direct messages"
-                ),
-                "show_group": False,
-                "button_url": "/channels" if room_type == RoomType.CHANNEL else "/dm",
-                "public_rooms": public_rooms,
-                "starred_rooms": rooms_data["starred_rooms"],
-                "joined_rooms": rooms_data["rooms"],
-            }
+            "name": "Messaging",
+            "description": "Sends messages between users in a dm or channel",
+            "plugin_id": "messaging.zuri.chat",
+            "organisation_id": f"{org_id}",
+            "user_id": f"{member_id}",
+            "group_name": f"{room_type}",
+            "category": (
+                "channels" if room_type == RoomType.CHANNEL else "direct messages"
+            ),
+            "show_group": False,
+            "button_url": "/channels" if room_type == RoomType.CHANNEL else "/dm",
+            "public_rooms": public_rooms,
+            "starred_rooms": joined_rooms["starred_rooms"],
+            "joined_rooms": joined_rooms["rooms"],
         }
 
     async def publish(self, org_id: str, member_id: str, room_type: str) -> dict:
@@ -187,9 +195,7 @@ class Sidebar:
         Args:
             org_id (str): The organization's id,
             member_id (str): The member's id,
-            category (str): category of the plugin (direct message or channel)
-            group_name: name of plugin
-            room_name: title of the room if any
+            room_type(str): category of the plugin (direct message or channel)
 
         Returns:
             {dict}: {dict containing user info}
