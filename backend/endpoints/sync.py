@@ -8,7 +8,14 @@ from utils.sidebar import sidebar
 router = APIRouter()
 
 
-@router.get("/sidebar")
+@router.get(
+    "/sidebar",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        400: {"detail": "Object id is not valid"},
+    },
+)
 async def get_sidebar(org_id: str, member_id: str, room_type: RoomType):
     """Provides a response of side bar data for the given room type
 
@@ -17,11 +24,11 @@ async def get_sidebar(org_id: str, member_id: str, room_type: RoomType):
         member_id (str): The member id of user logged in
         room_type (RoomType): The room type
 
-    Raises:
-        HTTPException [dict]: dict containing error message and 400 status code
-
     Returns:
         [dict]: dict containing sidebar data with status code 200
+
+    Raises:
+        HTTPException [dict]: dict containing error message and 400 status code
     """
     if not ObjectId.is_valid(org_id):
         raise HTTPException(

@@ -42,7 +42,7 @@ class Sidebar:
         return room_members
 
     @classmethod
-    def __get_dm_room_name(cls, room_members: dict) -> str:
+    async def __get_dm_room_name(cls, room_members: dict) -> str:
         """Concatenates the room members names to create the room name
 
         Args:
@@ -54,7 +54,7 @@ class Sidebar:
         return ",".join(user_names)
 
     @classmethod
-    def __get_dm_room_image_url(cls, room_members: dict) -> str:
+    async def __get_dm_room_image_url(cls, room_members: dict) -> str:
         """Gets the room image url from the first member in the room
 
         Args:
@@ -84,12 +84,12 @@ class Sidebar:
         room_profile["room_id"] = room["_id"]
         room_profile["room_url"] = f"/{room['room_type'].lower()}/{room['_id']}"
         room_profile["room_name"] = (
-            self.__get_dm_room_name(room_members)
+            await self.__get_dm_room_name(room_members)
             if room.get("room_type") in (RoomType.DM, RoomType.GROUP_DM)
             else room["room_name"]
         )
         room_profile["image_url"] = (
-            self.__get_dm_room_image_url(room_members)
+            await self.__get_dm_room_image_url(room_members)
             if room.get("room_type") in (RoomType.DM, RoomType.GROUP_DM)
             else ""
         )
@@ -175,7 +175,7 @@ class Sidebar:
         return {
             "name": "Messaging",
             "description": "Sends messages between users in a dm or channel",
-            "plugin_id": "messaging.zuri.chat",
+            "plugin_id": "chat.zuri.chat",
             "organisation_id": f"{org_id}",
             "user_id": f"{member_id}",
             "group_name": f"{room_type}",
@@ -198,7 +198,7 @@ class Sidebar:
             room_type(str): category of the plugin (direct message or channel)
 
         Returns:
-            {dict}: {dict containing user info}
+            {dict}: {dict containing centrifugo response}
         """
         sidebar_data = await self.format_data(org_id, member_id, room_type)
 
