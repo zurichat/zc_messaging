@@ -15,6 +15,7 @@ router = APIRouter()
 
 class InstallPayload(BaseModel):
     """Installation payload model."""
+
     organisation_id: str
     user_id: str
 
