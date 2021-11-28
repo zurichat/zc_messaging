@@ -64,7 +64,7 @@ async def create_room(
         detail="unable to create room",
     )
 
-@router.delete("/org/{org_id}/members/{member_id}/rooms/{room_id}",
+@router.delete("/org/{org_id}/rooms/{room_id}/members/{member_id}",
     response_model=ResponseModel, )
 async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
     """Removes a member from a room.
@@ -110,9 +110,9 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
 
     member: RoomMember = room_obj["room_members"].get(member_id)
     
-    if member.role == Role.ADMIN:
+    if member.role != Role.ADMIN:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="unable to remove room member",
         )
 
