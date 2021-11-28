@@ -1,4 +1,4 @@
-from backend.schema.room import Role, RoomMember
+from backend.schema.room import Role, RoomMember, RoomType
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
@@ -85,6 +85,7 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
         HTTP_200_OK (member removed from room): {room}
     Raises
         HTTP_404_NOT_FOUND: room or member not found
+        HTTP_403_FORBIDDEN: not authorized to remove room 
         HTTP_424_FAILED_DEPENDENCY: member removal unsuccessful
     """
 
@@ -96,6 +97,12 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
             detail="room does not exist",
         )
     
+    if room_obj["room_type"] == RoomType.DM:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="unable to remove room member",
+        )
+    
     if member_id not in room_obj["room_members"]:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -104,7 +111,7 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
     
     if member_id == mem_id:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="unable to remove room member",
         )
 
@@ -112,7 +119,7 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
     
     if member.role != Role.ADMIN:
         raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="unable to remove room member",
         )
 
