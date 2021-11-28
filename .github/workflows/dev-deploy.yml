@@ -21,13 +21,14 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
           script: |
-            cd /var/www/zuri.chat/zurimessaging/dev/zc_messaging/backend
+            cd /var/www/zuri.chat/zurimessaging/dev/zc_messaging/frontend
             git fetch --all 
             git reset --hard origin/dev
             git stash
             git pull
             yarn setup
             yarn build
+            cd ../backend
             source venv/bin/activate
             python3 -m pip install --upgrade pip
             pip install --no-cache-dir -r requirements.txt
