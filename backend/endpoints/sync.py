@@ -60,29 +60,29 @@ async def dm_install(payload: InstallPayload):
     if channel_res is None:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail="unable to remove room member",
+            detail="unable to create default Channel",
         )
-    if isinstance(channel_res, dict):
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail="unable to remove room member",
-        )
+#    if isinstance(channel_res, dict):
+#        raise HTTPException(
+#            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+#            detail="unable to remove room member",
+#        )
 
     dm_res = await DB.write(ROOM_COLLECTION, data=dm)
 
     if dm_res is None:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail="unable to remove room member",
+            detail="unable to create default DM",
         )
-    if isinstance(dm_res, dict) is dict:
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail="unable to remove room member",
-        )
+#    if isinstance(dm_res, dict) is dict:
+#        raise HTTPException(
+#            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+#            detail="unable to remove room member",
+#        )
 
     return JSONResponse(
-        data=None, message="installation successful", status_code=status.HTTP_200_OK
+        content="installation successful", status_code=status.HTTP_200_OK
     )
 
 
@@ -94,7 +94,7 @@ async def dm_install(payload: InstallPayload):
         400: {"detail": "Object id is not valid"},
     },
 )
-async def get_sidebar(org_id: str, member_id: str, room_type: RoomType):
+async def get_sidebar(org: str, user: str):
     """Provides a response of side bar data for the given room type
 
     Args:
@@ -108,22 +108,22 @@ async def get_sidebar(org_id: str, member_id: str, room_type: RoomType):
     Raises:
         HTTPException [dict]: dict containing error message and 400 status code
     """
-    if not ObjectId.is_valid(org_id):
+    if not ObjectId.is_valid(org):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="org_id is not a valid object id",
+            detail="org is not a valid object id",
         )
-    if not ObjectId.is_valid(member_id):
+    if not ObjectId.is_valid(user):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="member_id is not a valid object id",
+            detail="user is not a valid object id",
         )
-    if room_type is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="room_type is required"
-        )
+   # if room_type is None:
+   #     raise HTTPException(
+   #         status_code=status.HTTP_400_BAD_REQUEST, detail="room_type is required"
+   #     )
 
-    data = await sidebar.format_data(org_id, member_id, room_type)
+    data = await sidebar.format_data(org, user, RoomType.CHANNEL)
     return JSONResponse(
         content=ResponseModel.success(data), status_code=status.HTTP_200_OK
     )
