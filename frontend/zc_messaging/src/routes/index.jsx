@@ -1,10 +1,10 @@
 import React from "react"
 import { Switch, Route, BrowserRouter as Router } from "react-router-dom"
+import AllDms from "src/pages/all_dms/AllDms"
 import Hello from "../component/Hello"
 import { ChannelBrowser, DmBrowser, MessageBoard, Threads } from "../pages"
 
 /**
- * Routes
  * Main Routing for the zc messaging plugin.
  * All other routing must somehow be a descendant of this component.
  */
@@ -13,7 +13,7 @@ const Routes = () => (
     <Switch>
       <Route path="/browse-channels" component={ChannelBrowser} />
       <Route path="/threads" component={Threads} />
-      <Route path="/all-dms" component={DmBrowser} />
+      <Route path="/all-dms" component={AllDms} />
       <Route path="/:roomId" component={MessageBoard} />
       <Route exact path="/">
         <div>
