@@ -1,6 +1,6 @@
 import React from "react"
 import { Link } from "react-router-dom"
-import InMessageBoard from "../../routes/InMessageRoute"
+import RightBarRoute from "../../routes/RightBarRoute"
 import { Container, MessagingArea, RightAside } from "./MessageBoard.style"
 
 const MessageBoard = (props) => (
@@ -21,7 +21,7 @@ const MessageBoard = (props) => (
       ... All routed in InMessageRoute component
     */}
     <RightAside>
-      <InMessageBoard {...props} />
+      <RightBarRoute {...props} />
     </RightAside>
   </Container>
 )

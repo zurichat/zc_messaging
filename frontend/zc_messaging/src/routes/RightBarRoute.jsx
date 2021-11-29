@@ -2,7 +2,10 @@ import React from "react"
 import { Route, Switch } from "react-router";
 import { ChannelDetails, ThreadBar, UserProfileBar } from "../component";
 
-const InMessageBoard = (props) => {
+/**
+ * Routes the right bar components: thread, userprofile, channel details
+ */
+const RightBarRoute = (props) => {
   const { match: { path } } = props
   return (
     <Switch>
@@ -13,4 +16,4 @@ const InMessageBoard = (props) => {
   )
 }
 
-export default InMessageBoard;
+export default RightBarRoute;
