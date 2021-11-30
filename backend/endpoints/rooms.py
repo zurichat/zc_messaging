@@ -97,7 +97,7 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
             detail="room does not exist",
         )
     
-    if room_obj["room_type"] == RoomType.DM:
+    if room_obj["room_type"] != RoomType.CHANNEL:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="unable to remove room member",
