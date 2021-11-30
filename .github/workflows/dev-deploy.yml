@@ -27,4 +27,6 @@ jobs:
             git stash
             git pull
             source venv/bin/activate
+            python3 -m pip install --upgrade pip
+            pip install --no-cache-dir -r requirements.txt
             pm2 restart zuri_messaging

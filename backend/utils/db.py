@@ -1,8 +1,8 @@
 import requests
 
 PLUGIN_ID = "617db02f27c36150b422bc4d"
-ORG_ID = "61695d8bb2cc8a9af4833d46"
-COLLECTION_NAME = "rooms"
+ORG_ID = "619ba4671a5f54782939d384"
+BASE_URL = "https://staging.api.zuri.chat"
 
 
 class DataStorage:
@@ -16,10 +16,10 @@ class DataStorage:
     def __init__(
         self, plugin_id: str = PLUGIN_ID, organization_id: str = ORG_ID
     ) -> None:
-        self.write_api = "https://api.zuri.chat/data/write"
-        self.delete_api = "https://api.zuri.chat/data/delete"
-        self.read_query_api = "https://api.zuri.chat/data/read"
-        self.get_member_api = "https://api.zuri.chat/organizations/{org_id}/members/"
+        self.write_api = f"{BASE_URL}/data/write"
+        self.delete_api = f"{BASE_URL}/data/delete"
+        self.read_query_api = f"{BASE_URL}/data/read"
+        self.get_member_api = f"{BASE_URL}/organizations/" + "{org_id}/members/"
         self.plugin_id = plugin_id
         self.organization_id = organization_id
 
@@ -189,9 +189,9 @@ class FileStorage:
     def __init__(
         self, plugin_id: str = PLUGIN_ID, organization_id: str = ORG_ID
     ) -> None:
-        self.upload_api = "https://api.zuri.chat/upload/file/{pgn_id}"
-        self.upload_multiple_api = "https://api.zuri.chat/upload/files/{pgn_id}"
-        self.delete_file_api = "https://api.zuri.chat/delete/file/{pgn_id}"
+        self.upload_api = f"{BASE_URL}/upload/file/" + "{pgn_id}"
+        self.upload_multiple_api = f"{BASE_URL}/upload/files/" + "{pgn_id}"
+        self.delete_file_api = f"{BASE_URL}/delete/file/" + "{pgn_id}"
         self.plugin_id = plugin_id
         self.organization_id = organization_id
 
