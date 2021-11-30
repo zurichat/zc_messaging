@@ -36,6 +36,10 @@ module.exports = (webpackConfigEnv, argv) => {
       path: path.join(__dirname, "..", "dist") // string (default)
     },
     resolve: {
+      alias: {
+        "@components": path.join(__dirname, "src/components"),
+        "@assets": path.join(__dirname, "src/assets")
+      },
       fallback: {
         fs: false,
         path: false,
@@ -47,11 +51,11 @@ module.exports = (webpackConfigEnv, argv) => {
     module: {
       rules: [
         {
-          test: /\.yaml$/,
+          test: /\\.yaml$/,
           use: "js-yaml-loader"
         },
         {
-          test: /\.css$/i,
+          test: /\\.css$/i,
           use: [
             "style-loader",
             {
