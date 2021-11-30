@@ -108,10 +108,6 @@ async def get_sidebar(org: str, user: str):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="user is not a valid object id",
         )
-    # if room_type is None:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_400_BAD_REQUEST, detail="room_type is required"
-    #     )
 
     channel_data = await sidebar.format_data(org, user, RoomType.CHANNEL)
     dm_data = await sidebar.format_data(org, user, RoomType.DM)
