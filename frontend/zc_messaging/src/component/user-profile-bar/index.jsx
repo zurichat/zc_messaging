@@ -1,10 +1,10 @@
 import React from "react"
 
-const DmBrowser = (props) => (
+const UserProfile = props => (
   <>
-    <h1>DM Browser</h1>
+    <h1>User Profile</h1>
     <p>params: {JSON.stringify(props.match.params)}</p>
   </>
 )
 
-export default DmBrowser;
+export default UserProfile

@@ -1,7 +1,6 @@
 import React from "react"
 import { Switch, Route, BrowserRouter as Router } from "react-router-dom"
-import AllDms from "src/pages/all_dms/AllDms"
-import Hello from "../component/Hello"
+import Hello from "../component/hello"
 import { ChannelBrowser, DmBrowser, MessageBoard, Threads } from "../pages"
 
 /**
@@ -13,7 +12,7 @@ const Routes = () => (
     <Switch>
       <Route path="/browse-channels" component={ChannelBrowser} />
       <Route path="/threads" component={Threads} />
-      <Route path="/all-dms" component={AllDms} />
+      <Route path="/all-dms" component={DmBrowser} />
       <Route path="/:roomId" component={MessageBoard} />
       <Route exact path="/">
         <div>
@@ -27,7 +26,9 @@ const Routes = () => (
             <li>Don't repeat codes, create a reusable component</li>
             <li>Avoid re-rendering!!!</li>
             <li>Don't style elements globally please 😢</li>
-            <li>Use comments where needed so we can understand what is written</li>
+            <li>
+              Use comments where needed so we can understand what is written
+            </li>
           </ul>
         </div>
       </Route>
@@ -35,4 +36,4 @@ const Routes = () => (
   </Router>
 )
 
-export default Routes;
+export default Routes

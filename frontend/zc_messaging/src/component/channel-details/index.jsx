@@ -1,10 +1,10 @@
 import React from "react"
 
-const UserProfile = (props) => (
+const ChannelDetails = props => (
   <>
-    <h1>User Profile</h1>
+    <h1>Channel Details</h1>
     <p>params: {JSON.stringify(props.match.params)}</p>
   </>
 )
 
-export default UserProfile;
+export default ChannelDetails

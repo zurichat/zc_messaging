@@ -1,6 +1,6 @@
-import DmBrowser from "./DmBrowser"
-import MessageBoard from "./MessageBoard"
-import ChannelBrowser from "./ChannelBrowser"
-import Threads from "./Threads"
+import DmBrowser from "./dm-browser"
+import MessageBoard from "./message-board"
+import ChannelBrowser from "./channel-browser"
+import Threads from "./threads"
 
 export { MessageBoard, DmBrowser, ChannelBrowser, Threads }

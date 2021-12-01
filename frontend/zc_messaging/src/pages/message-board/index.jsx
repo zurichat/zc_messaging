@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import RightBarRoute from "../../routes/RightBarRoute"
 import { Container, MessagingArea, RightAside } from "./MessageBoard.style"
 
-const MessageBoard = (props) => (
+const MessageBoard = props => (
   <Container>
     <MessagingArea>
       {/* todo -> MessageBoard Area */}
@@ -11,9 +11,13 @@ const MessageBoard = (props) => (
       <p>params: {JSON.stringify(props.match)}</p>
       <Link to={`${props.match.url}/thread/111`}>Open a thread</Link>
       <br />
-      <Link to={`${props.match.url}/member-profile/111`}>Open a member full profile</Link>
+      <Link to={`${props.match.url}/member-profile/111`}>
+        Open a member full profile
+      </Link>
       <br />
-      <Link to={`${props.match.url}/channel-details/111`}>Open channel details</Link>
+      <Link to={`${props.match.url}/channel-details/111`}>
+        Open channel details
+      </Link>
     </MessagingArea>
 
     {/* 
@@ -26,4 +30,4 @@ const MessageBoard = (props) => (
   </Container>
 )
 
-export default MessageBoard;
+export default MessageBoard
