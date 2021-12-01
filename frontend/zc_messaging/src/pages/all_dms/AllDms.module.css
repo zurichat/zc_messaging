@@ -7,4 +7,10 @@
   background: #00b87c;
   color: #fff;
   padding: 0 1rem;
+  display: flex;
+  align-items: center;
+}
+.all_dms_header_text_container {
+  display: flex;
+  align-items: center;
 }
