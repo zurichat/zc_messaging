@@ -1,12 +1,10 @@
-from backend.schema.room import Role, RoomMember
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
-from schema.room import Room, RoomRequest
+from schema.room import Role, Room, RoomMember, RoomRequest
 from utils.db import DB
-from utils.room_utils import ROOM_COLLECTION
+from utils.room_utils import ROOM_COLLECTION, get_room
 from utils.sidebar import sidebar
-from utils.room_utils import get_room
 
 router = APIRouter()
 
@@ -64,8 +62,11 @@ async def create_room(
         detail="unable to create room",
     )
 
-@router.delete("/org/{org_id}/members/{member_id}/rooms/{room_id}",
-    response_model=ResponseModel, )
+
+@router.delete(
+    "/org/{org_id}/members/{member_id}/rooms/{room_id}",
+    response_model=ResponseModel,
+)
 async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
     """Removes a member from a room.
 
@@ -95,13 +96,13 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="room does not exist",
         )
-    
+
     if member_id not in room_obj["room_members"]:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="user not a member of the room",
         )
-    
+
     if member_id == mem_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -109,30 +110,28 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
         )
 
     member: RoomMember = room_obj["room_members"].get(member_id)
-    
+
     if member.role == Role.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="unable to remove room member",
         )
 
-    remove_member = room_obj["room_members"].pop(mem_id, "not_found")
-    
-    if remove_member != "not_found":
+    drop_member = room_obj["room_members"].pop(mem_id, "not_found")
+
+    if drop_member != "not_found":
         update_room = DB.update(ROOM_COLLECTION, room_obj["id"], room_obj)
-        if update_room == None:
+        if update_room is None or isinstance(update_room, dict):
             raise HTTPException(
                 status_code=status.HTTP_424_FAILED_DEPENDENCY,
                 detail="unable to remove room member",
             )
-        elif type(update_room) is dict:
-            raise HTTPException(
-                status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                detail="unable to remove room member",
-            )
-        else:
-            return JSONResponse(
-            content=ResponseModel.success(data=room_obj.dict(), message="member removed successfully from room"),
+
+        return JSONResponse(
+            content=ResponseModel.success(
+                data=room_obj.dict(),
+                message="member removed successfully from room",
+            ),
             status_code=status.HTTP_200_OK,
         )
 
