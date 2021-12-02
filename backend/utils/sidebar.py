@@ -167,7 +167,7 @@ class Sidebar:
         )
 
         org_members = await DB.get_all_members()
-        joined_rooms = await self.__get_joined_rooms(member_id, user_rooms, org_members)
+        joined_rooms = await self.__get_joined_rooms(member_id, user_rooms, org_members, DB)
         public_rooms = (
             await self.__get_public_rooms(member_id, org_id, org_members, DB)
             if room_type == RoomType.CHANNEL
