@@ -6,12 +6,11 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from schema.response import ResponseModel
 from schema.room import Role, RoomType
-from utils.db import DB
+from utils.db import DataStorage
 from utils.room_utils import ROOM_COLLECTION
 from utils.sidebar import sidebar
 
 router = APIRouter()
-
 
 class InstallPayload(BaseModel):
     """Installation payload model."""
@@ -25,6 +24,7 @@ async def dm_install(payload: InstallPayload):
     """This endpoint is called when an organisation wants to install the
     DM plugin for their workspace."""
 
+    DB = DataStorage(payload.organisation_id)
     channel = {
         "room_name": "general",
         "room_type": RoomType.CHANNEL,
