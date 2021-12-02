@@ -112,5 +112,6 @@ async def get_sidebar(org: str, user: str):
     channel_data = await sidebar.format_data(org, user, RoomType.CHANNEL)
     dm_data = await sidebar.format_data(org, user, RoomType.DM)
     return JSONResponse(
-        content=ResponseModel.success([channel_data, dm_data]), status_code=status.HTTP_200_OK
+        content=ResponseModel.success([channel_data, dm_data]),
+        status_code=status.HTTP_200_OK,
     )
