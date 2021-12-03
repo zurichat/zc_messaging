@@ -2,7 +2,6 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import AddToRoom, Role, Room, RoomRequest, RoomType
-from starlette.responses import Response
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DB
 from utils.room_utils import ROOM_COLLECTION, get_room
@@ -74,58 +73,65 @@ async def create_room(
         403: {"detail": "DM room or not found"},
     },
 )
-async def add_to_room(data: AddToRoom, org_id: str, room_id: str, member_id: str):
+async def add_to_room(
+    data: AddToRoom,
+    org_id: str,
+    room_id: str,
+    member_id: str,
+    background_tasks: BackgroundTasks,
+):
     """Adds a new member(s) to a room
     Args:
         data: a pydantic schema that defines the request params
         org_id (str): A unique identifier of an organisation
         room_id: A unique identifier of the room to be updated
+        member_id: A unique identifier of the member initiating the request
 
     Returns:
         HTTP_200_OK: member added
     Raises:
         HTTP_400_BAD_REQUEST: the max number for a Group_DM is 9
-        HTTP_401_UNAUTHORIZED: member not an admin
+        HTTP_401_UNAUTHORIZED: member not in room or not an admin
         HTTP_403_FORBIDDEN: DM room or not found
     """
 
     new_member = data.dict().get("new_member")
     room = await get_room(org_id=org_id, room_id=room_id)
+    member = room.get("room_members").get(str(member_id))
 
-    if room is not None and room["room_type"] != RoomType.DM:
-        member = room.get("room_members").get(str(member_id))
+    if room is None or room["room_type"] == RoomType.DM:
+        raise HTTPException(status_code=403, detail="DM room or not found")
 
-        if member["role"] == Role.ADMIN:
-            room_members = room["room_members"]
+    if member is None or member["role"] != Role.ADMIN:
+        raise HTTPException(
+            status_code=401, detail="member not in room or not an admin"
+        )
 
-            if room["room_type"] == RoomType.CHANNEL:
-                room_members.update(new_member)
+    if room["room_type"] == RoomType.CHANNEL:
+        room["room_members"].update(new_member)
 
-            if room["room_type"] == RoomType.GROUP_DM:
-                for person in list(new_member.keys()):
-                    if len(room_members.keys()) >= 9:
-                        raise HTTPException(
-                            detail="the max number for a Group_DM is 9",
-                            status_code=400,
-                        )
-                    new_data = {person: new_member.get(str(person))}
-                    room_members.update(new_data)
-
-            update_members = {"room_members": room_members}
-            update_res = await DB.update(
-                "chat_rooms", document_id=room_id, data=update_members
-            )
-            if update_res and update_res.get("status_code", None) is None:
-                centrifugo_res = await centrifugo_client.publish(
-                    room=room_id, event=Events.ROOM_MEMBER_ADD, data=new_member
+    if room["room_type"] == RoomType.GROUP_DM:
+        for person in list(new_member.keys()):
+            if len(room["room_members"].keys()) >= 9:
+                raise HTTPException(
+                    detail="the max number for a Group_DM is 9",
+                    status_code=400,
                 )
-                if centrifugo_res and centrifugo_res.get("status") == 200:
-                    return JSONResponse(content=centrifugo_res, status_code=200)
-                return Response(
-                    content="member added but event not published", status_code=424
-                )
-            raise HTTPException(
-                status_code=424, detail="failed to add new members to room"
-            )
-        raise HTTPException(status_code=401, detail="member not an admin")
-    return Response(status_code=403, content="DM room or not found")
+            new_data = {person: new_member.get(str(person))}
+            room["room_members"].update(new_data)
+
+    update_members = {"room_members": room["room_members"]}
+    update_res = await DB.update(
+        ROOM_COLLECTION, document_id=room_id, data=update_members
+    )
+
+    background_tasks.add_task(
+        centrifugo_client.publish,
+        room=room_id,
+        event=Events.ROOM_MEMBER_ADD,
+        data=new_member,
+    )
+
+    if update_res and update_res.get("status_code", None) is None:
+        return JSONResponse(content=room, status_code=200)
+    raise HTTPException(status_code=424, detail="failed to add new members to room")
