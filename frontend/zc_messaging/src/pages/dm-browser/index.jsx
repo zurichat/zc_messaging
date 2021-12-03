@@ -1,4 +1,4 @@
-import "./AllDms.module.css"
+import "./dm-browser.module.css"
 import AllDmsComboBox from "./components/all_dms_combo_box/AllDmsComboBox"
 const AllDms = () => {
   return (
