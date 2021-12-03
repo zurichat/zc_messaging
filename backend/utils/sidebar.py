@@ -1,7 +1,7 @@
 from schema.room import RoomType
 from utils.centrifugo import Events, centrifugo_client
-from utils.room_utils import DEFAULT_DM_IMG, get_org_rooms
 from utils.db import DataStorage
+from utils.room_utils import DEFAULT_DM_IMG, get_org_rooms
 
 
 class Sidebar:
@@ -81,20 +81,20 @@ class Sidebar:
             dict: key value pair of room profile
         """
         room_profile = {}
-        if room.get("room_type") == RoomType.DM:
-            room_members = await self.__get_room_members(member_id, room, org_members, DB)
+        if room.get("room_type") in (RoomType.DM, RoomType.GROUP_DM):
+            room_members = await self.__get_room_members(
+                member_id, room, org_members, DB
+            )
+            room_profile["room_name"] = await self.__get_dm_room_name(room_members)
+            room_profile["image_url"] = await self.__get_dm_room_image_url(room_members)
+
+        else:
+            room_profile["room_name"] = room["room_name"]
+            room_profile["image_url"] = ""
+
         room_profile["room_id"] = room["_id"]
         room_profile["room_url"] = f"/{room['room_type'].lower()}/{room['_id']}"
-        room_profile["room_name"] = (
-            await self.__get_dm_room_name(room_members)
-            if room.get("room_type") in (RoomType.DM, RoomType.GROUP_DM)
-            else room["room_name"]
-        )
-        room_profile["image_url"] = (
-            await self.__get_dm_room_image_url(room_members)
-            if room.get("room_type") in (RoomType.DM, RoomType.GROUP_DM)
-            else ""
-        )
+
         return room_profile
 
     async def __get_joined_rooms(
@@ -117,7 +117,9 @@ class Sidebar:
         starred_rooms = []
         user_rooms = user_rooms or []
         for room in user_rooms:
-            room_profile = await self.__get_room_profile(member_id, room, org_members, DB)
+            room_profile = await self.__get_room_profile(
+                member_id, room, org_members, DB
+            )
             rooms.append(room_profile)
             if room.get("room_members").get(member_id, {}).get("starred", None):
                 starred_rooms.append(room_profile)
@@ -167,7 +169,9 @@ class Sidebar:
         )
 
         org_members = await DB.get_all_members()
-        joined_rooms = await self.__get_joined_rooms(member_id, user_rooms, org_members, DB)
+        joined_rooms = await self.__get_joined_rooms(
+            member_id, user_rooms, org_members, DB
+        )
         public_rooms = (
             await self.__get_public_rooms(member_id, org_id, org_members, DB)
             if room_type == RoomType.CHANNEL
@@ -175,8 +179,12 @@ class Sidebar:
         )
 
         return {
-            "name": "Messaging",
-            "description": "Sends messages between users in a dm or channel",
+            "name": "Channels" if room_type == RoomType.CHANNEL else "Direct Messages",
+            "description": (
+                "Sends messages between users in a channel"
+                if room_type == RoomType.CHANNEL
+                else "Sends direct messages between users"
+            ),
             "plugin_id": "chat.zuri.chat",
             "organisation_id": f"{org_id}",
             "user_id": f"{member_id}",

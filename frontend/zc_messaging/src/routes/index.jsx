@@ -1,6 +1,10 @@
 import React from "react"
-import { Switch, Route, BrowserRouter as Router } from "react-router-dom"
-import Hello from "../component/hello"
+import {
+  Switch,
+  Route,
+  BrowserRouter as Router,
+  Redirect
+} from "react-router-dom"
 import { ChannelBrowser, DmBrowser, MessageBoard, Threads } from "../pages"
 
 /**
@@ -14,23 +18,8 @@ const Routes = () => (
       <Route path="/threads" component={Threads} />
       <Route path="/all-dms" component={DmBrowser} />
       <Route path="/:roomId" component={MessageBoard} />
-      <Route exact path="/">
-        <div>
-          <Hello text="Zuri people" />
-          <h2>App is not running on grace!!😊 let's keep it that way</h2>
-          <p>
-            <strong>Few guide lines</strong>
-          </p>
-          <ul>
-            <li>Make sure to remove console.logs after debugging </li>
-            <li>Don't repeat codes, create a reusable component</li>
-            <li>Avoid re-rendering!!!</li>
-            <li>Don't style elements globally please 😢</li>
-            <li>
-              Use comments where needed so we can understand what is written
-            </li>
-          </ul>
-        </div>
+      <Route exact path="*">
+        <Redirect to="/all-dms" />
       </Route>
     </Switch>
   </Router>

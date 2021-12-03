@@ -12,6 +12,7 @@ from utils.sidebar import sidebar
 
 router = APIRouter()
 
+
 class InstallPayload(BaseModel):
     """Installation payload model."""
 
@@ -49,7 +50,7 @@ async def dm_install(payload: InstallPayload):
         "created_at": str(datetime.utcnow()),
         "description": "",
         "topic": "",
-        "is_private": False,
+        "is_private": True,
         "is_archived": False,
         "org_id": payload.organisation_id,
         "created_by": payload.user_id,
