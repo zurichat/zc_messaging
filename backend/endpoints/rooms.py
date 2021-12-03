@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import AddToRoom, Role, Room, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
-from utils.db import DB
+from utils.db import DataStorage
 from utils.room_utils import ROOM_COLLECTION, get_room
 from utils.sidebar import sidebar
 
@@ -40,6 +40,7 @@ async def create_room(
         HTTP_424_FAILED_DEPENDENCY: room creation unsuccessful
     """
 
+    DB = DataStorage(org_id)
     room_obj = Room(**request.dict(), org_id=org_id, created_by=member_id)
     response = await DB.write(ROOM_COLLECTION, data=room_obj.dict())
     if response and response.get("status_code", None) is None:
@@ -95,6 +96,7 @@ async def add_to_room(
         HTTP_403_FORBIDDEN: DM room or not found
     """
 
+    DB = DataStorage(org_id)
     new_member = data.dict().get("new_member")
     room = await get_room(org_id=org_id, room_id=room_id)
     member = room.get("room_members").get(str(member_id))

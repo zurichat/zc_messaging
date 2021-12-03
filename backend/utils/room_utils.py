@@ -1,4 +1,4 @@
-from utils.db import DB
+from utils.db import DataStorage
 
 ROOM_COLLECTION = "chat_rooms"
 DEFAULT_DM_IMG = (
@@ -23,7 +23,7 @@ async def get_org_rooms(
     Returns:
         [List]: returns a list of all rooms within that organisation
     """
-    DB.organization_id = org_id
+    DB = DataStorage(org_id)
     query = {"$and": [{"org_id": org_id}]}
     if member_id is not None:
         query["$and"].append({f"room_members.{member_id}": {"$exists": True}})
@@ -51,7 +51,7 @@ async def get_room(org_id: str, room_id: str) -> dict:
     Returns:
         dict: key value pair of room info mapped accored to room schema
     """
-    DB.organization_id = org_id
+    DB = DataStorage(org_id)
     query = {"_id": room_id}
     options = {"sort": {"created_at": -1}}
     response = await DB.read(ROOM_COLLECTION, query=query, options=options)
@@ -71,7 +71,7 @@ async def get_room_members(org_id: str, room_id: str) -> dict:
     Returns:
         [Dict]: key value
     """
-    DB.organization_id = org_id
+    DB = DataStorage(org_id)
     query = {"_id": room_id}
     options = {"sort": {"created_at": -1}, "projection": {"room_members": 1, "_id": 0}}
     response = await DB.read(ROOM_COLLECTION, query=query, options=options)
@@ -90,7 +90,7 @@ async def get_member_starred_rooms(org_id: str, member_id: str) -> list:
     Returns:
         [List]: list of rooms that are starred by the user
     """
-    DB.organization_id = org_id
+    DB = DataStorage(org_id)
     query = {f"room_members.{member_id}.starred": True}
     options = {"sort": {"created_at": -1}}
     response = await DB.read(ROOM_COLLECTION, query=query, options=options)
@@ -112,7 +112,7 @@ async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> boo
     Raise:
         ValueError: Room not found
     """
-    DB.organization_id = org_id
+    DB = DataStorage(org_id)
     query = {"_id": room_id}
     response = await DB.read(ROOM_COLLECTION, query=query)
     if response and "status_code" not in response:
