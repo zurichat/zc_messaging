@@ -1,13 +1,16 @@
-import "./AllDmsComboBox.module.css"
+import {
+  AllDmsComboBoxContainer,
+  AllDmsComboBoxContent
+} from "./DmBrowserComboBox.styled.js"
 const AllDmsComboBox = () => {
   return (
-    <div className="all_dms_combo_box_container">
+    <AllDmsComboBoxContainer>
       <p>To:</p>
-      <div className="all_dms_combo_box_content">
+      <AllDmsComboBoxContent>
         <input type="text" placeholder="@somebody or somebody@example.com" />
         <div className="all_dms_combo_box_search_modal_container"></div>
-      </div>
-    </div>
+      </AllDmsComboBoxContent>
+    </AllDmsComboBoxContainer>
   )
 }
 

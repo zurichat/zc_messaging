@@ -1,4 +1,4 @@
-import DmBrowser from "./dm-browser"
+import DmBrowser from "./dm_browser/DmBrowser"
 import MessageBoard from "./message-board"
 import ChannelBrowser from "./channel-browser"
 import Threads from "./threads"
