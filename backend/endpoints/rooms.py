@@ -3,7 +3,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import Room, RoomRequest
-from utils.db import DB
+from utils.db import DataStorage
 from utils.room_utils import ROOM_COLLECTION
 from utils.sidebar import sidebar
 from utils.room_utils import get_room
@@ -41,6 +41,7 @@ async def create_room(
         HTTP_424_FAILED_DEPENDENCY: room creation unsuccessful
     """
 
+    DB = DataStorage(org_id)
     room_obj = Room(**request.dict(), org_id=org_id, created_by=member_id)
     response = await DB.write(ROOM_COLLECTION, data=room_obj.dict())
     if response and response.get("status_code", None) is None:
