@@ -1,10 +1,11 @@
-from backend.schema.room import Role, RoomMember, RoomType
+from backend.schema.response import ErrorResponseModel
+from schema.room import Role, RoomMember, RoomType
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import Room, RoomRequest
 from utils.db import DataStorage
-from utils.room_utils import ROOM_COLLECTION
+from utils.room_utils import ROOM_COLLECTION, remove_mem
 from utils.sidebar import sidebar
 from utils.room_utils import get_room
 
@@ -66,36 +67,14 @@ async def create_room(
     )
 
 
-def remove_mem(room_obj: dict, mem_id: str, org_id: str):
-    DB = DataStorage(org_id)
-    remove_member = room_obj["room_members"].pop(mem_id, "not_found")
-    
-    if remove_member == "not_found":
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="user not a member of the room",
-        )    
-    
-    update_room =  DB.update(ROOM_COLLECTION, room_obj["id"], room_obj)
-        
-    if update_room == None:
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail="unable to remove room member",
-        )
-    elif type(update_room) is dict:
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail="unable to remove room member",
-        )
-    else:
-        return JSONResponse(
-            content=ResponseModel.success(data=room_obj.dict(), message="member removed successfully from room"),
-            status_code=status.HTTP_200_OK,
-        )
-
 @router.patch("/org/{org_id}/rooms/{room_id}/members/{member_id}",
-    response_model=ResponseModel, )
+    response_model=ResponseModel, 
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"detail": {"room": "room"}},
+        404: {"detail": "room or member not found"},
+        424: {"detail": "member removal unsuccessful"},
+    },)
 async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
     """Removes a member from a room either when removed by an admin or member leaves the room.
 
@@ -106,10 +85,9 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
 
     Args:
         org_id (str): A unique identifier of an organisation
-        request: A pydantic schema that defines the room request parameters
         member_id (str): A unique identifier of the member removing another member
         room_id (str): A unique identifier of the room a member is being removed from
-        memb_id (str): A unique identifier of the member being removed from the room
+        mem_id (str): A unique identifier of the member being removed from the room
 
     Returns:
         HTTP_200_OK (member removed from room): {room}
@@ -139,7 +117,11 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
         )
     
     if member_id == mem_id:
-        return remove_mem(room_obj, member_id, org_id)
+        result = remove_mem(room_obj, member_id, org_id)
+        if type(result) is ErrorResponseModel: 
+            return HTTPException(**result)
+        else:
+            return JSONResponse(content=result, status_code=status.HTTP_200_OK)
     else:   
         member: RoomMember = room_obj["room_members"].get(member_id)
         
@@ -149,4 +131,9 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
                 detail="unable to remove room member",
             )
 
-        return remove_mem(room_obj, mem_id, org_id)    
+        
+        result = remove_mem(room_obj, mem_id, org_id)
+        if type(result) is ErrorResponseModel: 
+            return HTTPException(**result)
+        else:
+            return JSONResponse(content=result, status_code=status.HTTP_200_OK)
