@@ -66,7 +66,8 @@ async def create_room(
     )
 
 
-def remove_mem(room_obj: dict, mem_id: str):
+def remove_mem(room_obj: dict, mem_id: str, org_id: str):
+    DB = DataStorage(org_id)
     remove_member = room_obj["room_members"].pop(mem_id, "not_found")
     
     if remove_member == "not_found":
@@ -75,7 +76,7 @@ def remove_mem(room_obj: dict, mem_id: str):
             detail="user not a member of the room",
         )    
     
-    update_room = DB.update(ROOM_COLLECTION, room_obj["id"], room_obj)
+    update_room =  DB.update(ROOM_COLLECTION, room_obj["id"], room_obj)
         
     if update_room == None:
         raise HTTPException(
@@ -138,7 +139,7 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
         )
     
     if member_id == mem_id:
-        return remove_mem(room_obj, member_id)
+        return remove_mem(room_obj, member_id, org_id)
     else:   
         member: RoomMember = room_obj["room_members"].get(member_id)
         
@@ -148,4 +149,4 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
                 detail="unable to remove room member",
             )
 
-        return remove_mem(room_obj, mem_id)    
+        return remove_mem(room_obj, mem_id, org_id)    
