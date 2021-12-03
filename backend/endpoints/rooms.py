@@ -113,14 +113,12 @@ async def add_to_room(
         room["room_members"].update(new_member)
 
     if room["room_type"] == RoomType.GROUP_DM:
-        for person in list(new_member.keys()):
-            if len(room["room_members"].keys()) >= 9:
-                raise HTTPException(
-                    detail="the max number for a Group_DM is 9",
-                    status_code=400,
-                )
-            new_data = {person: new_member.get(str(person))}
-            room["room_members"].update(new_data)
+        room["room_members"].update(new_member)
+        if len(room["room_members"].keys()) > 9:
+            raise HTTPException(
+                detail="the max number for a Group_DM is 9",
+                status_code=400,
+            )
 
     update_members = {"room_members": room["room_members"]}
     update_res = await DB.update(
@@ -135,5 +133,5 @@ async def add_to_room(
     )
 
     if update_res and update_res.get("status_code", None) is None:
-        return JSONResponse(content=room, status_code=200)
+        return JSONResponse(content=update_res, status_code=200)
     raise HTTPException(status_code=424, detail="failed to add new members to room")
