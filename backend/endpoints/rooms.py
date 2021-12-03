@@ -64,10 +64,38 @@ async def create_room(
         detail="unable to create room",
     )
 
-@router.delete("/org/{org_id}/rooms/{room_id}/members/{member_id}",
+
+def remove_mem(room_obj: dict, mem_id: str):
+    remove_member = room_obj["room_members"].pop(mem_id, "not_found")
+    
+    if remove_member == "not_found":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="user not a member of the room",
+        )    
+    
+    update_room = DB.update(ROOM_COLLECTION, room_obj["id"], room_obj)
+        
+    if update_room == None:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="unable to remove room member",
+        )
+    elif type(update_room) is dict:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="unable to remove room member",
+        )
+    else:
+        return JSONResponse(
+            content=ResponseModel.success(data=room_obj.dict(), message="member removed successfully from room"),
+            status_code=status.HTTP_200_OK,
+        )
+
+@router.patch("/org/{org_id}/rooms/{room_id}/members/{member_id}",
     response_model=ResponseModel, )
 async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
-    """Removes a member from a room.
+    """Removes a member from a room either when removed by an admin or member leaves the room.
 
     Fetches the room which the member is removed from from the database collection
     Pops the member being removed from the room's members dict
@@ -88,7 +116,6 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
         HTTP_403_FORBIDDEN: not authorized to remove room 
         HTTP_424_FAILED_DEPENDENCY: member removal unsuccessful
     """
-
     room_obj = await get_room(org_id, room_id)
 
     if not room_obj:
@@ -110,40 +137,14 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
         )
     
     if member_id == mem_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="unable to remove room member",
-        )
-
-    member: RoomMember = room_obj["room_members"].get(member_id)
-    
-    if member.role != Role.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="unable to remove room member",
-        )
-
-    remove_member = room_obj["room_members"].pop(mem_id, "not_found")
-    
-    if remove_member != "not_found":
-        update_room = DB.update(ROOM_COLLECTION, room_obj["id"], room_obj)
-        if update_room == None:
+        return remove_mem(room_obj, member_id)
+    else:   
+        member: RoomMember = room_obj["room_members"].get(member_id)
+        
+        if member.role != Role.ADMIN:
             raise HTTPException(
-                status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="unable to remove room member",
             )
-        elif type(update_room) is dict:
-            raise HTTPException(
-                status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                detail="unable to remove room member",
-            )
-        else:
-            return JSONResponse(
-            content=ResponseModel.success(data=room_obj.dict(), message="member removed successfully from room"),
-            status_code=status.HTTP_200_OK,
-        )
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="user not a member of the room",
-    )
+        return remove_mem(room_obj, mem_id)    
