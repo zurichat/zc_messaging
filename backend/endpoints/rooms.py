@@ -72,6 +72,7 @@ async def create_room(
         400: {"detail": "the max number for a Group_DM is 9"},
         401: {"detail": "member not an admin"},
         403: {"detail": "DM room or not found"},
+        424: {"detail": "failed to add new members to room"},
     },
 )
 async def add_to_room(
@@ -87,26 +88,39 @@ async def add_to_room(
         org_id (str): A unique identifier of an organisation
         room_id: A unique identifier of the room to be updated
         member_id: A unique identifier of the member initiating the request
+        background_tasks: A parameter that allows tasks to be performed outside of the main function
 
     Returns:
-        HTTP_200_OK: member added
+        HTTP_200_OK: {
+                        "status": 200,
+                        "message": "success",
+                        "data": {
+                            "matched_documents": 1,
+                            "modified_documents": 1
+                        }
+                    }
     Raises:
         HTTP_400_BAD_REQUEST: the max number for a Group_DM is 9
         HTTP_401_UNAUTHORIZED: member not in room or not an admin
         HTTP_403_FORBIDDEN: DM room or not found
+        HTTP_424_FAILED_DEPENDENCY: failed to add new members to room
     """
 
-    DB = DataStorage(org_id)
+    DB = DataStorage(org_id)  # initializes the datastorage class with the org id
     new_member = data.dict().get("new_member")
     room = await get_room(org_id=org_id, room_id=room_id)
-    member = room.get("room_members").get(str(member_id))
 
     if room is None or room["room_type"] == RoomType.DM:
-        raise HTTPException(status_code=403, detail="DM room or not found")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="DM room or not found",
+        )
 
+    member = room.get("room_members").get(str(member_id))
     if member is None or member["role"] != Role.ADMIN:
         raise HTTPException(
-            status_code=401, detail="member not in room or not an admin"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="member not in room or not an admin",
         )
 
     if room["room_type"] == RoomType.CHANNEL:
@@ -116,22 +130,28 @@ async def add_to_room(
         room["room_members"].update(new_member)
         if len(room["room_members"].keys()) > 9:
             raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="the max number for a Group_DM is 9",
-                status_code=400,
             )
 
     update_members = {"room_members": room["room_members"]}
-    update_res = await DB.update(
+    update_response = await DB.update(
         ROOM_COLLECTION, document_id=room_id, data=update_members
-    )
+    )  # updates the room data in the db collection
 
     background_tasks.add_task(
         centrifugo_client.publish,
         room=room_id,
         event=Events.ROOM_MEMBER_ADD,
         data=new_member,
-    )
+    )  # publish to centrifugo in the background
 
-    if update_res and update_res.get("status_code", None) is None:
-        return JSONResponse(content=update_res, status_code=200)
-    raise HTTPException(status_code=424, detail="failed to add new members to room")
+    if update_response and update_response.get("status_code", None) is None:
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=update_response,
+        )
+    raise HTTPException(
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail="failed to add new members to room",
+    )
