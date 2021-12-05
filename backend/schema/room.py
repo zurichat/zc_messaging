@@ -62,7 +62,7 @@ class RoomRequest(BaseModel):
     created_at: str = str(datetime.utcnow())
     description: Optional[str] = None
     topic: Optional[str] = None
-    is_private: bool = True
+    is_private: bool = False
     is_archived: bool = False
 
     @root_validator(pre=True)
@@ -138,6 +138,7 @@ class RoomRequest(BaseModel):
                     detail="DM or Group DM should not have a description",
                 )
 
+        values["is_private"] = True
         return values
 
     @root_validator(pre=True)
