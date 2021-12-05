@@ -12,13 +12,6 @@ from utils.sidebar import sidebar
 router = APIRouter()
 
 
-# class InstallPayload(BaseModel):
-#     """Installation payload model."""
-
-#     organisation_id: str
-#     user_id: str
-
-
 @router.post("/install")
 async def dm_install(organisation_id: str = Body(...), user_id: str = Body(...)):
     """This endpoint is called when an organisation wants to install the
