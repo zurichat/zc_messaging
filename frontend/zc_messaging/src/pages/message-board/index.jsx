@@ -1,13 +1,14 @@
 import React from "react"
-import { Link } from "react-router-dom"
-import RightBarRoute from "../../routes/RightBarRoute"
+import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { MessageBoard } from "@zuri/zuri-ui"
 import { Container, MessagingArea, RightAside } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
 
-const MessagingBoard = props => {
+const MessagingBoard = () => {
+  const { roomId } = useParams()
+  const navigateTo = useNavigate()
   React.useEffect(() => {
-    if (!props.match.params.roomId) {
+    if (!roomId) {
       ;(async () => {
         const currentWorkspaceId = localStorage.getItem("currentWorkspace")
         const currentUser = JSON.parse(sessionStorage.getItem("user"))
@@ -15,7 +16,7 @@ const MessagingBoard = props => {
           currentWorkspaceId,
           currentUser?.id
         )
-        props.history.replace(`/${result.room_id}`)
+        navigateTo(`/${result.room_id}`, { replace: true })
       })()
     }
   }, [])
@@ -38,7 +39,7 @@ const MessagingBoard = props => {
     },
     messages: []
   }
-  return props.match.params.roomId ? (
+  return roomId ? (
     <Container>
       <MessagingArea>
         {/* todo -> MessageBoard Area */}
@@ -61,7 +62,7 @@ const MessagingBoard = props => {
       ... All routed in InMessageRoute component
     */}
       <RightAside>
-        <RightBarRoute {...props} />
+        <Outlet />
       </RightAside>
     </Container>
   ) : null
