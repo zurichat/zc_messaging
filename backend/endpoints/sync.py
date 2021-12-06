@@ -12,7 +12,16 @@ from utils.sidebar import sidebar
 router = APIRouter()
 
 
-@router.post("/install")
+@router.post(
+    "/install",
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"detail": "installtion successful"},
+        400: {"detail": "Object id is not valid"},
+        422: {"detail": "Field required"},
+        424: {"detail": "Instaalltion Failed"},
+    },
+)
 async def dm_install(organisation_id: str = Body(...), user_id: str = Body(...)):
     """This endpoint is called when an organisation wants to install the
     DM plugin for their workspace.
@@ -26,9 +35,9 @@ async def dm_install(organisation_id: str = Body(...), user_id: str = Body(...))
     Returns: [str]: string response of "installation successful"
 
     Raises: [HTTPException]: raises an HTTPException if the installation fails
-            400: [str]: if organisation_id or user_id is an invalid object id
-            422: [str]: if the organisation_id or user_id is not found in request body
-            424: [str]: if core service is not available or fails to install
+            400: [dict]: if organisation_id or user_id is an invalid object id
+            422: [dict]: if the organisation_id or user_id is not found in request body
+            424: [dict]: if core service is not available or fails to install
     """
     if not ObjectId.is_valid(organisation_id):
         raise HTTPException(

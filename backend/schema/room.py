@@ -138,7 +138,7 @@ class RoomRequest(BaseModel):
                     detail="DM or Group DM should not have a description",
                 )
 
-        values["is_private"] = True
+            values["is_private"] = True
         return values
 
     @root_validator(pre=True)
