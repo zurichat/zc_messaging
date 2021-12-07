@@ -48,7 +48,7 @@ class RoomMember(BaseModel):
     content of the room_member variable
     """
 
-    role: Role
+    role: Role = Role.MEMBER
     starred: bool = False
     closed: Optional[bool] = False
 

@@ -58,7 +58,7 @@ async def get_room(org_id: str, room_id: str) -> dict:
 
     if response and "status_code" not in response:
         return response
-    return None
+    return {}
 
 
 async def get_room_members(org_id: str, room_id: str) -> dict:

@@ -76,10 +76,10 @@ async def create_room(
     },
 )
 async def add_to_room(
-    data: AddToRoom,
     org_id: str,
     room_id: str,
     member_id: str,
+    data: AddToRoom,
     background_tasks: BackgroundTasks,
 ):
     """Adds a new member(s) to a room
@@ -110,7 +110,7 @@ async def add_to_room(
     new_member = data.dict().get("new_member")
     room = await get_room(org_id=org_id, room_id=room_id)
 
-    if room is None or room["room_type"] == RoomType.DM:
+    if not room or room["room_type"] == RoomType.DM:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="DM room or not found",
