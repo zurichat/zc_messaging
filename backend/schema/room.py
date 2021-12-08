@@ -48,7 +48,7 @@ class RoomMember(BaseModel):
     content of the room_member variable
     """
 
-    role: Role
+    role: Role = Role.MEMBER
     starred: bool = False
     closed: Optional[bool] = False
 
@@ -232,3 +232,9 @@ class Room(RoomRequest):
             )
 
         return values
+
+
+class AddToRoom(BaseModel):
+    """a schema that defines the request params for adding members to a room"""
+
+    new_member: Dict[str, RoomMember]
