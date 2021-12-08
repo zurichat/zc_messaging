@@ -1,9 +1,8 @@
 import React from "react"
 
-const Threads = props => (
+const Threads = () => (
   <>
     <h1>Threads</h1>
-    <p>params: {JSON.stringify(props.match.params)}</p>
   </>
 )
 

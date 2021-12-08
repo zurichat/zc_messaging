@@ -1,10 +1,11 @@
 import React from "react"
 
-const ChannelDetails = props => (
-  <>
-    <h1>Channel Details</h1>
-    <p>params: {JSON.stringify(props.match.params)}</p>
-  </>
-)
+const ChannelDetails = () => {
+  return (
+    <>
+      <h1>Channel Details</h1>
+    </>
+  )
+}
 
 export default ChannelDetails
