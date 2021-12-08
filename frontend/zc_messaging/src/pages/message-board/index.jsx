@@ -42,19 +42,7 @@ const MessagingBoard = () => {
   return roomId ? (
     <Container>
       <MessagingArea>
-        {/* todo -> MessageBoard Area */}
         <MessageBoard messageBoardConfig={chatSidebarConfig} />
-        {/* <h1>Messaging</h1>
-        <p>params: {JSON.stringify(props.match)}</p>
-        <Link to={`${props.match.url}/thread/111`}>Open a thread</Link>
-        <br />
-        <Link to={`${props.match.url}/member-profile/111`}>
-          Open a member full profile
-        </Link>
-        <br />
-        <Link to={`${props.match.url}/channel-details/111`}>
-          Open channel details
-        </Link> */}
       </MessagingArea>
 
       {/* 
