@@ -42,9 +42,8 @@ async def create_room(
     DB = DataStorage(org_id)
     room_obj = Room(**request.dict(), org_id=org_id, created_by=member_id)
 
-    if (
-        member_id not in room_obj.room_members.keys()
-    ):  # check if creator is in room members
+    # check if creator is in room members
+    if member_id not in room_obj.room_members.keys():
         room_obj.room_members[member_id] = {
             "role": Role.ADMIN,
             "starred": False,
