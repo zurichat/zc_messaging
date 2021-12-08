@@ -1,10 +1,11 @@
 import React from "react"
 
-const Thread = props => (
-  <>
-    <h1>Thread</h1>
-    <p>params: {JSON.stringify(props.match.params)}</p>
-  </>
-)
+const Thread = () => {
+  return (
+    <>
+      <h1>Thread</h1>
+    </>
+  )
+}
 
 export default Thread
