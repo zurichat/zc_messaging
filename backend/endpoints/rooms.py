@@ -1,7 +1,9 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from typing import Dict
+
+from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
-from schema.room import AddToRoom, Role, Room, RoomRequest, RoomType
+from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.room_utils import ROOM_COLLECTION, get_room
@@ -84,12 +86,12 @@ async def create_room(
         424: {"detail": "failed to add new members to room"},
     },
 )
-async def add_to_room(
+async def join_room(
     org_id: str,
     room_id: str,
     member_id: str,
-    data: AddToRoom,
     background_tasks: BackgroundTasks,
+    new_members: Dict[str, RoomMember] = Body(...),
 ):
     """Adds a new member(s) to a room
     Args:
@@ -98,6 +100,7 @@ async def add_to_room(
         room_id: A unique identifier of the room to be updated
         member_id: A unique identifier of the member initiating the request
         background_tasks: A parameter that allows tasks to be performed outside of the main function
+        new_members: A dictionary of new members to be added to the room
 
     Returns:
         HTTP_200_OK: {
@@ -114,15 +117,18 @@ async def add_to_room(
         HTTP_403_FORBIDDEN: DM room or not found
         HTTP_424_FAILED_DEPENDENCY: failed to add new members to room
     """
-
     DB = DataStorage(org_id)  # initializes the datastorage class with the org id
-    new_member = data.dict().get("new_member")
+
+    members = {
+        k: v.dict() for k, v in new_members.items()
+    }  # converts RoomMember to dict
+
     room = await get_room(org_id=org_id, room_id=room_id)
 
     if not room or room["room_type"] == RoomType.DM:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="DM room or not found",
+            detail="DM room cannot be joined or not found",
         )
 
     member = room.get("room_members").get(str(member_id))
@@ -133,10 +139,10 @@ async def add_to_room(
         )
 
     if room["room_type"] == RoomType.CHANNEL:
-        room["room_members"].update(new_member)
+        room["room_members"].update(members)
 
     if room["room_type"] == RoomType.GROUP_DM:
-        room["room_members"].update(new_member)
+        room["room_members"].update(members)
         if len(room["room_members"].keys()) > 9:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -152,13 +158,13 @@ async def add_to_room(
         centrifugo_client.publish,
         room=room_id,
         event=Events.ROOM_MEMBER_ADD,
-        data=new_member,
+        data=members,
     )  # publish to centrifugo in the background
 
     if update_response and update_response.get("status_code", None) is None:
         return JSONResponse(
             status_code=status.HTTP_200_OK,
-            content=update_response,
+            content=update_members,
         )
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
