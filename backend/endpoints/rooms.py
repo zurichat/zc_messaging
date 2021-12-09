@@ -86,7 +86,7 @@ async def create_room(
         424: {"detail": "failed to add new members to room"},
     },
 )
-async def members_join_room(
+async def join_room(
     org_id: str,
     room_id: str,
     member_id: str,
