@@ -1,7 +1,6 @@
 import requests
 
-PLUGIN_ID = "617db02f27c36150b422bc4d"
-ORG_ID = "619ba4671a5f54782939d384"
+PLUGIN_KEY = "chat.zuri.chat"
 BASE_URL = "https://staging.api.zuri.chat"
 
 
@@ -14,14 +13,22 @@ class DataStorage:
     """
 
     def __init__(
-        self, plugin_id: str = PLUGIN_ID, organization_id: str = ORG_ID
+        self, organization_id: str
     ) -> None:
         self.write_api = f"{BASE_URL}/data/write"
         self.delete_api = f"{BASE_URL}/data/delete"
         self.read_query_api = f"{BASE_URL}/data/read"
-        self.get_member_api = f"{BASE_URL}/organizations/" + "{org_id}/members/"
-        self.plugin_id = plugin_id
+        self.get_member_api = f"{BASE_URL}/organizations/{organization_id}/members/"
         self.organization_id = organization_id
+
+        try:
+            response = requests.get(url=f"{BASE_URL}/marketplace/plugins")
+            plugins = response.json().get("data").get("plugins")
+            plugin = next(item for item in plugins if PLUGIN_KEY in item["template_url"])
+            self.plugin_id = plugin["id"] if plugin else None
+
+        except requests.exceptions.RequestException as exception:
+            print(exception)
 
     async def write(self, collection_name, data):
         """Function to write into db
@@ -187,14 +194,17 @@ class FileStorage:
     """
 
     def __init__(
-        self, plugin_id: str = PLUGIN_ID, organization_id: str = ORG_ID
+        self, organization_id: str
     ) -> None:
-        self.upload_api = f"{BASE_URL}/upload/file/" + "{pgn_id}"
-        self.upload_multiple_api = f"{BASE_URL}/upload/files/" + "{pgn_id}"
-        self.delete_file_api = f"{BASE_URL}/delete/file/" + "{pgn_id}"
-        self.plugin_id = plugin_id
-        self.organization_id = organization_id
+        try:
+            response = requests.get(url=f"{BASE_URL}/marketplace/plugins")
+            plugins = response.json().get("data").get("plugins")
+            plugin = next(item for item in plugins if PLUGIN_KEY in item["template_url"])
+            self.plugin_id = plugin["id"] if plugin else None
+            self.upload_api = f"{BASE_URL}/upload/file/" + "{self.plugin_id}"
+            self.upload_multiple_api = f"{BASE_URL}/upload/files/" + "{self.plugin_id}"
+            self.delete_file_api = f"{BASE_URL}/delete/file/" + "{self.plugin_id}"
+            self.organization_id = organization_id
 
-
-DB = DataStorage()  # datastorage class object
-fileStore = FileStorage()  # filestorage class object
+        except requests.exceptions.RequestException as exception:
+            print(exception)
