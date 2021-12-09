@@ -1,14 +1,15 @@
 import App from "./App"
+import { BrowserRouter as Router } from "react-router-dom"
 import { Provider } from "react-redux"
 import { store } from "./store"
-import { ChakraProvider } from "@chakra-ui/react"
+import "./root-component.css"
 
-export default function Root() {
+export default function Root(props) {
   return (
-    <Provider store={store}>
-      <ChakraProvider>
+    <Router basename={props.baseName || "/"}>
+      <Provider store={store}>
         <App />
-      </ChakraProvider>
-    </Provider>
+      </Provider>
+    </Router>
   )
 }
