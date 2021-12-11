@@ -31,13 +31,16 @@ async def send_message(
         org_id (str): A unique identifier of an organisation
         request: A pydantic schema that defines the message request parameters
         room_id: A unique identifier of the room where the message is being sent to.
+        sender_id: A unique identifier of the user sending the message
+        background_tasks: A daemon thread for publishing centrifugo
     Returns:
         HTTP_201_CREATED {new message sent}:
         A dict containing data about the message that was created (response_output).
             {
                 "room_id": "61b3fb328f945e698c7eb396",
                 "message_id": "61696f43c4133ddga309dcf6",
-                "content": "str",
+                "text": "str",
+                "files": "HTTP url(s)"
                 "sender_id": "619ba4671a5f54782939d385"
             }
     Raises:
@@ -55,8 +58,9 @@ async def send_message(
         output_data = {
             "room_id": message_obj.room_id,
             "message_id": message_obj.message_id,
-            "content": message_obj.text,
-            "sender_id": message_obj.sender_id
+            "sender_id": message_obj.sender_id,
+            "text": message_obj.text,
+            "files": message_obj.files
         }
         background_tasks.add_task(
             centrifugo_client.publish, room_id, Events.MESSAGE_CREATE, output_data
