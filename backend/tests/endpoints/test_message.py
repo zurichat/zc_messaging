@@ -27,7 +27,7 @@ def test_send_message():
     }
 
     response = client.post(
-        "/org/{org_id}/rooms/{room_id}/messages",
+        "/org/{org_id}/rooms/{room_id}/sender/{sender_id}/messages",
         json= fake_message_data
         )
     assert response.status_code == 201
@@ -37,7 +37,7 @@ def test_message_not_sent():
     """test response when message is not sent successfully"""
 
     response = client.post(
-        "/org/{fake_org_id}/rooms/{fake_room_id}/messages",
+        "/org/{org_id}/rooms/{room_id}/sender/{sender_id}/messages",
         json= fake_message_data
         )
     
