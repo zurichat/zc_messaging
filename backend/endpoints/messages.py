@@ -6,12 +6,10 @@ from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.room_utils import get_room
 
 router = APIRouter()
 
 MESSAGE_COLLECTION = "chat_messages"
-test_room = "61b3fb328f945e698c7eb396"
 
 @router.post(
     "/org/{org_id}/rooms/{room_id}/sender/{sender_id}/messages",
@@ -37,19 +35,10 @@ async def send_message(
         HTTP_201_CREATED {new message sent}:
         A dict containing data about the message that was created (response_output).
             {
-                "message_id": "61696f43c4133ddga309dcf6",
-                "data": {
                 "room_id": "61b3fb328f945e698c7eb396",
-                "sender_id": "619ba4671a5f54782939d385",
-                "text": "str",
-                "reactions": [],
-                "saved_by": [],
-                "files": [],
-                "is_pinned": bool = False
-                "is_edited": bool = False
-                "created_at": "2021-10-15T19:51:41.928908Z",
-                "thread": [],
-                        }
+                "message_id": "61696f43c4133ddga309dcf6",
+                "content": "str",
+                "sender_id": "619ba4671a5f54782939d385"
             }
     Raises:
         HTTPException [404]: Sender not in room
@@ -61,18 +50,22 @@ async def send_message(
                             sender_id= sender_id)
     response = await DB.write(MESSAGE_COLLECTION, message_obj.dict())
 
-    if response.get("status_code") != 201:
-        raise HTTPException(
+    if response and response.get("status_code") == None:
+        message_obj.message_id = response["data"]["object_id"]
+        output_data = {
+            "room_id": message_obj.room_id,
+            "message_id": message_obj.message_id,
+            "content": message_obj.text,
+            "sender_id": message_obj.sender_id
+        }
+        background_tasks.add_task(
+            centrifugo_client.publish, room_id, Events.MESSAGE_CREATE, output_data
+        )  # publish to centrifugo in the background
+        return JSONResponse(
+            content=ResponseModel.success(data=output_data, message="new message sent"),
+            status_code=status.HTTP_201_CREATED,
+        )
+    raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail={"Message not sent": response},
         )
-    message_obj.message_id = response["data"]["object_id"]
-
-    background_tasks.add_task(
-        centrifugo_client.publish, room_id, Events.MESSAGE_CREATE,
-    )  # publish to centrifugo in the background
-
-    return JSONResponse(
-        content=ResponseModel.success(data=message_obj.dict(), message="new message sent"),
-        status_code=status.HTTP_201_CREATED,
-    )

@@ -25,14 +25,19 @@ class ThreadRequest(BaseModel):
 
 
 class Thread(ThreadRequest):
+    """Provide structure for the thread schema
+
+    Class inherits from ThreadRequest to hold 
+    data for the thread schema
+    """
     sender_id: str
     room_id: str
     org_id:str
-    message_id:str
+    message_id:str = Field(None, alias="_id")
 
     @root_validator(pre=True)
     @classmethod
-    def validates_channels(cls, values):
+    def validates_message(cls, values):
         """Checks if the room_id and sender_id are valid
 
         Args:
