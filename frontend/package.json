@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "start": "serve dist/ -p 9001",
-    "open": "opener http://localhost:9000",
+    "open": "opener http://localhost:9009",
     "dev:root": "yarn --cwd root-config dev",
     "dev:messaging": "yarn --cwd zc_messaging dev",
     "dev": "concurrently yarn:dev:*",
