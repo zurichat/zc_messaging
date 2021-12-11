@@ -56,7 +56,7 @@ class DataStorage:
         if response.status_code == 201:
             return response.json()
 
-        return {"status_code": response.status_code, "message": response.reason}
+        return {"status_code": response.status_code, "message": response.json()}
 
     async def update(self, collection_name, document_id, data):
         """Function to update data from db.
