@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "clean": "rimraf dist",
-    "dev": "webpack serve --port 9000 --env isLocal",
+    "dev": "webpack serve --port 9009 --env isLocal",
     "build": "webpack --mode=production"
   },
   "devDependencies": {

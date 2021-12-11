@@ -52,8 +52,9 @@
       {
         "imports": {
           "single-spa": "https://cdn.jsdelivr.net/npm/single-spa@5.9.0/lib/system/single-spa.min.js",
-          "vue": "https://cdn.jsdelivr.net/npm/vue@2.6.11/dist/vue.min.js",
-          "vue-router": "https://cdn.jsdelivr.net/npm/vue-router@3.1.6/dist/vue-router.min.js",
+          "react": "https://cdn.jsdelivr.net/npm/react@17.0.2/umd/react.production.min.js",
+          "react-dom": "https://cdn.jsdelivr.net/npm/react-dom@17.0.2/umd/react-dom.production.min.js",
+          "@zuri/utilities": "https://staging.zuri.chat/zuri-utilities.js",
           "@zuri/zuri-ui": "https://staging.zuri.chat/zuri-zuri-ui.js"
         }
       }
@@ -64,15 +65,6 @@
         "imports": {
           "react": "https://cdn.jsdelivr.net/npm/react@17.0.2/umd/react.development.js",
           "react-dom": "https://cdn.jsdelivr.net/npm/react-dom@17.0.2/umd/react-dom.development.js"
-        }
-      }
-    </script>
-    <% } else { %>
-    <script type="systemjs-importmap">
-      {
-        "imports": {
-          "react": "https://cdn.jsdelivr.net/npm/react@17.0.2/umd/react.production.min.js",
-          "react-dom": "https://cdn.jsdelivr.net/npm/react-dom@17.0.2/umd/react-dom.production.min.js"
         }
       }
     </script>
@@ -87,7 +79,7 @@
     <script type="systemjs-importmap">
       {
         "imports": {
-          "@zuri/zuri-messaging-root-config": "//localhost:9000/zuri-messaging-root-config.js",
+          "@zuri/zuri-messaging-root-config": "//localhost:9009/zuri-messaging-root-config.js",
           "@zuri/messaging": "//localhost:5013/zuri-messaging.js"
         }
       }
