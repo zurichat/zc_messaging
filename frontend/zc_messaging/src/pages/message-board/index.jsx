@@ -49,9 +49,7 @@ const MessagingBoard = () => {
       Right sidebar like thread, profile and co
       ... All routed in InMessageRoute component
     */}
-      <RightAside>
-        <Outlet />
-      </RightAside>
+      <Outlet />
     </Container>
   ) : null
 }

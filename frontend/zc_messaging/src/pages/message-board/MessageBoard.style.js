@@ -13,7 +13,6 @@ export const MessagingArea = styled.div`
   padding: 16px;
 `
 
-export const RightAside = styled.aside`
-  background: white;
-  padding: 16px;
+export const RightAsideWrapper = styled.div`
+  width: 415px;
 `
