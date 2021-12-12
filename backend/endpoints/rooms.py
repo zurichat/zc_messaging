@@ -1,6 +1,5 @@
-from typing import Dict
-
-from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
+from schema.room import Role, RoomMember
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Body
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
@@ -8,6 +7,8 @@ from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.room_utils import ROOM_COLLECTION, get_room
 from utils.sidebar import sidebar
+from utils.room_utils import get_room
+from typing import Dict
 
 router = APIRouter()
 
