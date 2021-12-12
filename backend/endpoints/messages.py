@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi import APIRouter
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Message, ThreadRequest
+from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
@@ -21,7 +21,7 @@ MESSAGE_COLLECTION = "chat_messages"
     },
 )
 async def send_message(
-    org_id, room_id, sender_id, request:ThreadRequest, background_tasks: BackgroundTasks
+    org_id, room_id, sender_id, request:MessageRequest, background_tasks: BackgroundTasks
 ):
     """Creates and sends a message from one user to another.
     Registers a new document to the chats database collection.
@@ -53,7 +53,7 @@ async def send_message(
                             sender_id= sender_id)
     response = await DB.write(MESSAGE_COLLECTION, message_obj.dict())
 
-    if response and response.get("status_code") == None:
+    if response and response.get("status_code") is None:
         message_obj.message_id = response["data"]["object_id"]
         output_data = {
             "room_id": message_obj.room_id,
@@ -73,3 +73,4 @@ async def send_message(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail={"Message not sent": response},
         )
+        

@@ -13,7 +13,7 @@ class Reaction(BaseModel):
     character: str
 
 
-class ThreadRequest(BaseModel):
+class MessageRequest(BaseModel):
     """
     Provides a base model for all threads
     """
@@ -24,10 +24,10 @@ class ThreadRequest(BaseModel):
     created_at: str = str(datetime.utcnow())
 
 
-class Thread(ThreadRequest):
+class Thread(MessageRequest):
     """Provide structure for the thread schema
 
-    Class inherits from ThreadRequest to hold 
+    Class inherits from MessageRequest to hold 
     data for the thread schema
     """
     sender_id: str
