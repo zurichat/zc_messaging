@@ -7,7 +7,7 @@ from utils.db import DataStorage
 
 router = APIRouter()
 
-MESSAGE_COLLECTION = "chat_messages"
+MESSAGE_COLLECTION = "messages"
 
 
 @router.post(
