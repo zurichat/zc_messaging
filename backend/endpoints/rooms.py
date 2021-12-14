@@ -1,5 +1,6 @@
-from schema.room import Role, RoomMember
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Body
+from typing import Dict
+
+from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
@@ -7,8 +8,6 @@ from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.room_utils import ROOM_COLLECTION, get_room
 from utils.sidebar import sidebar
-from utils.room_utils import get_room
-from typing import Dict
 
 router = APIRouter()
 
@@ -133,16 +132,16 @@ async def join_room(
         )
 
     member = room.get("room_members").get(str(member_id))
-    if member is None or member["role"] != Role.ADMIN:
+    if member is None or member["role"].upper() != Role.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="member not in room or not an admin",
         )
 
-    if room["room_type"] == RoomType.CHANNEL:
+    if room["room_type"].upper() == RoomType.CHANNEL:
         room["room_members"].update(members)
 
-    if room["room_type"] == RoomType.GROUP_DM:
+    if room["room_type"].upper() == RoomType.GROUP_DM:
         room["room_members"].update(members)
         if len(room["room_members"].keys()) > 9:
             raise HTTPException(
