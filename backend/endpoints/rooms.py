@@ -1,5 +1,6 @@
-from schema.room import Role, RoomMember
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Body
+from typing import Dict
+
+from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
@@ -125,23 +126,23 @@ async def join_room(
 
     room = await get_room(org_id=org_id, room_id=room_id)
 
-    if not room or room["room_type"] == RoomType.DM:
+    if not room or room["room_type"].upper() == RoomType.DM:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="DM room cannot be joined or not found",
         )
 
     member = room.get("room_members").get(str(member_id))
-    if member is None or member["role"] != Role.ADMIN:
+    if member is None or member["role"].lower() != Role.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="member not in room or not an admin",
         )
 
-    if room["room_type"] == RoomType.CHANNEL:
+    if room["room_type"].upper() == RoomType.CHANNEL:
         room["room_members"].update(members)
 
-    if room["room_type"] == RoomType.GROUP_DM:
+    if room["room_type"].upper() == RoomType.GROUP_DM:
         room["room_members"].update(members)
         if len(room["room_members"].keys()) > 9:
             raise HTTPException(

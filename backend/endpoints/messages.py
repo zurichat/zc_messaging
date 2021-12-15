@@ -19,7 +19,11 @@ MESSAGE_COLLECTION = "messages"
     },
 )
 async def send_message(
-    org_id, room_id, sender_id, request:MessageRequest, background_tasks: BackgroundTasks
+    org_id,
+    room_id,
+    sender_id,
+    request: MessageRequest,
+    background_tasks: BackgroundTasks,
 ):
     """Creates and sends a message from one user to another.
     Registers a new document to the chats database collection.
@@ -47,8 +51,9 @@ async def send_message(
         HTTPException [424]: "message not sent"
     """
     DB = DataStorage(org_id)
-    message_obj = Message(**request.dict(), org_id=org_id, room_id=room_id,
-                            sender_id= sender_id)
+    message_obj = Message(
+        **request.dict(), org_id=org_id, room_id=room_id, sender_id=sender_id
+    )
     response = await DB.write(MESSAGE_COLLECTION, message_obj.dict())
 
     if response and response.get("status_code") is None:
@@ -58,7 +63,7 @@ async def send_message(
             "message_id": message_obj.message_id,
             "sender_id": message_obj.sender_id,
             "text": message_obj.text,
-            "files": message_obj.files
+            "files": message_obj.files,
         }
         background_tasks.add_task(
             centrifugo_client.publish, room_id, Events.MESSAGE_CREATE, output_data
@@ -68,7 +73,6 @@ async def send_message(
             status_code=status.HTTP_201_CREATED,
         )
     raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"Message not sent": response},
-        )
-        
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail={"Message not sent": response},
+    )
