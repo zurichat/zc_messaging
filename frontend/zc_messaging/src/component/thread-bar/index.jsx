@@ -21,7 +21,7 @@ const Thread = () => {
           </Link>
         </span>
       </ThreadBarHeader>
-      <ThreadBarContent></ThreadBarContent>
+      <ThreadBarContent>{/* <MessageCard /> */}</ThreadBarContent>
     </ThreadBar>
   )
 }
