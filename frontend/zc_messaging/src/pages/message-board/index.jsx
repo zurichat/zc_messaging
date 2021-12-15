@@ -1,7 +1,7 @@
 import React from "react"
 import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { MessageBoard } from "@zuri/zuri-ui"
-import { Container, MessagingArea, RightAside } from "./MessageBoard.style"
+import { Container, MessagingArea, TypingNotice } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
 
 const MessagingBoard = () => {
@@ -42,7 +42,10 @@ const MessagingBoard = () => {
   return roomId ? (
     <Container>
       <MessagingArea>
-        <MessageBoard messageBoardConfig={chatSidebarConfig} />
+        <div style={{ height: "calc(100% - 29px)" }}>
+          <MessageBoard messageBoardConfig={chatSidebarConfig} />
+        </div>
+        <TypingNotice>Omo Jesu is typing</TypingNotice>
       </MessagingArea>
 
       {/* 
