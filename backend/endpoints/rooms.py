@@ -1,5 +1,3 @@
-from typing import Dict
-
 from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
