@@ -12,9 +12,7 @@ class DataStorage:
 
     """
 
-    def __init__(
-        self, organization_id: str
-    ) -> None:
+    def __init__(self, organization_id: str) -> None:
         self.write_api = f"{BASE_URL}/data/write"
         self.delete_api = f"{BASE_URL}/data/delete"
         self.read_query_api = f"{BASE_URL}/data/read"
@@ -24,7 +22,9 @@ class DataStorage:
         try:
             response = requests.get(url=f"{BASE_URL}/marketplace/plugins")
             plugins = response.json().get("data").get("plugins")
-            plugin = next(item for item in plugins if PLUGIN_KEY in item["template_url"])
+            plugin = next(
+                item for item in plugins if PLUGIN_KEY in item["template_url"]
+            )
             self.plugin_id = plugin["id"] if plugin else None
 
         except requests.exceptions.RequestException as exception:
@@ -56,7 +56,7 @@ class DataStorage:
         if response.status_code == 201:
             return response.json()
 
-        return {"status_code": response.status_code, "message": response.reason}
+        return {"status_code": response.status_code, "message": response.json()}
 
     async def update(self, collection_name, document_id, data):
         """Function to update data from db.
@@ -193,13 +193,13 @@ class FileStorage:
     files and the database on zc_core
     """
 
-    def __init__(
-        self, organization_id: str
-    ) -> None:
+    def __init__(self, organization_id: str) -> None:
         try:
             response = requests.get(url=f"{BASE_URL}/marketplace/plugins")
             plugins = response.json().get("data").get("plugins")
-            plugin = next(item for item in plugins if PLUGIN_KEY in item["template_url"])
+            plugin = next(
+                item for item in plugins if PLUGIN_KEY in item["template_url"]
+            )
             self.plugin_id = plugin["id"] if plugin else None
             self.upload_api = f"{BASE_URL}/upload/file/" + "{self.plugin_id}"
             self.upload_multiple_api = f"{BASE_URL}/upload/files/" + "{self.plugin_id}"

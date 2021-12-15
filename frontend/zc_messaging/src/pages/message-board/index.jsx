@@ -3,10 +3,12 @@ import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { MessageBoard } from "@zuri/zuri-ui"
 import { Container, MessagingArea, RightAside } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
+import { useSelector } from "react-redux"
 
 const MessagingBoard = () => {
   const { roomId } = useParams()
   const navigateTo = useNavigate()
+  const authUser = useSelector(state => state.authUser)
   React.useEffect(() => {
     if (!roomId) {
       ;(async () => {
@@ -34,8 +36,8 @@ const MessagingBoard = () => {
       //  )
     },
     currentUserData: {
-      username: "John Doe",
-      imageUrl: ""
+      username: authUser.user_name || "John Doe",
+      imageUrl: authUser.user_image_url || ""
     },
     messages: []
   }
