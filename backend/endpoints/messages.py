@@ -1,5 +1,3 @@
-from fastapi import APIRouter
-from fastapi import APIRouter
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
@@ -9,7 +7,7 @@ from utils.db import DataStorage
 
 router = APIRouter()
 
-MESSAGE_COLLECTION = "chat_messages"
+MESSAGE_COLLECTION = "messages"
 
 @router.post(
     "/org/{org_id}/rooms/{room_id}/sender/{sender_id}/messages",
