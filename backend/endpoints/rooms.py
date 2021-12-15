@@ -125,14 +125,14 @@ async def join_room(
 
     room = await get_room(org_id=org_id, room_id=room_id)
 
-    if not room or room["room_type"] == RoomType.DM:
+    if not room or room["room_type"].upper() == RoomType.DM:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="DM room cannot be joined or not found",
         )
 
     member = room.get("room_members").get(str(member_id))
-    if member is None or member["role"].upper() != Role.ADMIN:
+    if member is None or member["role"].lower() != Role.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="member not in room or not an admin",
