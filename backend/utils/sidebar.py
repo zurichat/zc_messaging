@@ -33,7 +33,7 @@ class Sidebar:
                                 }
                             }
         """
-        room_members = room.get("room_members")
+        room_members = room.get("room_members", "not-found")
         room_members.pop(member_id)  # remove self from room members
         for room_member_id in room_members.keys():
             member_data = await DB.get_member(room_member_id, org_members)
