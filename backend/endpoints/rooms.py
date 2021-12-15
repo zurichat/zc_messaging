@@ -5,9 +5,8 @@ from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.room_utils import ROOM_COLLECTION, get_room
+from utils.room_utils import ROOM_COLLECTION, get_org_rooms, get_room
 from utils.sidebar import sidebar
-from utils.room_utils import get_room
 from typing import Dict
 
 router = APIRouter()
@@ -171,3 +170,98 @@ async def join_room(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail="failed to add new members to room",
     )
+
+
+@router.get(
+    "/org/{org_id}/rooms",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"detail": {"rooms": "list of rooms"}},
+        404: {"detail": "rooms not found"},
+    },
+)
+async def get_all_rooms(org_id: str):
+    """Get all rooms.
+
+    Returns the list of rooms if the rooms are found in the database
+    Raises HTTP_404_NOT_FOUND if the org_id is invalid or rooms are not found
+
+    Args:
+        org_id (str): A unique identifier of an organisation
+
+    Returns:
+        HTTP_200_OK (list of rooms in the org): {rooms}
+        HTTP_404_NOT_FOUND (Failure to retrieve org rooms): {rooms}
+    """
+
+    if org_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid Organization id",
+        )
+       
+    try:
+        rooms = await get_org_rooms(org_id=org_id)        
+        if rooms:
+            return JSONResponse(
+                content=ResponseModel.success(data=rooms, message="list of rooms in the org"),
+                status_code=status.HTTP_200_OK,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Failure to retrieve org rooms"
+        )
+    except Exception as e:
+        raise e
+    
+        
+@router.get(
+    "/org/{org_id}/rooms/{room_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"detail": {"room_id": "room_id"}},
+        404: {"detail": "room not found"},
+    },
+)
+async def get_room_by_id(
+    org_id: str, room_id: str
+):
+    """Get room by id.
+
+    Returns the room object if the room is found in the database
+    Raises HTTP_404_NOT_FOUND if the room is not found
+
+    Args:
+        org_id (str): A unique identifier of an organisation
+        room_id (str): A unique identifier of the room
+
+    Returns:
+        HTTP_200_OK (room found): {room}
+        HTTP_404_NOT_FOUND (room not found): {room}
+    """
+    if org_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid Organization id",
+        )
+    
+    if room_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid Room id",
+        )
+    
+    try:
+        room = await get_room(org_id=org_id, room_id=room_id)
+
+        if room:
+            return JSONResponse(
+                content=ResponseModel.success(data=room, message="room found"),
+                status_code=status.HTTP_200_OK,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="room not found"
+        )
+    except Exception as e:
+        raise e
