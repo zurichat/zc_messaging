@@ -5,6 +5,7 @@ import { v2 } from "@zuri/zuri-ui"
 import mockMessages from "./messages.data.js"
 import { Container, MessagingArea, TypingNotice } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
+import { useSelector } from "react-redux"
 
 const { MessageBoard } = v2
 const currentUser = JSON.parse(sessionStorage.getItem("user"))
@@ -13,7 +14,7 @@ const MessagingBoard = () => {
   const { roomId } = useParams()
   const navigateTo = useNavigate()
   const [messages, setMessages] = useState(mockMessages)
-
+  const authUser = useSelector(state => state.authUser)
   React.useEffect(() => {
     if (!roomId) {
       ;(async () => {
