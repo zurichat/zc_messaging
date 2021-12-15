@@ -80,8 +80,8 @@ class RoomRequest(BaseModel):
             HTTPException [400]: if DM has topic
             HTTPException [400]: if DM has a description
         """
-        if values["room_type"] != RoomType.CHANNEL:
-            room_type = values.get("room_type")
+        if values["room_type"].upper() != RoomType.CHANNEL:
+            room_type = values.get("room_type").upper()
             room_members = values.get("room_members", {})
             topic = values.get("topic")
             description = values.get("description")
@@ -155,7 +155,7 @@ class RoomRequest(BaseModel):
         Raises:
             HTTPException [400]: if room_members has less than two unique members
         """
-        if values.get("room_type") == RoomType.CHANNEL:
+        if values.get("room_type").upper() == RoomType.CHANNEL:
             room_type = values.get("room_type")
             room_name = values.get("room_name")
             org_id = values.get("org_id")
