@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Any
 
 
 class ResponseModel(BaseModel):
@@ -15,7 +16,7 @@ class ResponseModel(BaseModel):
 
     status: str
     message: str
-    data: dict
+    data: Any
 
     @staticmethod
     def success(data, message="success"):

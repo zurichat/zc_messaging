@@ -1,13 +1,16 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Message, MessageRequest
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Body
+from schema.message import Message, MessageRequest, MessageUpdateRequest, Reaction
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
+from utils.mssg_utils import get_mssg
+from typing import Dict
 
 router = APIRouter()
 
 MESSAGE_COLLECTION = "messages"
+
 
 @router.post(
     "/org/{org_id}/rooms/{room_id}/sender/{sender_id}/messages",
@@ -181,7 +184,7 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
             detail="Invalid parameters",
         )
     try:
-        message = await DB.read(MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id, "_id": message_id})
+        message = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
         if message:
             return JSONResponse(
                 content=ResponseModel.success(
@@ -192,6 +195,201 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"Message not found": message},
+        )
+    except Exception as e:
+        raise e
+
+
+@router.put(
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
+    response_model=ResponseModel,
+            responses={
+                status.HTTP_200_OK: {"description": "message updated"},
+                status.HTTP_404_NOT_FOUND: {"description": "message not found"},
+                status.HTTP_403_FORBIDDEN: {"description": "you are not authorized to edit this message"},
+                status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not updated"}
+            })
+async def update_message(
+    request: MessageUpdateRequest,
+    org_id: str,
+    room_id: str,
+    sender_id: str,
+    message_id: str,
+    background_tasks: BackgroundTasks
+):
+    """
+    Update a message
+
+    Args:
+        request: Request object
+        org_id: A unique identifier of the organization.
+        room_id: A unique identifier of the room.
+        sender_id: A unique identifier of the sender.
+        message_id: A unique identifier of the message that is being updated.
+
+    Returns:
+        HTTP_200_OK {message updated successfully}:
+        A dict containing data about the message that was updated (response_output).
+            {
+                "_id": "61b8caec78fb01b18fac1410",
+                "created_at": "2021-12-14 16:40:43.302519",
+                "files": [],
+                "message_id": null,
+                "org_id": "619ba4671a5f54782939d384",
+                "reactions": [],
+                "room_id": "619e28c31a5f54782939d59a",
+                "saved_by": [],
+                "sender_id": "61696f5ac4133ddaa309dcfe",
+                "text": "testing messages",
+                "threads": []
+            }
+
+    Raises:
+        HTTP_404_FAILED_DEPENDENCY: Message not found
+        HTTP_424_FAILED_DEPENDENCY: Message not updated
+        HTTP_403_FORBIDDEN: You are not authorized to edit this message
+    """
+    DB = DataStorage(org_id)
+    if org_id and room_id and message_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid parameters",
+        )
+    mssg = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
+    if not mssg:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+        )
+
+    if mssg["sender_id"] != sender_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to edit this message",
+        )
+
+    payload = request.dict()
+    try:
+        message = await DB.update(
+            MESSAGE_COLLECTION, document_id=message_id, data=payload
+        )
+        if message:
+            edited_mssg = {
+            "text": payload["text"],
+        }
+            background_tasks.add_task(
+                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, edited_mssg
+            )  # publish to centrifugo in the background
+            return JSONResponse(
+                content=ResponseModel.success(
+                    data=edited_mssg, message="message updated successfully"
+                ),
+                status_code=status.HTTP_200_OK,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"message not updated": message},
+        )
+    except Exception as e:
+        raise e
+
+
+
+@router.put(
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reactions",
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"detail": "message not found"},
+        424: {"detail": "failed to add new reaction to message"},
+    },
+)
+async def add_reaction(
+    request: Reaction,
+    org_id: str,
+    room_id: str,
+    sender_id: str,
+    message_id: str,
+    background_tasks: BackgroundTasks,
+    new_reaction: Dict[str, Reaction] = Body(...),
+):
+    """
+    Add a reaction to a message
+    
+    Args:
+        request: Request object
+        org_id: A unique identifier of the organization.
+        room_id: A unique identifier of the room.
+        sender_id: A unique identifier of the sender.
+        message_id: A unique identifier of the message that is being updated.
+        new_reaction: A dict containing data about the reaction that is being added.
+            {
+                "reaction_id": "61b8caec78fb01b18fac1410",
+                "reaction_type": "like",
+                "reaction_value": "1"
+            }
+
+    Returns:
+        HTTP_200_OK {message updated successfully}:
+        A dict containing data about the message that was updated (response_output).
+            {
+                "_id": "61b8caec78fb01b18fac1410",
+                "created_at": "2021-12-14 16:40:43.302519",
+                "files": [],
+                "message_id": null,
+                "org_id": "619ba4671a5f54782939d384",
+                "reactions": [],
+                "room_id": "619e28c31a5f54782939d59a",
+                "saved_by": [],
+                "sender_id": "61696f5ac4133ddaa309dcfe",
+                "text": "testing messages",
+                "threads": []
+            }
+
+    Raises:
+        HTTP_404_NOT_FOUND: Message not found
+        HTTP_424_FAILED_DEPENDENCY: Failed to add new reaction to message
+    """
+    DB = DataStorage(org_id)
+    if org_id and room_id and message_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid parameters",
+        )
+    mssg = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
+    if not mssg:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+        )
+
+    if mssg["sender_id"] != sender_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to edit this message",
+        )
+
+    try:
+        reaction = await DB.add_reaction(
+            MESSAGE_COLLECTION,
+            document_id=message_id,
+            reaction_id=new_reaction["reaction_id"],
+            reaction_type=new_reaction["reaction_type"],
+            reaction_value=new_reaction["reaction_value"],
+        )
+        if reaction:
+            background_tasks.add_task(
+                centrifugo_client.publish,
+                room_id,
+                Events.MESSAGE_REACTION_ADD,
+                new_reaction,
+            )  # publish to centrifugo in the background
+            return JSONResponse(
+                content=ResponseModel.success(
+                    data=reaction, message="reaction added successfully"
+                ),
+                status_code=status.HTTP_200_OK,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"failed to add new reaction to message": reaction},
         )
     except Exception as e:
         raise e
