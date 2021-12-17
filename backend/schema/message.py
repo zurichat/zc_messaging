@@ -88,9 +88,5 @@ class MessageUpdateRequest(BaseModel):
     Provides a base model for all threads
     """
 
-    text: Optional[str]
-    files: Optional[List[AnyHttpUrl]] = None
+    text: str
     edited_at: str = str(datetime.now())
-    # reactions: Optional[List[Reaction]] = None
-    # saved_by: Optional[List[str]] = None
-
