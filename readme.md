@@ -57,7 +57,7 @@ Depending on your track, you are to work in the folder that concerns you.
 - cd into the project folder
 - cd into the frontend folder
 - `yarn install`
-- `yarn setup` to setup app simultaneously
+- `yarn setup` to setup app
 - `yarn setup:root` to setup SPA
 - `yarn setup:messaging` to setup React App
 - `yarn dev` to run apps simultaneously
