@@ -170,4 +170,3 @@ async def join_room(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail="failed to add new members to room",
     )
-    

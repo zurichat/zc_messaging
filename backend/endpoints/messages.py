@@ -1,5 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Message, MessageRequest, MessageUpdateRequest
+from schema.message import Message, MessageRequest, MessageUpdate
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
@@ -84,16 +84,16 @@ async def send_message(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
     response_model=ResponseModel,
     responses={
-        status.HTTP_200_OK: {"description": "message updated"},
+        status.HTTP_200_OK: {"description": "message edited"},
         status.HTTP_404_NOT_FOUND: {"description": "message not found"},
         status.HTTP_403_FORBIDDEN: {
             "description": "you are not authorized to edit this message"
         },
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not updated"},
+        status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
     },
 )
 async def update_message(
-    request: MessageUpdateRequest,
+    request: MessageUpdate,
     org_id: str,
     room_id: str,
     message_id: str,
@@ -107,10 +107,10 @@ async def update_message(
         org_id: A unique identifier of the organization.
         room_id: A unique identifier of the room.
         sender_id: A unique identifier of the sender.
-        message_id: A unique identifier of the message that is being updated.
+        message_id: A unique identifier of the message that is being edited.
 
     Returns:
-        HTTP_200_OK {message edited}:
+        HTTP_200_OK {message updated successfully}:
         A dict containing data about the message that was updated (response_output).
             {
                 "room_id": "619e28c31a5f54782939d59a",
@@ -126,23 +126,19 @@ async def update_message(
         HTTP_403_FORBIDDEN: You are not authorized to edit this message
     """
     DB = DataStorage(org_id)
-    if org_id and room_id and message_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid parameters",
-        )
-    mssg = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
-    if not mssg:
+    message = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
+    if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
         )
-    sender_id = mssg["sender_id"]
-    if sender_id != request.sender_id:
+
+    payload = request.dict()
+    if message["sender_id"] != payload["sender_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to edit this message",
         )
-    payload = request.dict()
+
     try:
         message = await DB.update(
             MESSAGE_COLLECTION, document_id=message_id, data=payload
@@ -155,18 +151,22 @@ async def update_message(
                 "text": payload["text"],
                 "edited_at": payload["edited_at"],
             }
+
             background_tasks.add_task(
                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, edited_mssg
             )  # publish to centrifugo in the background
+
             return JSONResponse(
                 content=ResponseModel.success(
                     data=edited_mssg, message="message edited"
                 ),
                 status_code=status.HTTP_200_OK,
             )
+
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail={"message not edited": message},
         )
+
     except Exception as e:
         raise e

@@ -83,7 +83,7 @@ class Message(Thread):
     threads: List[Thread] = []
 
 
-class MessageUpdateRequest(BaseModel):
+class MessageUpdate(BaseModel):
     """
     Provides a base model to update messages
     """
