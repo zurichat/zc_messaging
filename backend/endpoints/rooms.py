@@ -1,3 +1,5 @@
+from typing import Dict
+
 from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
@@ -6,7 +8,6 @@ from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.room_utils import ROOM_COLLECTION, get_org_rooms, get_room
 from utils.sidebar import sidebar
-from typing import Dict
 
 router = APIRouter()
 
@@ -190,30 +191,49 @@ async def get_all_rooms(org_id: str):
         org_id (str): A unique identifier of an organisation
 
     Returns:
-        HTTP_200_OK (list of rooms in the org): {rooms}
+        HTTP_200_OK (list of rooms in the org)
+        {
+            "_id": "61bc094b78fb01b18fac1425",
+            "created_at": "2021-12-17 03:10:26.620752",
+            "created_by": "619ba4671a5f54782939d385",
+            "description": "string",
+            "id": null,
+            "is_archived": false,
+            "is_private": false,
+            "org_id": "619ba4671a5f54782939d384",
+            "room_members": {
+                "619ba4671a5f54782939d385": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+                }
+            },
+            "room_name": "testroom2",
+            "room_type": "CHANNEL",
+            "topic": "string"
+        }
+
+    Raises:
         HTTP_404_NOT_FOUND (Failure to retrieve org rooms): {rooms}
     """
+    rooms = await get_org_rooms(org_id=org_id)
 
-    if org_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid Organization id",
-        )
-       
     try:
-        rooms = await get_org_rooms(org_id=org_id)        
         if rooms:
             return JSONResponse(
-                content=ResponseModel.success(data=rooms, message="list of rooms in the org"),
+                content=ResponseModel.success(
+                    data=rooms, message="list of rooms in the org"
+                ),
                 status_code=status.HTTP_200_OK,
             )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Failure to retrieve org rooms"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Failure to retrieve org rooms",
         )
     except Exception as e:
         raise e
-    
-        
+
+
 @router.get(
     "/org/{org_id}/rooms/{room_id}",
     response_model=ResponseModel,
@@ -223,9 +243,7 @@ async def get_all_rooms(org_id: str):
         404: {"detail": "room not found"},
     },
 )
-async def get_room_by_id(
-    org_id: str, room_id: str
-):
+async def get_room_by_id(org_id: str, room_id: str):
     """Get room by id.
 
     Returns the room object if the room is found in the database
@@ -236,19 +254,34 @@ async def get_room_by_id(
         room_id (str): A unique identifier of the room
 
     Returns:
-        HTTP_200_OK (room found): {room}
+        HTTP_200_OK (room found)
+        {
+            "_id": "61bc094b78fb01b18fac1425",
+            "created_at": "2021-12-17 03:10:26.620752",
+            "created_by": "619ba4671a5f54782939d385",
+            "description": "string",
+            "id": null,
+            "is_archived": false,
+            "is_private": false,
+            "org_id": "619ba4671a5f54782939d384",
+            "room_members": {
+                "619ba4671a5f54782939d385": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+                }
+            },
+            "room_name": "testroom2",
+            "room_type": "CHANNEL",
+            "topic": "string"
+        }
+
+    Raises:
         HTTP_404_NOT_FOUND (room not found): {room}
     """
-   
-    if org_id and room_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid parameters",
-        )
+    room = await get_room(org_id=org_id, room_id=room_id)
 
     try:
-        room = await get_room(org_id=org_id, room_id=room_id)
-
         if room:
             return JSONResponse(
                 content=ResponseModel.success(data=room, message="room found"),
