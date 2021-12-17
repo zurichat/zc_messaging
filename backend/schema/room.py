@@ -232,9 +232,3 @@ class Room(RoomRequest):
             )
 
         return values
-
-
-class AddToRoom(BaseModel):
-    """a schema that defines the request params for adding members to a room"""
-
-    new_member: Dict[str, RoomMember]
