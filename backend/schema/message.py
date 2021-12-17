@@ -20,12 +20,10 @@ class MessageRequest(BaseModel):
     """
 
     text: str
-    # reactions: List[Reaction] = []
-    reactions: Optional[List[Reaction]] = None
+    reactions: List[Reaction] = []
     files: List[AnyHttpUrl] = []
     saved_by: List[str] = []
-    # created_at: str = str(datetime.utcnow())
-    created_at: str = str(datetime.now())
+    created_at: str = str(datetime.utcnow())
 
 
 class Thread(MessageRequest):
@@ -38,8 +36,8 @@ class Thread(MessageRequest):
     sender_id: str
     room_id: str
     org_id: str
-    # message_id: str = Field(None, alias="_id")
-    message_id: Optional[str] = Field(..., alias='_id')
+    message_id: str = Field(None, alias="_id")
+
 
     @root_validator(pre=True)
     @classmethod
@@ -91,8 +89,8 @@ class MessageUpdateRequest(BaseModel):
     """
 
     text: Optional[str]
-    # reactions: Optional[List[Reaction]] = None
-    # files: Optional[List[AnyHttpUrl]] = None
-    # saved_by: Optional[List[str]] = None
+    files: Optional[List[AnyHttpUrl]] = None
     edited_at: str = str(datetime.now())
+    # reactions: Optional[List[Reaction]] = None
+    # saved_by: Optional[List[str]] = None
 
