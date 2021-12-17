@@ -85,7 +85,7 @@ class Message(Thread):
 
 class MessageUpdateRequest(BaseModel):
     """
-    Provides a base model for all threads
+    Provides a base model to update messages
     """
 
     text: str
