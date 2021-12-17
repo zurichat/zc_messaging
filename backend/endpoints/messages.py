@@ -6,7 +6,6 @@ from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.mssg_utils import get_mssg
 
-
 router = APIRouter()
 
 MESSAGE_COLLECTION = "messages"
@@ -76,27 +75,29 @@ async def send_message(
             status_code=status.HTTP_201_CREATED,
         )
     raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"Message not sent": response},
-        )
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail={"Message not sent": response},
+    )
 
 
 @router.put(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
     response_model=ResponseModel,
-            responses={
-                status.HTTP_200_OK: {"description": "message updated"},
-                status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-                status.HTTP_403_FORBIDDEN: {"description": "you are not authorized to edit this message"},
-                status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not updated"}
-            })
+    responses={
+        status.HTTP_200_OK: {"description": "message updated"},
+        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
+        status.HTTP_403_FORBIDDEN: {
+            "description": "you are not authorized to edit this message"
+        },
+        status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not updated"},
+    },
+)
 async def update_message(
     request: MessageUpdateRequest,
     org_id: str,
     room_id: str,
-    sender_id: str,
     message_id: str,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
 ):
     """
     Update a message
@@ -118,7 +119,7 @@ async def update_message(
                 "text": "testing edits",
                 "edited_at": "2021-12-17 11:47:22.678046"
             }
-            
+
     Raises:
         HTTP_404_FAILED_DEPENDENCY: Message not found
         HTTP_424_FAILED_DEPENDENCY: Message not edited
@@ -135,13 +136,12 @@ async def update_message(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
         )
-
-    if mssg["sender_id"] != sender_id:
+    sender_id = mssg["sender_id"]
+    if sender_id != request.sender_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to edit this message",
         )
-
     payload = request.dict()
     try:
         message = await DB.update(
@@ -151,10 +151,10 @@ async def update_message(
             edited_mssg = {
                 "room_id": room_id,
                 "message_id": message_id,
-                "sender_id": sender_id,
+                "sender_id": payload["sender_id"],
                 "text": payload["text"],
                 "edited_at": payload["edited_at"],
-        }
+            }
             background_tasks.add_task(
                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, edited_mssg
             )  # publish to centrifugo in the background

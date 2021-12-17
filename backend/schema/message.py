@@ -1,7 +1,8 @@
 import asyncio
 import concurrent.futures
 from datetime import datetime
-from typing import List, Optional
+from typing import List
+
 from fastapi import HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 from utils.room_utils import get_room
@@ -37,7 +38,6 @@ class Thread(MessageRequest):
     room_id: str
     org_id: str
     message_id: str = Field(None, alias="_id")
-
 
     @root_validator(pre=True)
     @classmethod
@@ -89,4 +89,5 @@ class MessageUpdateRequest(BaseModel):
     """
 
     text: str
-    edited_at: str = str(datetime.now())
+    sender_id: str
+    edited_at: str = str(datetime.utcnow())
