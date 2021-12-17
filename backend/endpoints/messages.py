@@ -82,7 +82,7 @@ async def send_message(
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
     response_model=ResponseModel,
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     responses={
         404: {"detail": "Messages not found"},
     },
@@ -136,7 +136,7 @@ async def get_all_messages(org_id: str, room_id: str):
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
     response_model=ResponseModel,
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     responses={
         404: {"detail": "Message not found"},
     },
