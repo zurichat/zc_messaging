@@ -239,18 +239,13 @@ async def get_room_by_id(
         HTTP_200_OK (room found): {room}
         HTTP_404_NOT_FOUND (room not found): {room}
     """
-    if org_id is None:
+   
+    if org_id and room_id is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid Organization id",
+            detail="Invalid parameters",
         )
-    
-    if room_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid Room id",
-        )
-    
+
     try:
         room = await get_room(org_id=org_id, room_id=room_id)
 
