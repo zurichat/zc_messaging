@@ -9,6 +9,7 @@ router = APIRouter()
 
 MESSAGE_COLLECTION = "messages"
 
+
 @router.post(
     "/org/{org_id}/rooms/{room_id}/sender/{sender_id}/messages",
     response_model=ResponseModel,
@@ -73,9 +74,9 @@ async def send_message(
             status_code=status.HTTP_201_CREATED,
         )
     raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"Message not sent": response},
-        )
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail={"Message not sent": response},
+    )
 
 
 @router.get(
@@ -86,17 +87,16 @@ async def send_message(
         404: {"detail": "Messages not found"},
     },
 )
-async def get_all_messages(org_id: str, room_id: str): 
+async def get_all_messages(org_id: str, room_id: str):
     """Reads all messages in the collection.
 
     Args:
         org_id (str): A unique identifier of an organisation
-        request: A pydantic schema that defines the message request parameters
         room_id: A unique identifier of the room where the message is being sent to.
 
     Returns:
         HTTP_200_OK {messages retrieved}:
-        A dict containing data about the messages in the collection based on the message schema (response_output).
+        A list containing data about all the messages in the collection.
             {
                 "_id": "61b8caec78fb01b18fac1410",
                 "created_at": "2021-12-14 16:40:43.302519",
@@ -115,13 +115,9 @@ async def get_all_messages(org_id: str, room_id: str):
         HTTP_404_NOT_FOUND: "Messages not found"
     """
     DB = DataStorage(org_id)
-    if org_id and room_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid parameters",
-        )
+    messages = await DB.read(MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id})
+
     try:
-        messages = await DB.read(MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id})
         if messages:
             return JSONResponse(
                 content=ResponseModel.success(
@@ -135,7 +131,7 @@ async def get_all_messages(org_id: str, room_id: str):
         )
     except Exception as e:
         raise e
-    
+
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
@@ -150,13 +146,12 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
 
     Args:
         org_id (str): A unique identifier of an organisation
-        request: A pydantic schema that defines the message request parameters
         room_id: A unique identifier of the room where the message is being sent to.
         message_id: A unique identifier of the message to be retrieved
 
     Returns:
         HTTP_200_OK {message retrieved}:
-        A dict containing data about the message in the collection based on the message schema (response_output).
+        A dict containing data about the message in the collection based on the message schema.
             {
                 "_id": "61b8caec78fb01b18fac1410",
                 "created_at": "2021-12-14 16:40:43.302519",
@@ -175,13 +170,11 @@ async def get_message_by_id(org_id: str, room_id: str, message_id: str):
         HTTP_HTTP_404_NOT_FOUND: Message not found
     """
     DB = DataStorage(org_id)
-    if org_id and room_id and message_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid parameters",
-        )
+    message = await DB.read(
+        MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id, "_id": message_id}
+    )
+
     try:
-        message = await DB.read(MESSAGE_COLLECTION, {"org_id": org_id, "room_id": room_id, "_id": message_id})
         if message:
             return JSONResponse(
                 content=ResponseModel.success(
