@@ -2,9 +2,11 @@ import asyncio
 import concurrent.futures
 from datetime import datetime
 from typing import List
+
 from fastapi import HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 from utils.room_utils import get_room
+
 
 class Reaction(BaseModel):
     """Provides the nested object for reactions to message"""
@@ -17,6 +19,7 @@ class MessageRequest(BaseModel):
     """
     Provides a base model for all threads
     """
+
     text: str
     reactions: List[Reaction] = []
     files: List[AnyHttpUrl] = []
@@ -27,13 +30,14 @@ class MessageRequest(BaseModel):
 class Thread(MessageRequest):
     """Provide structure for the thread schema
 
-    Class inherits from MessageRequest to hold 
+    Class inherits from MessageRequest to hold
     data for the thread schema
     """
+
     sender_id: str
     room_id: str
-    org_id:str
-    message_id:str = Field(None, alias="_id")
+    org_id: str
+    message_id: str = Field(None, alias="_id")
 
     @root_validator(pre=True)
     @classmethod
@@ -49,15 +53,13 @@ class Thread(MessageRequest):
         Raises:
             HTTPException [404]: if room_id or sender_id is invalid
         """
-        
+
         sender_id = values.get("sender_id")
         org_id = values.get("org_id")
         room_id = values.get("room_id")
         with concurrent.futures.ThreadPoolExecutor(1) as executor:
-                future = executor.submit(
-                    asyncio.run, get_room(org_id, room_id)
-                )
-                room = future.result()
+            future = executor.submit(asyncio.run, get_room(org_id, room_id))
+            room = future.result()
         if not room:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Room not available"
@@ -70,6 +72,7 @@ class Thread(MessageRequest):
             )
         return values
 
+
 class Message(Thread):
     """Provides a base model for messages
 
@@ -78,4 +81,3 @@ class Message(Thread):
     """
 
     threads: List[Thread] = []
-

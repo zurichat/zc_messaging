@@ -1,7 +1,5 @@
-from typing import Any
-
 from pydantic import BaseModel
-
+from typing import Any
 
 class ResponseModel(BaseModel):
     """Creates a response model for the API.
