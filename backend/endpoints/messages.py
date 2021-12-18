@@ -127,6 +127,7 @@ async def update_message(
     """
     DB = DataStorage(org_id)
     message = await get_mssg(org_id=org_id, room_id=room_id, message_id=message_id)
+
     if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
@@ -138,35 +139,31 @@ async def update_message(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to edit this message",
         )
-
+        
     try:
-        message = await DB.update(
+        edit_message = await DB.update(
             MESSAGE_COLLECTION, document_id=message_id, data=payload
         )
-        if message:
-            edited_mssg = {
+        if edit_message:
+            data = {
                 "room_id": room_id,
                 "message_id": message_id,
                 "sender_id": payload["sender_id"],
                 "text": payload["text"],
                 "edited_at": payload["edited_at"],
             }
-
             background_tasks.add_task(
-                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, edited_mssg
+                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
             )  # publish to centrifugo in the background
-
             return JSONResponse(
                 content=ResponseModel.success(
-                    data=edited_mssg, message="message edited"
+                    data=data, message="message edited"
                 ),
                 status_code=status.HTTP_200_OK,
             )
-
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"message not edited": message},
+            detail={"message not edited": edit_message},
         )
-
     except Exception as e:
         raise e
