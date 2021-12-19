@@ -214,7 +214,8 @@ async def get_all_rooms(org_id: str):
         }
 
     Raises:
-        HTTP_404_NOT_FOUND (Failure to retrieve org rooms): {rooms}
+        HTTPException [404]: Failure to retrieve rooms
+        HTTPException [424]: Failure to retrieve data 
     """
     rooms = await get_org_rooms(org_id=org_id)
 
@@ -228,10 +229,14 @@ async def get_all_rooms(org_id: str):
             )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Failure to retrieve org rooms",
+            detail="Failure to retrieve rooms",
         )
-    except Exception as e:
-        raise e
+    except HTTPException as e:
+        return JSONResponse(
+            data="Failure to retrieve data",
+            status=status.HTTP_424_FAILED_DEPENDENCY,
+            detail=e,
+        )
 
 
 @router.get(
@@ -277,7 +282,8 @@ async def get_room_by_id(org_id: str, room_id: str):
         }
 
     Raises:
-        HTTP_404_NOT_FOUND (room not found): {room}
+        HTTPException [404]: Room not found
+        HTTPException [424]: Failure to retrieve data 
     """
     room = await get_room(org_id=org_id, room_id=room_id)
 
@@ -290,5 +296,9 @@ async def get_room_by_id(org_id: str, room_id: str):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="room not found"
         )
-    except Exception as e:
-        raise e
+    except HTTPException as e:
+        return JSONResponse(
+            data="Failure to retrieve data",
+            status=status.HTTP_424_FAILED_DEPENDENCY,
+            detail=e,
+        )
