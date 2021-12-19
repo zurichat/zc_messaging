@@ -81,8 +81,8 @@ async def send_message(
 @router.put(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
     response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"description": "message edited"},
         status.HTTP_401_UNAUTHORIZED: {
             "description": "you are not authorized to edit this message"
         },
