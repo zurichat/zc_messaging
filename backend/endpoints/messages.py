@@ -83,10 +83,10 @@ async def send_message(
     response_model=ResponseModel,
     responses={
         status.HTTP_200_OK: {"description": "message edited"},
-        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
         status.HTTP_401_UNAUTHORIZED: {
             "description": "you are not authorized to edit this message"
         },
+        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
         status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
         status.HTTP_424_FAILED_DEPENDENCY: {"description": "Failure to retrieve data"},
     },
@@ -125,7 +125,7 @@ async def update_message(
     Raises:
         HTTPException [401]: You are not authorized to edit this message
         HTTPException [404]: Message not found
-        HTTPException [424]: "message not edited"
+        HTTPException [424]: Message not edited
         HTTPException [424]: Failure to retrieve data
     """
     DB = DataStorage(org_id)
