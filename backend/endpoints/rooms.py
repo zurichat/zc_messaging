@@ -175,10 +175,10 @@ async def join_room(
 @router.get(
     "/org/{org_id}/rooms",
     response_model=ResponseModel,
-    status_code=status.HTTP_200_OK,
     responses={
-        200: {"detail": {"rooms": "list of rooms"}},
-        404: {"detail": "rooms not found"},
+        status.HTTP_200_OK: {"detail": {"rooms": "list of rooms"}},
+        status.HTTP_404_NOT_FOUND: {"detail": "failure to retrieve rooms"},
+        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "failure to retrieve data"},
     },
 )
 async def get_all_rooms(org_id: str):
@@ -215,9 +215,9 @@ async def get_all_rooms(org_id: str):
 
     Raises:
         HTTPException [404]: Failure to retrieve rooms
-        HTTPException [424]: Failure to retrieve data 
+        HTTPException [424]: Failure to retrieve data
     """
-    rooms = await get_org_rooms(org_id=org_id)
+    rooms = await get_org_rooms(org_id)
 
     try:
         if rooms:
@@ -244,8 +244,9 @@ async def get_all_rooms(org_id: str):
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        200: {"detail": {"room_id": "room_id"}},
-        404: {"detail": "room not found"},
+        status.HTTP_200_OK: {"detail": {"room_id": "room found"}},
+        status.HTTP_404_NOT_FOUND: {"detail": "room not found"},
+        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "failure to retrieve data"},
     },
 )
 async def get_room_by_id(org_id: str, room_id: str):
@@ -283,9 +284,9 @@ async def get_room_by_id(org_id: str, room_id: str):
 
     Raises:
         HTTPException [404]: Room not found
-        HTTPException [424]: Failure to retrieve data 
+        HTTPException [424]: Failure to retrieve data
     """
-    room = await get_room(org_id=org_id, room_id=room_id)
+    room = await get_room(org_id, room_id)
 
     try:
         if room:
