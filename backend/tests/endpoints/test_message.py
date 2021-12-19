@@ -43,4 +43,3 @@ def test_message_not_sent():
     
     assert response.status_code == 424
     assert response.json() == {"detail": {"message not sent": {}}}
-

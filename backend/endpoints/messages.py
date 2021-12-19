@@ -88,7 +88,9 @@ async def send_message(
         },
         status.HTTP_404_NOT_FOUND: {"description": "message not found"},
         status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "Failure to retrieve data"},
+        status.HTTP_424_FAILED_DEPENDENCY: {
+            "description": "Failure to publish to centrifugo"
+        },
     },
 )
 async def update_message(
@@ -105,69 +107,64 @@ async def update_message(
         request: Request object
         org_id: A unique identifier of the organization.
         room_id: A unique identifier of the room.
-        sender_id: A unique identifier of the sender.
         message_id: A unique identifier of the message that is being edited.
+        background_tasks: A daemon thread for publishing to centrifugo
 
     Returns:
         HTTP_200_OK {message updated successfully}:
-        A dict containing data about the message that was updated (response_output).
+        A dict containing data about the message that was edited.
             {
-                "status": "success",
-                "message": "message edited",
-                "data": {
-                    "room_id": "619e28c31a5f54782939d59a",
-                    "message_id": "61ba9b0378fb01b18fac1420",
-                    "sender_id": "619ba4671a5f54782939d385",
-                    "text": "check on updates"
-                }
+                "room_id": "619e28c31a5f54782939d59a",
+                "message_id": "61ba9b0378fb01b18fac1420",
+                "sender_id": "619ba4671a5f54782939d385",
+                "text": "xxxxxxxxxxxxxxxxx"
             }
 
     Raises:
         HTTPException [401]: You are not authorized to edit this message
         HTTPException [404]: Message not found
         HTTPException [424]: Message not edited
-        HTTPException [424]: Failure to retrieve data
+        HTTPException [424]: Failure to publish to centrifugo
     """
     DB = DataStorage(org_id)
     message = await get_message(org_id, room_id, message_id)
 
-    try:
-        if not message:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-            )
-
-        payload = request.dict()
-        if message["sender_id"] != payload["sender_id"]:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="You are not authorized to edit this message",
-            )
-
-        edit_message = await DB.update(
-            MESSAGE_COLLECTION, document_id=message_id, data=payload
+    if not message:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
         )
-        if edit_message:
-            data = {
-                "room_id": room_id,
-                "message_id": message_id,
-                "sender_id": payload["sender_id"],
-                "text": payload["text"],
-            }
+
+    payload = request.dict()
+    if message["sender_id"] != payload["sender_id"]:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You are not authorized to edit this message",
+        )
+
+    edited_message = await DB.update(
+        MESSAGE_COLLECTION, document_id=message_id, data=payload
+    )
+    if edited_message:
+        new_data = {
+            "room_id": room_id,
+            "message_id": message_id,
+            "sender_id": payload["sender_id"],
+            "text": payload["text"],
+        }
+        try:
             background_tasks.add_task(
-                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
+                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_data
             )  # publish to centrifugo in the background
             return JSONResponse(
-                content=ResponseModel.success(data=data, message="message edited"),
+                content=ResponseModel.success(data=new_data, message="message edited"),
                 status_code=status.HTTP_200_OK,
             )
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"message not edited": edit_message},
-        )
-    except HTTPException as e:
-        return JSONResponse(
-            data="Failure to retrieve data",
-            status=status.HTTP_424_FAILED_DEPENDENCY,
-            detail=e
-        )
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                detail={"Failure to publish to centrifugo"},
+            )
+    raise HTTPException(
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail={"message not edited": edited_message},
+    )
