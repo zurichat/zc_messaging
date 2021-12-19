@@ -142,7 +142,7 @@ async def get_all_messages(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"Messages not found": messages},
         )
-    except Exception as e:
+    except HTTPException as e:
         return JSONResponse(
             data="Failure to retrieve data",
             status=status.HTTP_424_FAILED_DEPENDENCY,
@@ -216,7 +216,7 @@ async def get_message_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"Message not found": message},
         )
-    except Exception as e:
+    except HTTPException as e:
         return JSONResponse(
             data="Failure to retrieve data",
             status=status.HTTP_424_FAILED_DEPENDENCY,
