@@ -3,7 +3,7 @@ from utils.db import DataStorage
 MESSAGE_COLLECTION = "messages"
 
 
-async def get_mssg(org_id: str, room_id: str, message_id: str) -> dict:
+async def get_message(org_id: str, room_id: str, message_id: str) -> dict:
     """Get messages in a room
     Args:
         org_id (str): The organization id

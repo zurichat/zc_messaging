@@ -90,4 +90,3 @@ class MessageUpdate(BaseModel):
 
     text: str
     sender_id: str
-    edited_at: str = str(datetime.utcnow())
