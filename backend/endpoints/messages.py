@@ -143,7 +143,7 @@ async def update_message(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="You are not authorized to edit this message",
             )
-        
+
         edit_message = await DB.update(
             MESSAGE_COLLECTION, document_id=message_id, data=payload
         )
@@ -152,23 +152,22 @@ async def update_message(
                 "room_id": room_id,
                 "message_id": message_id,
                 "sender_id": payload["sender_id"],
-                "text": payload["text"]
+                "text": payload["text"],
             }
             background_tasks.add_task(
                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, data
             )  # publish to centrifugo in the background
             return JSONResponse(
-                content=ResponseModel.success(
-                    data=data, message="message edited"
-                ),
+                content=ResponseModel.success(data=data, message="message edited"),
                 status_code=status.HTTP_200_OK,
             )
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail={"message not edited": edit_message},
         )
-    except Exception:
+    except HTTPException as e:
         return JSONResponse(
-            content={"message": "Failure to retrieve data"},
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            )
+            data="Failure to retrieve data",
+            status=status.HTTP_424_FAILED_DEPENDENCY,
+            detail=e
+        )
