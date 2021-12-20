@@ -83,14 +83,10 @@ async def send_message(
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_401_UNAUTHORIZED: {
-            "description": "you are not authorized to edit this message"
-        },
-        status.HTTP_404_NOT_FOUND: {"description": "message not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"description": "message not edited"},
-        status.HTTP_424_FAILED_DEPENDENCY: {
-            "description": "Failure to publish to centrifugo"
-        },
+        401: {"description": "you are not authorized to edit this message"},
+        404: {"description": "message not found"},
+        424: {"description": "message not edited"},
+        424: {"description": "Failure to publish to centrifugo"},
     },
 )
 async def update_message(
