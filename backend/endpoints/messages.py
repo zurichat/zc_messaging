@@ -56,6 +56,7 @@ async def send_message(
         **request.dict(), org_id=org_id, room_id=room_id, sender_id=sender_id
     )
     response = await DB.write(MESSAGE_COLLECTION, message_obj.dict())
+
     if response and response.get("status_code") is None:
         message_obj.message_id = response["data"]["object_id"]
         output_data = {
