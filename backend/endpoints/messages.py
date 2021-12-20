@@ -107,7 +107,7 @@ async def update_message(
         background_tasks: A daemon thread for publishing to centrifugo
 
     Returns:
-        HTTP_200_OK {message updated successfully}:
+        HTTP_200_OK {Message edited}:
         A dict containing data about the message that was edited.
             {
                 "room_id": "619e28c31a5f54782939d59a",
@@ -152,7 +152,7 @@ async def update_message(
                 centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_data
             )  # publish to centrifugo in the background
             return JSONResponse(
-                content=ResponseModel.success(data=new_data, message="message edited"),
+                content=ResponseModel.success(data=new_data, message="Message edited"),
                 status_code=status.HTTP_200_OK,
             )
         except Exception as error:
