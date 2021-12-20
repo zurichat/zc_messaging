@@ -149,6 +149,7 @@ async def update_message(
             "message_id": message_id,
             "sender_id": payload["sender_id"],
             "text": payload["text"],
+            "edited": True,
         }
         try:
             background_tasks.add_task(

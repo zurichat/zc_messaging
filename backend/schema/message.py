@@ -90,3 +90,4 @@ class MessageUpdate(BaseModel):
 
     text: str
     sender_id: str
+    edited: bool = True
