@@ -82,10 +82,10 @@ async def send_message(
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
     response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"detail": "Messages retrieved"},
-        status.HTTP_404_NOT_FOUND: {"detail": "Messages not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "Failure to retrieve data"},
+        404: {"detail": "Messages not found"},
+        424: {"detail": "Failure to retrieve data"},
     },
 )
 async def get_all_messages(
@@ -101,30 +101,27 @@ async def get_all_messages(
     Returns:
         HTTP_200_OK {Messages retrieved}:
         A list containing data about all the messages in the collection.
-        {
-            "status": "success",
-            "message": "Messages retrieved",
-            "data": [
-                {
-                    "_id": "61b8caec78fb01b18fac1410",
-                    "created_at": "2021-12-14 16:40:43.302519",
-                    "files": [],
-                    "message_id": null,
-                    "org_id": "619ba4671a5f54782939d384",
-                    "reactions": [
-                        {
-                            "character": "wink",
-                            "sender_id": "6169704bc4133ddaa309dd07"
-                        }
-                    ],
-                    "room_id": "619e28c31a5f54782939d59a",
-                    "saved_by": [],
-                    "sender_id": "61696f5ac4133ddaa309dcfe",
-                    "text": "testing messages",
-                    "threads": []
-                }
-            ]
-        }
+        [
+            {
+                "_id": "61b8caec78fb01b18fac1410",
+                "created_at": "2021-12-14 16:40:43.302519",
+                "files": [],
+                "message_id": null,
+                "org_id": "619ba4671a5f54782939d384",
+                "reactions": [
+                    {
+                        "character": "wink",
+                        "sender_id": "6169704bc4133ddaa309dd07"
+                    }
+                ],
+                "room_id": "619e28c31a5f54782939d59a",
+                "saved_by": [],
+                "sender_id": "61696f5ac4133ddaa309dcfe",
+                "text": "testing messages",
+                "threads": []
+            }
+        ]
+
     Raises:
         HTTPException [404]: Messages not found
         HTTPException [424]: Failure to retrieve data
@@ -142,21 +139,20 @@ async def get_all_messages(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"Messages not found": messages},
         )
-    except HTTPException as e:
-        return JSONResponse(
+    except HTTPException as error:
+        raise HTTPException(
             data="Failure to retrieve data",
             status=status.HTTP_424_FAILED_DEPENDENCY,
-            detail=e,
-        )
+        ) from error
 
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
     response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
     responses={
-        status.HTTP_200_OK: {"detail": "Message retrieved"},
-        status.HTTP_404_NOT_FOUND: {"detail": "Message not found"},
-        status.HTTP_424_FAILED_DEPENDENCY: {"detail": "Failure to retrieve data"},
+        404: {"detail": "Message not found"},
+        424: {"detail": "Failure to retrieve data"},
     },
 )
 async def get_message_by_id(
@@ -175,28 +171,24 @@ async def get_message_by_id(
         HTTP_200_OK {Message retrieved}:
         A dict containing data about the message in the collection based on the message schema.
         {
-            "status": "success",
-            "message": "message retrieved",
-            "data": {
-                "_id": "61ba9b0378fb01b18fac1420",
-                "created_at": "2021-12-16 05:05:39.886322",
-                "files": [
-                    "https://cdn.iconscout.com/icon/free/png-256/"
-                ],
-                "message_id": null,
-                "org_id": "619ba4671a5f54782939d384",
-                "reactions": [
-                    {
-                        "character": "rotfl",
-                        "sender_id": "61696f5ac4133ddaa309dcfe"
-                    }
-                ],
-                "room_id": "619e28c31a5f54782939d59a",
-                "saved_by": null,
-                "sender_id": "619ba4671a5f54782939d385",
-                "text": "testing update endpoint",
-                "threads": []
-            }
+            "_id": "61b8caec78fb01b18fac1410",
+            "created_at": "2021-12-14 16:40:43.302519",
+            "files": [
+                "https://cdn.iconscout.com/icon/free/png-256/"
+            ],
+            "message_id": null,
+            "org_id": "619ba4671a5f54782939d384",
+            "reactions": [
+                {
+                    "character": "wink",
+                    "sender_id": "6169704bc4133ddaa309dd07"
+                }
+            ],
+            "room_id": "619e28c31a5f54782939d59a",
+            "saved_by": [],
+            "sender_id": "61696f5ac4133ddaa309dcfe",
+            "text": "testing messages",
+            "threads": []
         }
 
     Raises:
@@ -216,9 +208,8 @@ async def get_message_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"Message not found": message},
         )
-    except HTTPException as e:
-        return JSONResponse(
+    except HTTPException as error:
+        raise HTTPException(
             data="Failure to retrieve data",
             status=status.HTTP_424_FAILED_DEPENDENCY,
-            detail=e,
-        )
+        ) from error
