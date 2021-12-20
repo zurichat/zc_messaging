@@ -14,8 +14,8 @@ async def get_message(org_id: str, room_id: str, message_id: str) -> dict:
     """
     DB = DataStorage(org_id)
     query = {"room_id": room_id, "_id": message_id}
-    options = {"sort": {"created_at": -1}}
-    response = await DB.read(MESSAGE_COLLECTION, query=query, options=options)
+   
+    response = await DB.read(MESSAGE_COLLECTION, query=query)
 
     if response and "status_code" not in response:
         return response
