@@ -128,7 +128,6 @@ async def update_message(
     """
     DB = DataStorage(org_id)
     message = await get_message(org_id, room_id, message_id)
-
     if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
@@ -159,11 +158,11 @@ async def update_message(
                 content=ResponseModel.success(data=new_data, message="message edited"),
                 status_code=status.HTTP_200_OK,
             )
-        except Exception:
+        except Exception as error:
             raise HTTPException(
                 status_code=status.HTTP_424_FAILED_DEPENDENCY,
                 detail={"Failure to publish to centrifugo"},
-            )
+            ) from error
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail={"message not edited": edited_message},
