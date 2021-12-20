@@ -5,6 +5,7 @@ from typing import List
 
 from fastapi import HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
+from utils.message_utils import get_message
 from utils.room_utils import get_room
 
 
@@ -57,6 +58,7 @@ class Thread(MessageRequest):
         sender_id = values.get("sender_id")
         org_id = values.get("org_id")
         room_id = values.get("room_id")
+        message_id = values.get("message_id")
         with concurrent.futures.ThreadPoolExecutor(1) as executor:
             future = executor.submit(asyncio.run, get_room(org_id, room_id))
             room = future.result()
@@ -70,6 +72,23 @@ class Thread(MessageRequest):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="sender not a member of this room",
             )
+
+        # if message_id is not None:
+        #     with concurrent.futures.ThreadPoolExecutor(1) as executor:
+        #         future = executor.submit(asyncio.run, get_message(org_id, room_id, message_id))
+        #         message = future.result()
+        #     if not message:
+        #         raise HTTPException(
+        #             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+        #         )
+
+        #     # payload = request.dict()
+        #     if sender_id != message["sender_id"]:
+        #         raise HTTPException(
+        #             status_code=status.HTTP_401_UNAUTHORIZED,
+        #             detail="You are not authorized to edit this message",
+        #         )
+        #     return values
         return values
 
 

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Message, MessageRequest, MessageUpdate
+from schema.message import Message, MessageRequest, MessageUpdate, Thread
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
@@ -89,7 +89,8 @@ async def send_message(
     },
 )
 async def update_message(
-    request: MessageUpdate,
+    # request: MessageUpdate,
+    request: Thread,
     org_id: str,
     room_id: str,
     message_id: str,
