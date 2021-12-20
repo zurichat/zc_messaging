@@ -81,3 +81,13 @@ class Message(Thread):
     """
 
     threads: List[Thread] = []
+
+
+class MessageUpdate(BaseModel):
+    """
+    Provides a base model to update messages
+    """
+
+    text: str
+    sender_id: str
+    edited: bool = True
