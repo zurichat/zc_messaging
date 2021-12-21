@@ -1,5 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Message, MessageRequest, MessageUpdate
+from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/org/{org_id}/rooms/{room_id}/sender/{sender_id}/messages",
+    "/org/{org_id}/rooms/{room_id}/messages",
     response_model=ResponseModel,
     status_code=status.HTTP_201_CREATED,
     responses={
@@ -21,7 +21,6 @@ router = APIRouter()
 async def send_message(
     org_id,
     room_id,
-    sender_id,
     request: MessageRequest,
     background_tasks: BackgroundTasks,
 ):
@@ -51,10 +50,13 @@ async def send_message(
         HTTPException [424]: "message not sent"
     """
     DB = DataStorage(org_id)
-    message_obj = Message(
-        **request.dict(), org_id=org_id, room_id=room_id, sender_id=sender_id
+
+    message_obj = Message(**request.dict(), org_id=org_id, room_id=room_id)
+
+    response = await DB.write(
+        MESSAGE_COLLECTION, message_obj.dict(exclude={"message_id"})
     )
-    response = await DB.write(MESSAGE_COLLECTION, message_obj.dict())
+    message_obj.message_id = response.get("data").get("object_id")
 
     if response and response.get("status_code") is None:
         message_obj.message_id = response["data"]["object_id"]
@@ -89,7 +91,7 @@ async def send_message(
     },
 )
 async def update_message(
-    request: MessageUpdate,
+    request: MessageRequest,
     org_id: str,
     room_id: str,
     message_id: str,
@@ -127,7 +129,9 @@ async def update_message(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
         )
 
-    payload = request.dict()
+    request.edited = True
+    payload = request.dict(exclude_unset=True)
+
     if message["sender_id"] != payload["sender_id"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -137,7 +141,8 @@ async def update_message(
     edited_message = await DB.update(
         MESSAGE_COLLECTION, document_id=message_id, data=payload
     )
-    if edited_message:
+
+    if edited_message and edited_message.get("status_code") is None:
         new_data = {
             "room_id": room_id,
             "message_id": message_id,
