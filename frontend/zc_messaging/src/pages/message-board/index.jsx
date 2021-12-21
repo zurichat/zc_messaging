@@ -8,7 +8,6 @@ import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
 import { useSelector } from "react-redux"
 
 const { MessageBoard } = v2
-const currentUser = JSON.parse(sessionStorage.getItem("user"))
 
 const MessagingBoard = () => {
   const { roomId } = useParams()
@@ -19,10 +18,9 @@ const MessagingBoard = () => {
     if (!roomId) {
       ;(async () => {
         const currentWorkspaceId = localStorage.getItem("currentWorkspace")
-        const currentUser = JSON.parse(sessionStorage.getItem("user"))
         const result = await fetchDefaultRoom(
           currentWorkspaceId,
-          currentUser?.id
+          authUser?.user_id
         )
         navigateTo(`/${result.room_id}`, { replace: true })
       })()
@@ -31,12 +29,11 @@ const MessagingBoard = () => {
 
   const sendMessageHandler = async message => {
     const currentDate = new Date()
-    const currentUser = JSON.parse(sessionStorage.getItem("user"))
     const newMessage = {
       message_id: Date.now().toString(),
       sender: {
-        sender_name: currentUser?.username || "Me",
-        sender_image_url: currentUser?.imageUrl
+        sender_name: authUser?.user_name || "Me",
+        sender_image_url: authUser?.user_image_url
       },
       time: `${
         currentDate.getHours() < 12
@@ -130,7 +127,7 @@ const MessagingBoard = () => {
             onSendMessage={sendMessageHandler}
             onReact={reactHandler}
             onSendAttachedFile={SendAttachedFileHandler}
-            currentUserId={currentUser?.id}
+            currentUserId={authUser?.user_id}
           />
         </div>
         <TypingNotice>Omo Jesu is typing</TypingNotice>
