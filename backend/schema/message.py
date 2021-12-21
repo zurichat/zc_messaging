@@ -21,9 +21,11 @@ class MessageRequest(BaseModel):
     """
 
     text: str
+    sender_id: str
     reactions: List[Reaction] = []
     files: List[AnyHttpUrl] = []
     saved_by: List[str] = []
+    edited: bool = False
     created_at: str = str(datetime.utcnow())
 
 
@@ -34,7 +36,6 @@ class Thread(MessageRequest):
     data for the thread schema
     """
 
-    sender_id: str
     room_id: str
     org_id: str
     message_id: str = Field(None, alias="_id")
