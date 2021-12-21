@@ -107,14 +107,14 @@ class DataStorage:
             data: list; on success
             data: dict; on api call fails or errors
         """
-        request_body = dict(
-            collection_name=collection_name,
-            filter=query,
-            object_id=resource_id,
-            organization_id=self.organization_id,
-            plugin_id=self.plugin_id,
-            options=options,
-        )
+        request_body = {
+            "collection_name": collection_name,
+            "filter": query,
+            "object_id": resource_id,
+            "organization_id": self.organization_id,
+            "plugin_id": self.plugin_id,
+            "options": options,
+        }
 
         try:
             response = requests.post(url=self.read_query_api, json=request_body)
