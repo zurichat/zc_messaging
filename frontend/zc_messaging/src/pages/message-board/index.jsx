@@ -1,13 +1,10 @@
 import React, { useState } from "react"
 import { useNavigate, useParams, Outlet } from "react-router-dom"
-// import { MessageBoard } from "@zuri/zuri-ui"
-import { v2 } from "@zuri/zuri-ui"
+import { MessageBoard } from "@zuri/zuri-ui"
 import mockMessages from "./messages.data.js"
 import { Container, MessagingArea, TypingNotice } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
 import { useSelector } from "react-redux"
-
-const { MessageBoard } = v2
 
 const MessagingBoard = () => {
   const { roomId } = useParams()
