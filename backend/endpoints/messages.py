@@ -165,6 +165,65 @@ async def update_message(
 
 
 @router.get(
+    "/org/{org_id}/rooms/{room_id}/messages",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"detail": "Messages not found"},
+        424: {"detail": "Failure to retrieve data"},
+    },
+)
+async def get_all_messages(
+    org_id: str,
+    room_id: str,
+):
+    """Reads all messages in the collection.
+
+    Args:
+        org_id (str): A unique identifier of an organisation
+        room_id: A unique identifier of the room where the message is being sent to.
+
+    Returns:
+        HTTP_200_OK {Messages retrieved}:
+        A list containing data about all the messages in the collection.
+        [
+            {
+                "_id": "61b8caec78fb01b18fac1410",
+                "created_at": "2021-12-14 16:40:43.302519",
+                "files": [],
+                "message_id": null,
+                "org_id": "619ba4671a5f54782939d384",
+                "reactions": [
+                    {
+                        "character": "wink",
+                        "sender_id": "6169704bc4133ddaa309dd07"
+                    }
+                ],
+                "room_id": "619e28c31a5f54782939d59a",
+                "saved_by": [],
+                "sender_id": "61696f5ac4133ddaa309dcfe",
+                "text": "testing messages",
+                "threads": []
+            }
+        ]
+
+    Raises:
+        HTTPException [404]: Messages not found
+        HTTPException [424]: Failure to retrieve data
+    """
+    messages = await get_room_messages(org_id, room_id)
+    if messages:
+        return JSONResponse(
+            content=ResponseModel.success(data=messages, message="Messages retrieved"),
+            status_code=status.HTTP_200_OK,
+        )
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail={"Messages not found": messages},
+    )
+
+
+@router.get(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
@@ -222,63 +281,4 @@ async def get_message_by_id(
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail={"Message not found": message},
-    )
-
-
-router.get(
-    "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=ResponseModel,
-    status_code=status.HTTP_200_OK,
-    responses={
-        404: {"detail": "Messages not found"},
-        424: {"detail": "Failure to retrieve data"},
-    },
-)
-async def get_all_messages(
-    org_id: str,
-    room_id: str,
-):
-    """Reads all messages in the collection.
-
-    Args:
-        org_id (str): A unique identifier of an organisation
-        room_id: A unique identifier of the room where the message is being sent to.
-
-    Returns:
-        HTTP_200_OK {Messages retrieved}:
-        A list containing data about all the messages in the collection.
-        [
-            {
-                "_id": "61b8caec78fb01b18fac1410",
-                "created_at": "2021-12-14 16:40:43.302519",
-                "files": [],
-                "message_id": null,
-                "org_id": "619ba4671a5f54782939d384",
-                "reactions": [
-                    {
-                        "character": "wink",
-                        "sender_id": "6169704bc4133ddaa309dd07"
-                    }
-                ],
-                "room_id": "619e28c31a5f54782939d59a",
-                "saved_by": [],
-                "sender_id": "61696f5ac4133ddaa309dcfe",
-                "text": "testing messages",
-                "threads": []
-            }
-        ]
-
-    Raises:
-        HTTPException [404]: Messages not found
-        HTTPException [424]: Failure to retrieve data
-    """
-    messages = await get_room_messages(org_id, room_id)
-    if messages:
-        return JSONResponse(
-            content=ResponseModel.success(data=messages, message="Messages retrieved"),
-            status_code=status.HTTP_200_OK,
-        )
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail={"Messages not found": messages},
     )
