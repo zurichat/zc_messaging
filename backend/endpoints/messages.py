@@ -57,24 +57,18 @@ async def send_message(
     response = await DB.write(
         MESSAGE_COLLECTION, message_obj.dict(exclude={"message_id"})
     )
-    message_obj.message_id = response.get("data").get("object_id")
 
     if response and response.get("status_code") is None:
         message_obj.message_id = response["data"]["object_id"]
-        output_data = {
-            "room_id": message_obj.room_id,
-            "message_id": message_obj.message_id,
-            "sender_id": message_obj.sender_id,
-            "text": message_obj.text,
-            "files": message_obj.files,
-        }
+        # Publish to centrifugo in the background.
         background_tasks.add_task(
-            centrifugo_client.publish, room_id, Events.MESSAGE_CREATE, output_data
-        )  # publish to centrifugo in the background
+            centrifugo_client.publish, room_id, Events.MESSAGE_CREATE, message_obj.dict()
+        )
         return JSONResponse(
-            content=ResponseModel.success(data=output_data, message="new message sent"),
+            content=ResponseModel.success(data=message_obj.dict(), message="new message sent"),
             status_code=status.HTTP_201_CREATED,
         )
+
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail={"Message not sent": response},
@@ -144,18 +138,12 @@ async def update_message(
     )
 
     if edited_message and edited_message.get("status_code") is None:
-        new_data = {
-            "room_id": room_id,
-            "message_id": message_id,
-            "sender_id": payload["sender_id"],
-            "text": payload["text"],
-            "edited": True,
-        }
+        # Publish to centrifugo in the background.
         background_tasks.add_task(
-            centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_data
-        )  # publish to centrifugo in the background
+            centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, edited_message
+        )
         return JSONResponse(
-            content=ResponseModel.success(data=new_data, message="Message edited"),
+            content=ResponseModel.success(data=edited_message, message="Message edited"),
             status_code=status.HTTP_200_OK,
         )
     raise HTTPException(
