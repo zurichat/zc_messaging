@@ -85,7 +85,7 @@ class DataStorage:
         if response.status_code == 200:
             return response.json()
 
-        return {"status_code": response.status_code, "message": response.reason}
+        return {"status_code": response.status_code, "message": response.json()}
 
     # NB: refactoring read_query into read, DB.read now has functionality of read and read_query
     async def read(
