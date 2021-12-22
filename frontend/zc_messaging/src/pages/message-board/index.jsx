@@ -1,71 +1,140 @@
-import React from "react"
+import React, { useState } from "react"
 import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { MessageBoard } from "@zuri/zuri-ui"
-import { Container, MessagingArea, RightAside } from "./MessageBoard.style"
+import mockMessages from "./messages.data.js"
+import { Container, MessagingArea, TypingNotice } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
 import { useSelector } from "react-redux"
 
 const MessagingBoard = () => {
   const { roomId } = useParams()
   const navigateTo = useNavigate()
+  const [messages, setMessages] = useState(mockMessages)
   const authUser = useSelector(state => state.authUser)
   React.useEffect(() => {
     if (!roomId) {
       ;(async () => {
         const currentWorkspaceId = localStorage.getItem("currentWorkspace")
-        const currentUser = JSON.parse(sessionStorage.getItem("user"))
         const result = await fetchDefaultRoom(
           currentWorkspaceId,
-          currentUser?.id
+          authUser?.user_id
         )
         navigateTo(`/${result.room_id}`, { replace: true })
       })()
     }
   }, [])
-  const chatSidebarConfig = {
-    chatHeader: "Chats",
-    showChatSideBar: true,
-    sendChatMessageHandler: msg => {
-      console.warn("sendChatMessageHandler", msg)
-      //  dispatch(
-      //    handleCreateRoomMessages(authReducer.organisation, room_id, {
-      //      sender_id: authReducer.user._id,
-      //      room_id,
-      //      message: msg.richUiData.blocks[0].text
-      //    })
-      //  )
-    },
-    currentUserData: {
-      username: authUser.user_name || "John Doe",
-      imageUrl: authUser.user_image_url || ""
-    },
-    messages: []
+
+  const sendMessageHandler = async message => {
+    const currentDate = new Date()
+    const newMessage = {
+      message_id: Date.now().toString(),
+      sender: {
+        sender_name: authUser?.user_name || "Me",
+        sender_image_url: authUser?.user_image_url
+      },
+      time: `${
+        currentDate.getHours() < 12
+          ? currentDate.getHours()
+          : currentDate.getHours() - 12
+      }:${currentDate.getMinutes()}${
+        currentDate.getHours() < 12 ? "AM" : "PM"
+      }`,
+      timestamp: currentDate.getTime(),
+      emojis: [],
+      richUiData: message
+    }
+    await Promise.resolve(() => {
+      // send message to server
+    })
+    setMessages([...messages, newMessage])
+    return true
   }
+
+  const reactHandler = (event, emojiObject, messageId) => {
+    const currentUser = JSON.parse(sessionStorage.getItem("user"))
+    const newMessages = [...messages]
+
+    // if message_id is not undefined then it's coming from already rendered emoji in message container
+
+    const emoji = emojiObject.character
+    const newEmojiName = messageId ? emojiObject.name : emojiObject.unicodeName
+
+    const messageIndex = newMessages.findIndex(
+      message => message.message_id === messageId
+    )
+
+    if (messageIndex < 0) {
+      return
+    }
+
+    const message = newMessages[messageIndex]
+    const emojiIndex = message.emojis.findIndex(
+      emoji => emoji.name === newEmojiName
+    )
+
+    if (emojiIndex >= 0) {
+      //the emoji exists in the message
+      const reactedUsersId = message.emojis[emojiIndex].reactedUsersId
+      const reactedUserIdIndex = reactedUsersId.findIndex(
+        id => id === currentUser?.id
+      )
+      if (reactedUserIdIndex >= 0) {
+        // the current user has reacted with this emoji before
+        // now, if the user is the only person that has reacted, then the emoji
+        // should be removed entirely.
+        if (message.emojis[emojiIndex].count <= 1) {
+          message.emojis.splice(emojiIndex, 1)
+        } else {
+          message.emojis[emojiIndex].reactedUsersId.splice(reactedUserIdIndex)
+          message.emojis[emojiIndex].count =
+            message.emojis[emojiIndex].count - 1
+        }
+      } else {
+        // the user has not reacted and will now be added to the list and count incremented
+        message.emojis[emojiIndex].reactedUsersId.push(currentUser?.id)
+        message.emojis[emojiIndex].count = message.emojis[emojiIndex].count + 1
+      }
+    } else {
+      // the emoji does not exist
+      // create the emoji object and push
+      const newEmojiObject = {
+        name: newEmojiName,
+        count: 1,
+        emoji: emoji,
+        reactedUsersId: [currentUser?.id]
+      }
+      message.emojis.push(newEmojiObject)
+    }
+
+    newMessages[messageIndex] = message
+    setMessages(newMessages)
+    return false
+  }
+
+  const SendAttachedFileHandler = file => {
+    // do something with the file
+  }
+
   return roomId ? (
     <Container>
       <MessagingArea>
-        {/* todo -> MessageBoard Area */}
-        <MessageBoard messageBoardConfig={chatSidebarConfig} />
-        {/* <h1>Messaging</h1>
-        <p>params: {JSON.stringify(props.match)}</p>
-        <Link to={`${props.match.url}/thread/111`}>Open a thread</Link>
-        <br />
-        <Link to={`${props.match.url}/member-profile/111`}>
-          Open a member full profile
-        </Link>
-        <br />
-        <Link to={`${props.match.url}/channel-details/111`}>
-          Open channel details
-        </Link> */}
+        <div style={{ height: "calc(100% - 29px)" }}>
+          <MessageBoard
+            messages={messages}
+            onSendMessage={sendMessageHandler}
+            onReact={reactHandler}
+            onSendAttachedFile={SendAttachedFileHandler}
+            currentUserId={authUser?.user_id}
+          />
+        </div>
+        <TypingNotice>Omo Jesu is typing</TypingNotice>
       </MessagingArea>
 
       {/* 
       Right sidebar like thread, profile and co
       ... All routed in InMessageRoute component
     */}
-      <RightAside>
-        <Outlet />
-      </RightAside>
+      <Outlet />
     </Container>
   ) : null
 }

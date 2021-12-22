@@ -42,20 +42,12 @@ class DataStorage:
             data: list; on success
             data: dict; on api call fails or errors
         """
-        # body = dict(
-        #     plugin_id=self.plugin_id,
-        #     organization_id=self.organization_id,
-        #     collection_name=collection_name,
-        #     payload=data,
-        # )
-
-        body = {
-            "plugin_id": self.plugin_id,
-            "organization_id": self.organization_id,
-            "collection_name": collection_name,
-            "payload": data,
-        }
-
+        body = dict(
+            plugin_id=self.plugin_id,
+            organization_id=self.organization_id,
+            collection_name=collection_name,
+            payload=data,
+        )
         try:
             response = requests.post(url=self.write_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -78,22 +70,13 @@ class DataStorage:
             data: json object; on success
             data: dict; on api call fails or errors
         """
-        # body = dict(
-        #     plugin_id=self.plugin_id,
-        #     organization_id=self.organization_id,
-        #     collection_name=collection_name,
-        #     object_id=document_id,
-        #     payload=data,
-        # )
-
-        body = {
-            "plugin_id": self.plugin_id,
-            "organization_id": self.organization_id,
-            "collection_name": collection_name,
-            "object_id": document_id,
-            "payload": data,
-        }
-
+        body = dict(
+            plugin_id=self.plugin_id,
+            organization_id=self.organization_id,
+            collection_name=collection_name,
+            object_id=document_id,
+            payload=data,
+        )
         try:
             response = requests.put(url=self.write_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -103,7 +86,6 @@ class DataStorage:
             return response.json()
 
         return {"status_code": response.status_code, "message": response.reason}
-
 
     # NB: refactoring read_query into read, DB.read now has functionality of read and read_query
     async def read(
@@ -144,7 +126,6 @@ class DataStorage:
 
         return {"status_code": response.status_code, "message": response.reason}
 
-
     async def delete(self, collection_name, document_id):
         """
         Function to del data resource from db.
@@ -158,20 +139,12 @@ class DataStorage:
             data: Json object; on success
             data: dict; on api call fails or errors
         """
-        # body = dict(
-        #     plugin_id=self.plugin_id,
-        #     organization_id=self.organization_id,
-        #     collection_name=collection_name,
-        #     object_id=document_id,
-        # )
-
-        body = {
-            "plugin_id": self.plugin_id,
-            "organization_id": self.organization_id,
-            "collection_name": collection_name,
-            "object_id": document_id,
-        }
-
+        body = dict(
+            plugin_id=self.plugin_id,
+            organization_id=self.organization_id,
+            collection_name=collection_name,
+            object_id=document_id,
+        )
         try:
             response = requests.post(url=self.delete_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -181,7 +154,6 @@ class DataStorage:
             return response.json()
 
         return {"status_code": response.status_code, "message": response.reason}
-
 
     async def get_all_members(self):
         """Gets a list of all members registered in an organisation
@@ -198,7 +170,6 @@ class DataStorage:
             return []
         if response.status_code == 200:
             return response.json()["data"]
-
 
     async def get_member(self, member_id: str, members: list):
         """Get info of a single registered member in an organisation
