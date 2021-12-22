@@ -7,9 +7,10 @@ client = TestClient(app)
 
 fake_room_id = "44523d5325dsdf"
 fake_org_id = "1223209805sdfsa902"
-fake_org_id = "42893209343920"
+fake_org_id = ("42893209343920",)
+fake_sender_id = "425324132312"
 fake_message_obj = {
-    "sender_id": "425324132312",
+    "sender_id": fake_sender_id,
     "room_id": fake_room_id,
     "org_id": fake_org_id,
     "message_id": "34o003409",
@@ -34,11 +35,11 @@ def test_send_message(monkeypatch):
     monkeypatch.setattr(DB, "write", mock_post)
 
     fake_response_output = {
-        "room_id": "61b3fb328f945e698c7eb396",
+        "room_id": fake_room_id,
         "message_id": "61696f43c4133ddga309dcf6",
         "text": "str",
         "files": "HTTP url(s)",
-        "sender_id": "619ba4671a5f54782939d385",
+        "sender_id": fake_sender_id,
     }
     response = client.post(
         "/org/{org_id}/rooms/{room_id}/sender/{sender_id}/messages",
