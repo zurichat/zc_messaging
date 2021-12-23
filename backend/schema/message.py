@@ -108,6 +108,7 @@ class MessageRequest(BaseModel):
 }
 """
 
+
 class Thread(MessageRequest):
     """Provide structure for the thread schema
 
