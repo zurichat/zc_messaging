@@ -253,7 +253,7 @@ async def get_message_by_id(
     room_id: str,
     message_id: str,
 ):
-    """Retrieves a message in the collection.
+    """Retrieves a message in the room.
 
     Args:
         org_id (str): A unique identifier of an organisation
@@ -262,7 +262,7 @@ async def get_message_by_id(
 
     Returns:
         HTTP_200_OK {Message retrieved}:
-        A dict containing data about the message in the collection based on the message schema.
+        A dict containing data about the message in the room based on the message schema.
 
         {
             "_id": "61c3aa9478fb01b18fac1465",
