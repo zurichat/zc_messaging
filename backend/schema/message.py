@@ -1,7 +1,7 @@
 import asyncio
 import concurrent.futures
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, List
 
 from fastapi import HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
@@ -12,46 +12,11 @@ class Emoji(BaseModel):
     """
     Provides the nested object for reactions to message
     """
+
     name: str
     count: int
     emoji: str
     reactedUsersId: List[str] = []
-
-
-# class RichUiDataBlock(BaseModel):
-#     """
-#     """
-#     key: str
-#     text: str
-#     type: str
-#     depth: int
-#     inlineStyleRanges: List[RichUiStyleRange] = []
-#     entityRanges: List[RichUiEntityRange] = []
-#     data: Any
-
-
-# class RichUiEntityData(BaseModel):
-#     """
-#     """
-#     mention: RichUiEntityDataMention
-#     emojiUnicode: str
-
-
-
-# class RichUiEntity(BaseModel):
-#     """
-#     """
-#     type: str
-#     mutability: str
-#     data: RichUiEntityData
-
-
-# class RichUiData(BaseModel):
-#     """
-#     Mirrors the RichUiData model from the rich text library.
-#     """
-#     blocks: List[RichUiDataBlock] = []
-#     entityMap: Dict[str, RichUiEntity] = {}
 
 
 class MessageRequest(BaseModel):
@@ -59,13 +24,13 @@ class MessageRequest(BaseModel):
     Provides a base model for all threads
     """
 
-    text: str
     sender_id: str
     emojis: List[Emoji] = []
-    richUiData: Any
+    richUiData: Any = {}
     files: List[AnyHttpUrl] = []
     saved_by: List[str] = []
     created_at: str = str(datetime.utcnow())
+
 
 """
 {
@@ -86,7 +51,10 @@ class MessageRequest(BaseModel):
             }
         ],
         "entityMap": {}
-    }
+    },
+    "files": ["https://api.zuri.chat/files/profile_image/614679ee1a5607b13c00bcb7/6146fa49845b436ea04d10e9/20210928185128_0.jpg"],
+    "saved_by": []
+    "created_at": "2021-12-22 22:38:33.075643"
 }
 {
     "message_id": "1640204440922",
