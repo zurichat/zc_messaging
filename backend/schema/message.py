@@ -29,7 +29,7 @@ class MessageRequest(BaseModel):
     richUiData: Any = {}
     files: List[AnyHttpUrl] = []
     saved_by: List[str] = []
-    timestamp: int = int(datetime.utcnow().timestamp())
+    timestamp: int
     created_at: str = str(datetime.utcnow())
 
 

@@ -119,14 +119,12 @@ async def update_message(
 ):
     """
     Update a message
-
     Args:
         request: Request object
         org_id: A unique identifier of the organization.
         room_id: A unique identifier of the room.
         message_id: A unique identifier of the message that is being edited.
         background_tasks: A daemon thread for publishing to centrifugo
-
     Returns:
         HTTP_200_OK {Message edited}:
         A dict containing data about the message that was edited.
@@ -181,6 +179,7 @@ async def update_message(
         )
 
     payload = request.dict(exclude_unset=True)
+    message["richUiData"] = payload["richUiData"]
     payload["edited"] = True
 
     if message["sender_id"] != payload["sender_id"]:
@@ -194,13 +193,12 @@ async def update_message(
     )
 
     if edited_message and edited_message.get("status_code") is None:
-        new_message = await get_message(org_id, room_id, message_id)
         # Publish to centrifugo in the background.
         background_tasks.add_task(
-            centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_message
+            centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, message
         )
         return JSONResponse(
-            content=ResponseModel.success(data=new_message, message="Message edited"),
+            content=ResponseModel.success(data=message, message="Message edited"),
             status_code=status.HTTP_200_OK,
         )
     raise HTTPException(
