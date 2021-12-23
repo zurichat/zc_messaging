@@ -4,8 +4,7 @@ from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.message_utils import (MESSAGE_COLLECTION, get_message,
-                                 get_room_messages)
+from utils.message_utils import (MESSAGE_COLLECTION, get_message)
 
 router = APIRouter()
 
@@ -38,6 +37,7 @@ async def send_message(
     Returns:
         HTTP_201_CREATED {new message sent}:
         A dict containing data about the message that was created (response_output).
+
             {
                 "sender_id": "619ba4671a5f54782939d385",
                 "emojis": [],
@@ -64,6 +64,7 @@ async def send_message(
                 "edited": false,
                 "threads": []
             }
+
     Raises:
         HTTPException [404]: Sender not in room
         HTTPException [404]: Room does not exist
@@ -129,6 +130,7 @@ async def update_message(
     Returns:
         HTTP_200_OK {Message edited}:
         A dict containing data about the message that was edited.
+        
             {
                 "_id": "61c3aa9478fb01b18fac1465",
                 "created_at": "2021-12-22 22:38:33.075643",

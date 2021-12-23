@@ -33,29 +33,7 @@ class MessageRequest(BaseModel):
 
 
 """
-{
-    "message_id": "1640179225324",
-    "sender_id": "619ba4671a5f54782939d385",
-    "timestamp": 1640179225324,
-    "emojis": [],
-    "richUiData": {
-        "blocks": [
-            {
-                "key": "eljik",
-                "text": "HI, I'm mark.. new here",
-                "type": "unstyled",
-                "depth": 0,
-                "inlineStyleRanges": [],
-                "entityRanges": [],
-                "data": {}
-            }
-        ],
-        "entityMap": {}
-    },
-    "files": ["https://api.zuri.chat/files/profile_image/614679ee1a5607b13c00bcb7/6146fa49845b436ea04d10e9/20210928185128_0.jpg"],
-    "saved_by": []
-    "created_at": "2021-12-22 22:38:33.075643"
-}
+    This is the message model that will be used to create a message
 {
     "message_id": "1640204440922",
     "sender_id": "619ba4671a5f54782939d385",
@@ -65,7 +43,7 @@ class MessageRequest(BaseModel):
         "blocks": [
             {
                 "key": "f3s6p",
-                "text": "@funkymikky4ril hello :face_with_raised_eyebrow: ",
+                "text": "@funkymikky4ril HI, I'm mark.. new here",
                 "type": "unstyled",
                 "depth": 0,
                 "inlineStyleRanges": [],
@@ -104,10 +82,12 @@ class MessageRequest(BaseModel):
                 }
             }
         }
-    }
+    },
+    "files": ["https://api.zuri.chat/files/profile_image/614679ee1a5607b13c00bcb7/6146fa49845b436ea04d10e9"],
+    "saved_by": []
+    "created_at": "2021-12-22 22:38:33.075643"
 }
 """
-
 
 class Thread(MessageRequest):
     """Provide structure for the thread schema
