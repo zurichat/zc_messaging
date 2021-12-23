@@ -57,18 +57,24 @@ async def send_message(
     response = await DB.write(
         MESSAGE_COLLECTION, message_obj.dict(exclude={"message_id"})
     )
+    message_obj.message_id = response.get("data").get("object_id")
 
     if response and response.get("status_code") is None:
         message_obj.message_id = response["data"]["object_id"]
-        # Publish to centrifugo in the background.
+        output_data = {
+            "room_id": message_obj.room_id,
+            "message_id": message_obj.message_id,
+            "sender_id": message_obj.sender_id,
+            "text": message_obj.text,
+            "files": message_obj.files,
+        }
         background_tasks.add_task(
-            centrifugo_client.publish, room_id, Events.MESSAGE_CREATE, message_obj.dict()
-        )
+            centrifugo_client.publish, room_id, Events.MESSAGE_CREATE, output_data
+        )  # publish to centrifugo in the background
         return JSONResponse(
-            content=ResponseModel.success(data=message_obj.dict(), message="new message sent"),
+            content=ResponseModel.success(data=output_data, message="new message sent"),
             status_code=status.HTTP_201_CREATED,
         )
-
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail={"Message not sent": response},
@@ -94,14 +100,12 @@ async def update_message(
 ):
     """
     Update a message
-
     Args:
         request: Request object
         org_id: A unique identifier of the organization.
         room_id: A unique identifier of the room.
         message_id: A unique identifier of the message that is being edited.
         background_tasks: A daemon thread for publishing to centrifugo
-
     Returns:
         HTTP_200_OK {Message edited}:
         A dict containing data about the message that was edited.
@@ -111,7 +115,6 @@ async def update_message(
                 "sender_id": "619ba4671a5f54782939d385",
                 "text": "xxxxxxxxxxxxxxxxx"
             }
-
     Raises:
         HTTPException [401]: You are not authorized to edit this message
         HTTPException [404]: Message not found
@@ -138,12 +141,18 @@ async def update_message(
     )
 
     if edited_message and edited_message.get("status_code") is None:
-        # Publish to centrifugo in the background.
+        new_data = {
+            "room_id": room_id,
+            "message_id": message_id,
+            "sender_id": payload["sender_id"],
+            "text": payload["text"],
+            "edited": True,
+        }
         background_tasks.add_task(
-            centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, edited_message
-        )
+            centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_data
+        )  # publish to centrifugo in the background
         return JSONResponse(
-            content=ResponseModel.success(data=edited_message, message="Message edited"),
+            content=ResponseModel.success(data=new_data, message="Message edited"),
             status_code=status.HTTP_200_OK,
         )
     raise HTTPException(
@@ -165,7 +174,7 @@ async def get_all_messages(
     org_id: str,
     room_id: str,
 ):
-    """Reads all messages in the collection.
+    """Retrieves all messages in the room.
 
     Args:
         org_id (str): A unique identifier of an organisation
@@ -173,24 +182,43 @@ async def get_all_messages(
 
     Returns:
         HTTP_200_OK {Messages retrieved}:
-        A list containing data about all the messages in the collection.
+        A list containing data about all the messages in the room.
+
         [
             {
-                "_id": "61b8caec78fb01b18fac1410",
-                "created_at": "2021-12-14 16:40:43.302519",
+                "_id": "61c3aa9478fb01b18fac1465",
+                "created_at": "2021-12-22 22:38:33.075643",
+                "edited": true,
+                "emojis": [
+                {
+                    "count": 1,
+                    "emoji": "👹",
+                    "name": "frown",
+                    "reactedUsersId": [
+                    "619ba4671a5f54782939d385"
+                    ]
+                }
+                ],
                 "files": [],
-                "message_id": null,
                 "org_id": "619ba4671a5f54782939d384",
-                "reactions": [
+                "richUiData": {
+                "blocks": [
                     {
-                        "character": "wink",
-                        "sender_id": "6169704bc4133ddaa309dd07"
+                    "data": {},
+                    "depth": 0,
+                    "entityRanges": [],
+                    "inlineStyleRanges": [],
+                    "key": "eljik",
+                    "text": "HI, I'm mark.. new here",
+                    "type": "unstyled"
                     }
                 ],
+                "entityMap": {}
+                },
                 "room_id": "619e28c31a5f54782939d59a",
                 "saved_by": [],
-                "sender_id": "61696f5ac4133ddaa309dcfe",
-                "text": "testing messages",
+                "sender_id": "619ba4671a5f54782939d385",
+                "text": "string",
                 "threads": []
             }
         ]
@@ -235,24 +263,41 @@ async def get_message_by_id(
     Returns:
         HTTP_200_OK {Message retrieved}:
         A dict containing data about the message in the collection based on the message schema.
+
         {
-            "_id": "61b8caec78fb01b18fac1410",
-            "created_at": "2021-12-14 16:40:43.302519",
-            "files": [
-                "https://cdn.iconscout.com/icon/free/png-256/"
+            "_id": "61c3aa9478fb01b18fac1465",
+            "created_at": "2021-12-22 22:38:33.075643",
+            "edited": true,
+            "emojis": [
+            {
+                "count": 1,
+                "emoji": "👹",
+                "name": "smile",
+                "reactedUsersId": [
+                "619ba4671a5f54782939d385"
+                ]
+            }
             ],
-            "message_id": null,
+            "files": [],
             "org_id": "619ba4671a5f54782939d384",
-            "reactions": [
+            "richUiData": {
+            "blocks": [
                 {
-                    "character": "wink",
-                    "sender_id": "6169704bc4133ddaa309dd07"
+                "data": {},
+                "depth": 0,
+                "entityRanges": [],
+                "inlineStyleRanges": [],
+                "key": "eljik",
+                "text": "HI, I'm mark.. new here",
+                "type": "unstyled"
                 }
             ],
+            "entityMap": {}
+            },
             "room_id": "619e28c31a5f54782939d59a",
             "saved_by": [],
-            "sender_id": "61696f5ac4133ddaa309dcfe",
-            "text": "testing messages",
+            "sender_id": "619ba4671a5f54782939d385",
+            "text": "string",
             "threads": []
         }
 
