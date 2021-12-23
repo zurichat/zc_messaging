@@ -42,12 +42,14 @@ class DataStorage:
             data: list; on success
             data: dict; on api call fails or errors
         """
-        body = dict(
-            plugin_id=self.plugin_id,
-            organization_id=self.organization_id,
-            collection_name=collection_name,
-            payload=data,
-        )
+
+        body = {
+            "plugin_id": self.plugin_id,
+            "organization_id": self.organization_id,
+            "collection_name": collection_name,
+            "payload": data,
+        }
+
         try:
             response = requests.post(url=self.write_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -70,13 +72,15 @@ class DataStorage:
             data: json object; on success
             data: dict; on api call fails or errors
         """
-        body = dict(
-            plugin_id=self.plugin_id,
-            organization_id=self.organization_id,
-            collection_name=collection_name,
-            object_id=document_id,
-            payload=data,
-        )
+
+        body = {
+            "plugin_id": self.plugin_id,
+            "organization_id": self.organization_id,
+            "collection_name": collection_name,
+            "object_id": document_id,
+            "payload": data,
+        }
+
         try:
             response = requests.put(url=self.write_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -107,7 +111,7 @@ class DataStorage:
             data: list; on success
             data: dict; on api call fails or errors
         """
-        request_body = {
+        body = {
             "collection_name": collection_name,
             "filter": query,
             "object_id": resource_id,
@@ -117,7 +121,7 @@ class DataStorage:
         }
 
         try:
-            response = requests.post(url=self.read_query_api, json=request_body)
+            response = requests.post(url=self.read_query_api, json=body)
         except requests.exceptions.RequestException as exception:
             print(exception)
             return None
@@ -139,12 +143,14 @@ class DataStorage:
             data: Json object; on success
             data: dict; on api call fails or errors
         """
-        body = dict(
-            plugin_id=self.plugin_id,
-            organization_id=self.organization_id,
-            collection_name=collection_name,
-            object_id=document_id,
-        )
+
+        body = {
+            "plugin_id": self.plugin_id,
+            "organization_id": self.organization_id,
+            "collection_name": collection_name,
+            "object_id": document_id,
+        }
+
         try:
             response = requests.post(url=self.delete_api, json=body)
         except requests.exceptions.RequestException as exception:
