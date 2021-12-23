@@ -3,7 +3,8 @@ import { createSlice } from "@reduxjs/toolkit"
 const initialState = {
   user_id: "",
   user_name: "",
-  user_image_url: ""
+  user_image_url: "",
+  workspaceUsers: {}
 }
 
 export const authUserSlice = createSlice({
@@ -14,6 +15,7 @@ export const authUserSlice = createSlice({
       state.user_id = action.payload.user_id
       state.user_name = action.payload.user_name
       state.user_image_url = action.payload.user_image_url
+      state.workspaceUsers = action.payload.workspaceUsers
     }
   }
 })
