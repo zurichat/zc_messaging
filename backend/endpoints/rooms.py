@@ -170,3 +170,95 @@ async def join_room(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail="failed to add new members to room",
     )
+
+
+@router.put(
+    "/org/{org_id}/rooms/{room_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"detail": "member not in room"},
+        403: {"detail": "cannot close a channel room"},
+        404: {"detail": "room not found"},
+        424: {"detail": "unable to close conversation"},
+    },
+)
+async def close_conversation(
+    org_id: str,
+    room_id: str,
+    member_id: str,
+    background_tasks: BackgroundTasks,
+):
+    """
+    Closes a DM or Group_DM room on the sidebar
+    By toggling the closed boolean field of the room document from False to True
+    The function when called on a closed room, changes the closed field back to False
+    Args:
+        org_id (str): A unique identifier of an organisation
+        room_id: A unique identifier of the room to be updated
+        member_id: A unique identifier of the member initiating the request
+        background_tasks: A parameter that allows tasks to be performed outside of the main function
+    Returns:
+        HTTP_200_OK: {
+                        "status": "success",
+                        "message": "conversation closed || conversation opened",
+                        "data": {
+                            "closed": true || false,
+                            "role": "admin",
+                            "starred": false
+                        }
+                    }
+    Raises:
+        HTTP_401_UNAUTHORIZED: member not in room
+        HTTP_403_FORBIDDEN: cannot close a channel room
+        HTTP_404_NOT_FOUND: room not found
+        HTTP_424_FAILED_DEPENDENCY: failed to add new members to room
+    """
+    DB = DataStorage(org_id)
+    room = await get_room(org_id=org_id, room_id=room_id)
+
+    if not room:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="room not found"
+        )
+
+    if room["room_type"].upper() == RoomType.CHANNEL:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="cannot close a channel room"
+        )
+
+    if member_id not in room["room_members"].keys():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="member not in room"
+        )
+
+    member_room_data = room["room_members"].get(member_id)
+    member_room_data["closed"] = member_room_data["closed"] is False
+    data = {"room_members": room["room_members"]}
+
+    update_response = await DB.update(
+        ROOM_COLLECTION, document_id=room_id, data=data
+    )  # updates the room data in the db collection
+
+    background_tasks.add_task(
+        centrifugo_client.publish,
+        room=room_id,
+        event=Events.SIDEBAR_UPDATE,
+        data=member_room_data,
+    )  # publish to centrifugo in the background
+
+    if update_response and update_response.get("status_code", None) is None:
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=ResponseModel.success(
+                data=member_room_data,
+                message="conversation closed"
+                if member_room_data["closed"]
+                else "conversation opened",
+            ),
+        )
+
+    raise HTTPException(
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail="unable to close conversation",
+    )

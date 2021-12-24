@@ -117,10 +117,11 @@ class Sidebar:
         starred_rooms = []
         user_rooms = user_rooms or []
         for room in user_rooms:
-            room_profile = await self.__get_room_profile(
-                member_id, room, org_members, DB
-            )
-            rooms.append(room_profile)
+            if room.get("room_members").get(member_id).get("closed") is False:
+                room_profile = await self.__get_room_profile(
+                    member_id, room, org_members, DB
+                )
+                rooms.append(room_profile)
             if room.get("room_members").get(member_id, {}).get("starred", None):
                 starred_rooms.append(room_profile)
         return {"rooms": rooms, "starred_rooms": starred_rooms}
