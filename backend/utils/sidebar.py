@@ -38,11 +38,7 @@ class Sidebar:
         for room_member_id in room_members.keys():
             member_data = await DB.get_member(room_member_id, org_members)
             username = member_data.get("user_name", "no user name")
-            image_url = (
-                DEFAULT_DM_IMG
-                if member_data.get("image_url") == ""
-                else member_data.get("image_url")
-            )
+            image_url = member_data.get("image_url") or DEFAULT_DM_IMG
             room_members[room_member_id].update(username=username, image_url=image_url)
         return room_members
 
