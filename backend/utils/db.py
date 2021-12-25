@@ -26,7 +26,6 @@ class DataStorage:
                 item for item in plugins if PLUGIN_KEY in item["template_url"]
             )
             self.plugin_id = plugin["id"] if plugin else None
-
         except requests.exceptions.RequestException as exception:
             print(exception)
 
@@ -42,14 +41,13 @@ class DataStorage:
             data: list; on success
             data: dict; on api call fails or errors
         """
-        
         body = {
             "plugin_id": self.plugin_id,
             "organization_id": self.organization_id,
             "collection_name": collection_name,
             "payload": data,
         }
-            
+        
         try:
             response = requests.post(url=self.write_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -57,7 +55,6 @@ class DataStorage:
             return None
         if response.status_code == 201:
             return response.json()
-
         return {"status_code": response.status_code, "message": response.json()}
 
     async def update(self, collection_name, document_id, data):
@@ -72,7 +69,6 @@ class DataStorage:
             data: json object; on success
             data: dict; on api call fails or errors
         """
-        
         body = {
             "plugin_id": self.plugin_id,
             "organization_id": self.organization_id,
@@ -88,7 +84,6 @@ class DataStorage:
             return None
         if response.status_code == 200:
             return response.json()
-
         return {"status_code": response.status_code, "message": response.json()}
 
     # NB: refactoring read_query into read, DB.read now has functionality of read and read_query
@@ -119,15 +114,14 @@ class DataStorage:
             "plugin_id": self.plugin_id,
             "options": options,
         }
-
+        
         try:
-            response = requests.post(url=self.read_query_api, json=request_body)
+            response = requests.post(url=self.read_query_api, json=body)
         except requests.exceptions.RequestException as exception:
             print(exception)
             return None
         if response.status_code == 200:
             return response.json().get("data")
-
         return {"status_code": response.status_code, "message": response.reason}
 
     async def delete(self, collection_name, document_id):
@@ -143,7 +137,6 @@ class DataStorage:
             data: Json object; on success
             data: dict; on api call fails or errors
         """
-        
         body = {
             "plugin_id": self.plugin_id,
             "organization_id": self.organization_id,
@@ -158,7 +151,6 @@ class DataStorage:
             return None
         if response.status_code == 200:
             return response.json()
-
         return {"status_code": response.status_code, "message": response.reason}
 
     async def get_all_members(self):
