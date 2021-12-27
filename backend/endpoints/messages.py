@@ -179,15 +179,14 @@ async def update_message(
         )
 
     payload = request.dict(exclude_unset=True)
-    message["richUiData"] = payload["richUiData"]
-    payload["edited"] = True
-
     if message["sender_id"] != payload["sender_id"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="You are not authorized to edit this message",
         )
-
+        
+    message["richUiData"] = payload["richUiData"]
+    payload["edited"] = True
     edited_message = await DB.update(
         MESSAGE_COLLECTION, document_id=message_id, data=payload
     )
