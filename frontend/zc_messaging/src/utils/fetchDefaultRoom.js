@@ -1,4 +1,5 @@
 import axios from "axios"
+import { BASE_URL } from "./constants"
 
 /**
  * @param {string} orgId
@@ -13,7 +14,8 @@ import axios from "axios"
 
 const fetchDefaultRoom = async (orgId, userId) => {
   const response = await axios.get(
-    `https://chat.zuri.chat/api/v1/sidebar?org=${orgId}&user=${userId}`
+    // `https://chat.zuri.chat/api/v1/sidebar?org=${orgId}&user=${userId}`
+    `${BASE_URL}/sidebar?org=${orgId}&user=${userId}`
   )
   const { public_rooms } =
     response.data?.data?.find(room => room.name === "Channels") || {}

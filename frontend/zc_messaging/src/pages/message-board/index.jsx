@@ -1,20 +1,30 @@
 import React, { useState } from "react"
 import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { MessageBoard } from "@zuri/zuri-ui"
+import { SubscribeToChannel } from "@zuri/utilities"
 import mockMessages from "./messages.data.js"
 import { Container, MessagingArea, TypingNotice } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
-import { useSelector } from "react-redux"
+import { useSelector, useDispatch } from "react-redux"
+import {
+  getRoomMessagesHandler,
+  sendMessageBoardHandler
+} from "./message-board.utils"
+import {
+  addNewMessage,
+  setMessages
+} from "../../store/reducers/messageBoardSlice"
 
 const MessagingBoard = () => {
   const { roomId } = useParams()
   const navigateTo = useNavigate()
-  const [messages, setMessages] = useState(mockMessages)
+  const dispatch = useDispatch()
+  const userMessages = useSelector(state => state.messageBoard.messages)
   const authUser = useSelector(state => state.authUser)
+  const currentWorkspaceId = localStorage.getItem("currentWorkspace")
   React.useEffect(() => {
     if (!roomId) {
       ;(async () => {
-        const currentWorkspaceId = localStorage.getItem("currentWorkspace")
         const result = await fetchDefaultRoom(
           currentWorkspaceId,
           authUser?.user_id
@@ -24,41 +34,67 @@ const MessagingBoard = () => {
     }
   }, [])
 
+  React.useEffect(() => {
+    if (roomId && authUser.user_id) {
+      getRoomMessagesHandler(currentWorkspaceId, roomId).then(data => {
+        dispatch(setMessages(data.data))
+      })
+      SubscribeToChannel(roomId, data => {
+        if (data.data.data.sender_id !== authUser.user_id) {
+          const sender = authUser?.workspaceUsers.users.find(
+            user => user._id === data.data.data.sender_id
+          )
+          dispatch(
+            addNewMessage({
+              ...data.data.data,
+              sender: {
+                sender_name: sender?.user_name,
+                sender_image_url: sender?.image_url
+              }
+            })
+          )
+        }
+      })
+    }
+  }, [roomId, authUser])
+
   const sendMessageHandler = async message => {
     const currentDate = new Date()
     const newMessage = {
-      message_id: Date.now().toString(),
-      sender: {
-        sender_name: authUser?.user_name || "Me",
-        sender_image_url: authUser?.user_image_url
-      },
-      time: `${
-        currentDate.getHours() < 12
-          ? currentDate.getHours()
-          : currentDate.getHours() - 12
-      }:${currentDate.getMinutes()}${
-        currentDate.getHours() < 12 ? "AM" : "PM"
-      }`,
+      sender_id: authUser?.user_id,
       timestamp: currentDate.getTime(),
       emojis: [],
       richUiData: message
     }
-    await Promise.resolve(() => {
-      // send message to server
-    })
-    setMessages([...messages, newMessage])
+    const sender = authUser?.workspaceUsers.users.find(
+      user => user._id === authUser?.user_id
+    )
+    dispatch(
+      addNewMessage({
+        ...newMessage,
+        sender: {
+          sender_name: sender?.user_name,
+          sender_image_url: sender?.image_url
+        }
+      })
+    )
+    const response = await sendMessageBoardHandler(
+      currentWorkspaceId,
+      roomId,
+      authUser?.user_id,
+      newMessage
+    )
     return true
   }
 
   const reactHandler = (event, emojiObject, messageId) => {
-    const currentUser = JSON.parse(sessionStorage.getItem("user"))
-    const newMessages = [...messages]
+    const currentUserId = authUser?.user_id
+    const newMessages = [...userMessages]
 
     // if message_id is not undefined then it's coming from already rendered emoji in message container
 
     const emoji = emojiObject.character
     const newEmojiName = messageId ? emojiObject.name : emojiObject.unicodeName
-
     const messageIndex = newMessages.findIndex(
       message => message.message_id === messageId
     )
@@ -76,7 +112,7 @@ const MessagingBoard = () => {
       //the emoji exists in the message
       const reactedUsersId = message.emojis[emojiIndex].reactedUsersId
       const reactedUserIdIndex = reactedUsersId.findIndex(
-        id => id === currentUser?.id
+        id => id === currentUserId
       )
       if (reactedUserIdIndex >= 0) {
         // the current user has reacted with this emoji before
@@ -91,8 +127,14 @@ const MessagingBoard = () => {
         }
       } else {
         // the user has not reacted and will now be added to the list and count incremented
-        message.emojis[emojiIndex].reactedUsersId.push(currentUser?.id)
-        message.emojis[emojiIndex].count = message.emojis[emojiIndex].count + 1
+        // console.log("reacted-user-id-index", message.emojis[emojiIndex])
+        // console.log("id", currentUserId)
+        // console.log("type", isArray(message.emojis[emojiIndex].reactedUsersId))
+        message.emojis[emojiIndex].reactedUsersId = [
+          ...message.emojis[emojiIndex].reactedUsersId,
+          currentUserId
+        ]
+        // message.emojis[emojiIndex].count = message.emojis[emojiIndex].count + 1
       }
     } else {
       // the emoji does not exist
@@ -101,13 +143,12 @@ const MessagingBoard = () => {
         name: newEmojiName,
         count: 1,
         emoji: emoji,
-        reactedUsersId: [currentUser?.id]
+        reactedUsersId: [currentUserId]
       }
       message.emojis.push(newEmojiObject)
     }
 
     newMessages[messageIndex] = message
-    setMessages(newMessages)
     return false
   }
 
@@ -120,7 +161,21 @@ const MessagingBoard = () => {
       <MessagingArea>
         <div style={{ height: "calc(100% - 29px)" }}>
           <MessageBoard
-            messages={messages}
+            messages={(() => {
+              return userMessages.map(message => {
+                const sender = authUser?.workspaceUsers.users.find(
+                  user => user._id === message.sender_id
+                )
+                return {
+                  ...message,
+                  timestamp: new Date().getTime(),
+                  sender: {
+                    sender_name: sender?.user_name,
+                    sender_image_url: sender?.image_url
+                  }
+                }
+              })
+            })()}
             onSendMessage={sendMessageHandler}
             onReact={reactHandler}
             onSendAttachedFile={SendAttachedFileHandler}
