@@ -82,3 +82,13 @@ class Message(Thread):
     """
 
     threads: List[Thread] = []
+
+
+class MessageError(BaseModel):
+    """[summary]
+
+    Args:
+        BaseModel ([type]): [description]
+    """
+
+    message: str
