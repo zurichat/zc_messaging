@@ -4,7 +4,7 @@ from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.message_utils import MESSAGE_COLLECTION, get_message, get_room_messages
+from utils.message_utils import MESSAGE_COLLECTION, get_message
 
 router = APIRouter()
 
@@ -184,7 +184,7 @@ async def update_message(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="You are not authorized to edit this message",
         )
-
+        
     message["richUiData"] = payload["richUiData"]
     payload["edited"] = True
     edited_message = await DB.update(
@@ -203,28 +203,4 @@ async def update_message(
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail={"message not edited": edited_message},
-    )
-
-
-@router.get(
-    "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=ResponseModel,
-    status_code=status.HTTP_200_OK,
-    responses={424: {"detail": "ZC Core failed"}},
-)
-async def get_messages(org_id, room_id):
-    """Fetches all messages sent in a particular room.
-
-    Args:
-        org_id (str): A unique identifier of an organization
-        room_id (str): A unique identifier of the room where messages are fetched from
-
-    Returns:
-        A list of message objects
-
-    """
-    room_messages = await get_room_messages(org_id, room_id)
-    return JSONResponse(
-        content=ResponseModel.success(data=room_messages, message="Messages retrieved"),
-        status_code=status.HTTP_200_OK,
     )
