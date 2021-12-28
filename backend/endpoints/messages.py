@@ -224,8 +224,13 @@ async def get_messages(org_id, room_id):
         A list of message objects
 
     """
-    room_messages = await get_room_messages(org_id, room_id)
+    response = await get_room_messages(org_id, room_id)
+    if response is None or "status_code" in response:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail=response,
+        )
     return JSONResponse(
-        content=ResponseModel.success(data=room_messages, message="Messages retrieved"),
+        content=ResponseModel.success(data=response, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )
