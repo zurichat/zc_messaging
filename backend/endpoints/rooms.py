@@ -212,7 +212,7 @@ async def close_conversation(
         HTTP_401_UNAUTHORIZED: member not in room
         HTTP_403_FORBIDDEN: cannot close a channel room
         HTTP_404_NOT_FOUND: room not found
-        HTTP_424_FAILED_DEPENDENCY: failed to add new members to room
+        HTTP_424_FAILED_DEPENDENCY: unable to close conversation
     """
     DB = DataStorage(org_id)
     room = await get_room(org_id=org_id, room_id=room_id)
@@ -241,13 +241,13 @@ async def close_conversation(
     )  # updates the room data in the db collection
 
     background_tasks.add_task(
-        centrifugo_client.publish,
-        room=room_id,
-        event=Events.SIDEBAR_UPDATE,
-        data=member_room_data,
+        sidebar.publish,
+        org_id,
+        member_id,
+        room["room_type"],
     )  # publish to centrifugo in the background
 
-    if update_response and update_response.get("status_code", None) is None:
+    if update_response and update_response.get("status_code") is None:
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content=ResponseModel.success(

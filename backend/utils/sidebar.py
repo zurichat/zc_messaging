@@ -122,7 +122,7 @@ class Sidebar:
                     member_id, room, org_members, DB
                 )
                 rooms.append(room_profile)
-            if room.get("room_members").get(member_id, {}).get("starred", None):
+            if room.get("room_members").get(member_id, {}).get("starred"):
                 starred_rooms.append(room_profile)
         return {"rooms": rooms, "starred_rooms": starred_rooms}
 
