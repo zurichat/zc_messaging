@@ -31,9 +31,8 @@ async def get_room_messages(org_id: str, room_id: str) -> list:
 
     DB = DataStorage(org_id)
     response = await DB.read(MESSAGE_COLLECTION, query={"room_id": room_id})
-    if response and "status_code" not in response:
-        return response
-    return {}
+
+    return response or []
 
 
 async def get_message(org_id: str, room_id: str, message_id: str) -> dict:
