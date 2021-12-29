@@ -223,12 +223,14 @@ async def get_messages(org_id, room_id):
     Returns:
         A list of message objects
 
+    Raises:
+        HTTPException [424]: Zc Core failed
     """
     response = await get_room_messages(org_id, room_id)
     if response is None or "status_code" in response:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail=response,
+            detail="Zc Core failed",
         )
     return JSONResponse(
         content=ResponseModel.success(data=response, message="Messages retrieved"),
