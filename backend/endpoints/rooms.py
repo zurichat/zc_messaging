@@ -129,7 +129,7 @@ async def remove_member(org_id: str, member_id: str, room_id: str, admin_id: str
             detail="user not a member of the room",
         )
     
-    if not admin_id:
+    if admin_id == None:
         result = remove_mem(room_obj, member_id, org_id)
         if type(result) is ErrorResponseModel: 
             return HTTPException(**result)
