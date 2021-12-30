@@ -1,58 +1,69 @@
-import React, { useState } from "react"
+import { useEffect } from "react"
 import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { MessageBoard } from "@zuri/zuri-ui"
 import { SubscribeToChannel } from "@zuri/utilities"
-import mockMessages from "./messages.data.js"
 import { Container, MessagingArea, TypingNotice } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
 import { useSelector, useDispatch } from "react-redux"
+import getMessageSender from "../../utils/getMessageSender.js"
 import {
-  getRoomMessagesHandler,
-  sendMessageBoardHandler
-} from "./message-board.utils"
-import {
-  addNewMessage,
-  setMessages
-} from "../../store/reducers/messageBoardSlice"
+  messagesApi,
+  useGetMessagesInRoomQuery,
+  useSendMessageInRoomMutation
+} from "../../redux/services/messages.js"
 
 const MessagingBoard = () => {
   const { roomId } = useParams()
   const navigateTo = useNavigate()
   const dispatch = useDispatch()
-  const userMessages = useSelector(state => state.messageBoard.messages)
   const authUser = useSelector(state => state.authUser)
   const currentWorkspaceId = localStorage.getItem("currentWorkspace")
-  React.useEffect(() => {
-    if (!roomId) {
-      ;(async () => {
-        const result = await fetchDefaultRoom(
-          currentWorkspaceId,
-          authUser?.user_id
-        )
-        navigateTo(`/${result.room_id}`, { replace: true })
-      })()
+  const {
+    data: roomMessages,
+    error,
+    isLoading
+  } = useGetMessagesInRoomQuery(
+    {
+      orgId: currentWorkspaceId,
+      roomId
+    },
+    {
+      refetchOnMountOrArgChange: true
     }
-  }, [])
-
-  React.useEffect(() => {
-    if (roomId && authUser.user_id) {
-      getRoomMessagesHandler(currentWorkspaceId, roomId).then(data => {
-        dispatch(setMessages(data.data))
+  )
+  const [sendNewMessage, { isLoading: isSending }] =
+    useSendMessageInRoomMutation()
+  useEffect(() => {
+    if (!roomId) {
+      fetchDefaultRoom(currentWorkspaceId, authUser?.user_id).then(result => {
+        navigateTo(`/${result.room_id}`, { replace: true })
       })
+    }
+    if (roomId && authUser.user_id) {
       SubscribeToChannel(roomId, data => {
         if (data.data.data.sender_id !== authUser.user_id) {
-          const sender = authUser?.workspaceUsers.users.find(
-            user => user._id === data.data.data.sender_id
-          )
-          dispatch(
-            addNewMessage({
-              ...data.data.data,
-              sender: {
-                sender_name: sender?.user_name,
-                sender_image_url: sender?.image_url
-              }
-            })
-          )
+          getMessageSender(data.data.data.sender_id).then(sender => {
+            dispatch(
+              messagesApi.util.updateQueryData(
+                "getMessagesInRoom",
+                {
+                  orgId: currentWorkspaceId,
+                  roomId
+                },
+                draftMessages => {
+                  draftMessages.push({
+                    sender: {
+                      sender_name: sender?.user_name,
+                      sender_image_url:
+                        sender?.image_url ||
+                        `https://i.pravatar.cc/300?u=${sender?._id}`
+                    },
+                    ...data.data.data
+                  })
+                }
+              )
+            )
+          })
         }
       })
     }
@@ -61,35 +72,26 @@ const MessagingBoard = () => {
   const sendMessageHandler = async message => {
     const currentDate = new Date()
     const newMessage = {
-      sender_id: authUser?.user_id,
       timestamp: currentDate.getTime(),
       emojis: [],
       richUiData: message
     }
-    const sender = authUser?.workspaceUsers.users.find(
-      user => user._id === authUser?.user_id
-    )
-    dispatch(
-      addNewMessage({
-        ...newMessage,
-        sender: {
-          sender_name: sender?.user_name,
-          sender_image_url: sender?.image_url
-        }
-      })
-    )
-    const response = await sendMessageBoardHandler(
-      currentWorkspaceId,
+    sendNewMessage({
+      orgId: currentWorkspaceId,
       roomId,
-      authUser?.user_id,
-      newMessage
-    )
+      sender: {
+        sender_id: authUser?.user_id,
+        sender_name: authUser?.user_name,
+        sender_image_url: authUser?.user_image_url
+      },
+      messageData: { ...newMessage }
+    })
     return true
   }
 
   const reactHandler = (event, emojiObject, messageId) => {
     const currentUserId = authUser?.user_id
-    const newMessages = [...userMessages]
+    const newMessages = [...roomMessages]
 
     // if message_id is not undefined then it's coming from already rendered emoji in message container
 
@@ -156,33 +158,19 @@ const MessagingBoard = () => {
     // do something with the file
   }
 
-  return roomId ? (
+  return roomId && roomMessages && !isLoading ? (
     <Container>
       <MessagingArea>
         <div style={{ height: "calc(100% - 29px)" }}>
           <MessageBoard
-            messages={(() => {
-              return userMessages.map(message => {
-                const sender = authUser?.workspaceUsers.users.find(
-                  user => user._id === message.sender_id
-                )
-                return {
-                  ...message,
-                  timestamp: new Date().getTime(),
-                  sender: {
-                    sender_name: sender?.user_name,
-                    sender_image_url: sender?.image_url
-                  }
-                }
-              })
-            })()}
+            messages={roomMessages}
             onSendMessage={sendMessageHandler}
             onReact={reactHandler}
             onSendAttachedFile={SendAttachedFileHandler}
             currentUserId={authUser?.user_id}
           />
         </div>
-        <TypingNotice>Omo Jesu is typing</TypingNotice>
+        {/* <TypingNotice>Omo Jesu is typing</TypingNotice> */}
       </MessagingArea>
 
       {/* 
