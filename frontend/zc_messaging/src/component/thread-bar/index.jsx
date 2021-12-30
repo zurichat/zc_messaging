@@ -1,10 +1,29 @@
 import React from "react"
+import { FiX } from "react-icons/fi"
+import { useNavigate, useParams } from "react-router"
+import { Link } from "react-router-dom"
 
-const Thread = props => (
-  <>
-    <h1>Thread</h1>
-    <p>params: {JSON.stringify(props.match.params)}</p>
-  </>
-)
+import { ThreadBar, ThreadBarHeader, ThreadBarContent } from "./ThreadBar.style"
+
+const Thread = () => {
+  const navigate = useNavigate()
+  const params = useParams()
+  return (
+    <ThreadBar>
+      <ThreadBarHeader>
+        <span>
+          <h4>Thread</h4>
+          <h5>Announcement</h5>
+        </span>
+        <span>
+          <Link to={`/${params.roomId || ""}`}>
+            <FiX stroke="white" size={18} />
+          </Link>
+        </span>
+      </ThreadBarHeader>
+      <ThreadBarContent>{/* <MessageCard /> */}</ThreadBarContent>
+    </ThreadBar>
+  )
+}
 
 export default Thread

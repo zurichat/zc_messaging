@@ -1,11 +1,16 @@
 from backend.schema.response import ErrorResponseModel
 from schema.room import Role, RoomMember, RoomType
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from typing import Dict
+
+from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
-from schema.room import Room, RoomRequest
+from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
+from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.room_utils import ROOM_COLLECTION, remove_mem
+from utils.room_utils import ROOM_COLLECTION, get_room
 from utils.sidebar import sidebar
 from utils.room_utils import get_room
 
@@ -44,6 +49,15 @@ async def create_room(
 
     DB = DataStorage(org_id)
     room_obj = Room(**request.dict(), org_id=org_id, created_by=member_id)
+
+    # check if creator is in room members
+    if member_id not in room_obj.room_members.keys():
+        room_obj.room_members[member_id] = {
+            "role": Role.ADMIN,
+            "starred": False,
+            "closed": False,
+        }
+
     response = await DB.write(ROOM_COLLECTION, data=room_obj.dict())
     if response and response.get("status_code", None) is None:
         room_id = {"room_id": response.get("data").get("object_id")}
@@ -66,7 +80,6 @@ async def create_room(
         detail="unable to create room",
     )
 
-
 @router.patch("/org/{org_id}/rooms/{room_id}/members/{member_id}",
     response_model=ResponseModel, 
     status_code=status.HTTP_200_OK,
@@ -75,7 +88,7 @@ async def create_room(
         404: {"detail": "room or member not found"},
         424: {"detail": "member removal unsuccessful"},
     },)
-async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
+async def remove_member(org_id: str, member_id: str, room_id: str, admin_id: str):
     """Removes a member from a room either when removed by an admin or member leaves the room.
 
     Fetches the room which the member is removed from from the database collection
@@ -85,9 +98,9 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
 
     Args:
         org_id (str): A unique identifier of an organisation
-        member_id (str): A unique identifier of the member removing another member
+        member_id (str): A unique identifier of the member being removed from the room
         room_id (str): A unique identifier of the room a member is being removed from
-        mem_id (str): A unique identifier of the member being removed from the room
+        admin_id (str): A unique identifier of the member removing another member
 
     Returns:
         HTTP_200_OK (member removed from room): {room}
@@ -116,14 +129,14 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
             detail="user not a member of the room",
         )
     
-    if member_id == mem_id:
+    if not admin_id:
         result = remove_mem(room_obj, member_id, org_id)
         if type(result) is ErrorResponseModel: 
             return HTTPException(**result)
         else:
             return JSONResponse(content=result, status_code=status.HTTP_200_OK)
     else:   
-        member: RoomMember = room_obj["room_members"].get(member_id)
+        member: RoomMember = room_obj["room_members"].get(admin_id)
         
         if member.role != Role.ADMIN:
             raise HTTPException(
@@ -132,8 +145,103 @@ async def remove_member(org_id: str, member_id: str, room_id: str, mem_id: str):
             )
 
         
-        result = remove_mem(room_obj, mem_id, org_id)
+        result = remove_mem(room_obj, member_id, org_id)
         if type(result) is ErrorResponseModel: 
             return HTTPException(**result)
         else:
             return JSONResponse(content=result, status_code=status.HTTP_200_OK)
+
+@router.put(
+    "/org/{org_id}/rooms/{room_id}/members/{member_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        400: {"detail": "the max number for a Group_DM is 9"},
+        401: {"detail": "member not an admin"},
+        403: {"detail": "DM room or not found"},
+        424: {"detail": "failed to add new members to room"},
+    },
+)
+async def join_room(
+    org_id: str,
+    room_id: str,
+    member_id: str,
+    background_tasks: BackgroundTasks,
+    new_members: Dict[str, RoomMember] = Body(...),
+):
+    """Adds a new member(s) to a room
+    Args:
+        data: a pydantic schema that defines the request params
+        org_id (str): A unique identifier of an organisation
+        room_id: A unique identifier of the room to be updated
+        member_id: A unique identifier of the member initiating the request
+        background_tasks: A parameter that allows tasks to be performed outside of the main function
+        new_members: A dictionary of new members to be added to the room
+
+    Returns:
+        HTTP_200_OK: {
+                        "status": 200,
+                        "message": "success",
+                        "data": {
+                            "matched_documents": 1,
+                            "modified_documents": 1
+                        }
+                    }
+    Raises:
+        HTTP_400_BAD_REQUEST: the max number for a Group_DM is 9
+        HTTP_401_UNAUTHORIZED: member not in room or not an admin
+        HTTP_403_FORBIDDEN: DM room or not found
+        HTTP_424_FAILED_DEPENDENCY: failed to add new members to room
+    """
+    DB = DataStorage(org_id)  # initializes the datastorage class with the org id
+
+    members = {
+        k: v.dict() for k, v in new_members.items()
+    }  # converts RoomMember to dict
+
+    room = await get_room(org_id=org_id, room_id=room_id)
+
+    if not room or room["room_type"].upper() == RoomType.DM:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="DM room cannot be joined or not found",
+        )
+
+    member = room.get("room_members").get(str(member_id))
+    if member is None or member["role"].lower() != Role.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="member not in room or not an admin",
+        )
+
+    if room["room_type"].upper() == RoomType.CHANNEL:
+        room["room_members"].update(members)
+
+    if room["room_type"].upper() == RoomType.GROUP_DM:
+        room["room_members"].update(members)
+        if len(room["room_members"].keys()) > 9:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="the max number for a Group_DM is 9",
+            )
+
+    update_members = {"room_members": room["room_members"]}
+    update_response = await DB.update(
+        ROOM_COLLECTION, document_id=room_id, data=update_members
+    )  # updates the room data in the db collection
+
+    background_tasks.add_task(
+        centrifugo_client.publish,
+        room=room_id,
+        event=Events.ROOM_MEMBER_ADD,
+        data=members,
+    )  # publish to centrifugo in the background
+
+    if update_response and update_response.get("status_code", None) is None:
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=update_members,
+        )
+    raise HTTPException(
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail="failed to add new members to room",
+    )

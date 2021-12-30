@@ -1,10 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit"
 import logger from "redux-logger"
-import sampleReducer from "./reducers/templateSlice"
+import authUserReducer from "./reducers/authUserSlice"
+import messageBoardReducer from "./reducers/messageBoardSlice"
 
 export const store = configureStore({
   reducer: {
-    sample: sampleReducer
+    authUser: authUserReducer,
+    messageBoard: messageBoardReducer
   },
   middleware: getDefaultMiddleware =>
     process.env.NODE_ENV !== "production"

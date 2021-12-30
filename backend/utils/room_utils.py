@@ -2,7 +2,7 @@ from starlette import status
 from backend.schema.response import ErrorResponseModel, ResponseModel
 from utils.db import DataStorage
 
-ROOM_COLLECTION = "chat_rooms"
+ROOM_COLLECTION = "rooms"
 DEFAULT_DM_IMG = (
     "https://cdn.iconscout.com/icon/free/png-256/"
     "account-avatar-profile-human-man-user-30448.png"

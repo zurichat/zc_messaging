@@ -48,7 +48,7 @@ class RoomMember(BaseModel):
     content of the room_member variable
     """
 
-    role: Role
+    role: Role = Role.MEMBER
     starred: bool = False
     closed: Optional[bool] = False
 
@@ -62,7 +62,7 @@ class RoomRequest(BaseModel):
     created_at: str = str(datetime.utcnow())
     description: Optional[str] = None
     topic: Optional[str] = None
-    is_private: bool = True
+    is_private: bool = False
     is_archived: bool = False
 
     @root_validator(pre=True)
@@ -80,8 +80,8 @@ class RoomRequest(BaseModel):
             HTTPException [400]: if DM has topic
             HTTPException [400]: if DM has a description
         """
-        if values["room_type"] != RoomType.CHANNEL:
-            room_type = values.get("room_type")
+        if values["room_type"].upper() != RoomType.CHANNEL:
+            room_type = values.get("room_type").upper()
             room_members = values.get("room_members", {})
             topic = values.get("topic")
             description = values.get("description")
@@ -138,6 +138,7 @@ class RoomRequest(BaseModel):
                     detail="DM or Group DM should not have a description",
                 )
 
+            values["is_private"] = True
         return values
 
     @root_validator(pre=True)
@@ -154,7 +155,7 @@ class RoomRequest(BaseModel):
         Raises:
             HTTPException [400]: if room_members has less than two unique members
         """
-        if values.get("room_type") == RoomType.CHANNEL:
+        if values.get("room_type").upper() == RoomType.CHANNEL:
             room_type = values.get("room_type")
             room_name = values.get("room_name")
             org_id = values.get("org_id")

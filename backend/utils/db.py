@@ -12,9 +12,7 @@ class DataStorage:
 
     """
 
-    def __init__(
-        self, organization_id: str
-    ) -> None:
+    def __init__(self, organization_id: str) -> None:
         self.write_api = f"{BASE_URL}/data/write"
         self.delete_api = f"{BASE_URL}/data/delete"
         self.read_query_api = f"{BASE_URL}/data/read"
@@ -24,9 +22,10 @@ class DataStorage:
         try:
             response = requests.get(url=f"{BASE_URL}/marketplace/plugins")
             plugins = response.json().get("data").get("plugins")
-            plugin = next(item for item in plugins if PLUGIN_KEY in item["template_url"])
+            plugin = next(
+                item for item in plugins if PLUGIN_KEY in item["template_url"]
+            )
             self.plugin_id = plugin["id"] if plugin else None
-
         except requests.exceptions.RequestException as exception:
             print(exception)
 
@@ -42,12 +41,13 @@ class DataStorage:
             data: list; on success
             data: dict; on api call fails or errors
         """
-        body = dict(
-            plugin_id=self.plugin_id,
-            organization_id=self.organization_id,
-            collection_name=collection_name,
-            payload=data,
-        )
+        body = {
+            "plugin_id": self.plugin_id,
+            "organization_id": self.organization_id,
+            "collection_name": collection_name,
+            "payload": data,
+        }
+        
         try:
             response = requests.post(url=self.write_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -55,8 +55,7 @@ class DataStorage:
             return None
         if response.status_code == 201:
             return response.json()
-
-        return {"status_code": response.status_code, "message": response.reason}
+        return {"status_code": response.status_code, "message": response.json()}
 
     async def update(self, collection_name, document_id, data):
         """Function to update data from db.
@@ -70,13 +69,14 @@ class DataStorage:
             data: json object; on success
             data: dict; on api call fails or errors
         """
-        body = dict(
-            plugin_id=self.plugin_id,
-            organization_id=self.organization_id,
-            collection_name=collection_name,
-            object_id=document_id,
-            payload=data,
-        )
+        body = {
+            "plugin_id": self.plugin_id,
+            "organization_id": self.organization_id,
+            "collection_name": collection_name,
+            "object_id": document_id,
+            "payload": data,
+        }
+        
         try:
             response = requests.put(url=self.write_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -84,8 +84,7 @@ class DataStorage:
             return None
         if response.status_code == 200:
             return response.json()
-
-        return {"status_code": response.status_code, "message": response.reason}
+        return {"status_code": response.status_code, "message": response.json()}
 
     # NB: refactoring read_query into read, DB.read now has functionality of read and read_query
     async def read(
@@ -107,7 +106,7 @@ class DataStorage:
             data: list; on success
             data: dict; on api call fails or errors
         """
-        request_body = {
+        body = {
             "collection_name": collection_name,
             "filter": query,
             "object_id": resource_id,
@@ -115,15 +114,14 @@ class DataStorage:
             "plugin_id": self.plugin_id,
             "options": options,
         }
-
+        
         try:
-            response = requests.post(url=self.read_query_api, json=request_body)
+            response = requests.post(url=self.read_query_api, json=body)
         except requests.exceptions.RequestException as exception:
             print(exception)
             return None
         if response.status_code == 200:
             return response.json().get("data")
-
         return {"status_code": response.status_code, "message": response.reason}
 
     async def delete(self, collection_name, document_id):
@@ -139,12 +137,13 @@ class DataStorage:
             data: Json object; on success
             data: dict; on api call fails or errors
         """
-        body = dict(
-            plugin_id=self.plugin_id,
-            organization_id=self.organization_id,
-            collection_name=collection_name,
-            object_id=document_id,
-        )
+        body = {
+            "plugin_id": self.plugin_id,
+            "organization_id": self.organization_id,
+            "collection_name": collection_name,
+            "object_id": document_id,
+        }
+        
         try:
             response = requests.post(url=self.delete_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -152,7 +151,6 @@ class DataStorage:
             return None
         if response.status_code == 200:
             return response.json()
-
         return {"status_code": response.status_code, "message": response.reason}
 
     async def get_all_members(self):
@@ -193,13 +191,13 @@ class FileStorage:
     files and the database on zc_core
     """
 
-    def __init__(
-        self, organization_id: str
-    ) -> None:
+    def __init__(self, organization_id: str) -> None:
         try:
             response = requests.get(url=f"{BASE_URL}/marketplace/plugins")
             plugins = response.json().get("data").get("plugins")
-            plugin = next(item for item in plugins if PLUGIN_KEY in item["template_url"])
+            plugin = next(
+                item for item in plugins if PLUGIN_KEY in item["template_url"]
+            )
             self.plugin_id = plugin["id"] if plugin else None
             self.upload_api = f"{BASE_URL}/upload/file/" + "{self.plugin_id}"
             self.upload_multiple_api = f"{BASE_URL}/upload/files/" + "{self.plugin_id}"
