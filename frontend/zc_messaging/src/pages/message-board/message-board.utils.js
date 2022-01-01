@@ -51,7 +51,7 @@ const getRoomMessagesHandler = async (orgId, roomId) => {
     }
     throw new Error("Invalid arguments")
   } catch (error) {
-    console.error(error)
+    console.error("error getting room messages", error)
   }
 }
 
