@@ -1,4 +1,4 @@
-from backend.schema.response import ErrorResponseModel
+from schema.response import ErrorResponseModel
 from schema.room import Role, RoomMember, RoomType
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from typing import Dict
@@ -9,10 +9,8 @@ from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.room_utils import ROOM_COLLECTION, remove_mem
-from utils.room_utils import ROOM_COLLECTION, get_room
+from utils.room_utils import ROOM_COLLECTION, remove_member, get_room
 from utils.sidebar import sidebar
-from utils.room_utils import get_room
 
 router = APIRouter()
 
@@ -106,7 +104,7 @@ async def remove_member(org_id: str, member_id: str, room_id: str, admin_id: str
         HTTP_200_OK (member removed from room): {room}
     Raises
         HTTP_404_NOT_FOUND: room or member not found
-        HTTP_403_FORBIDDEN: not authorized to remove room 
+        HTTP_403_FORBIDDEN: not authorized to remove room  member
         HTTP_424_FAILED_DEPENDENCY: member removal unsuccessful
     """
     room_obj = await get_room(org_id, room_id)
@@ -120,7 +118,7 @@ async def remove_member(org_id: str, member_id: str, room_id: str, admin_id: str
     if room_obj["room_type"] != RoomType.CHANNEL:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="unable to remove room member",
+            detail="cannot remove member from DM rooms",
         )
     
     if member_id not in room_obj["room_members"]:
@@ -130,26 +128,25 @@ async def remove_member(org_id: str, member_id: str, room_id: str, admin_id: str
         )
     
     if admin_id == None:
-        result = remove_mem(room_obj, member_id, org_id)
+        result = remove_member(room_obj, member_id, org_id)
         if type(result) is ErrorResponseModel: 
-            return HTTPException(**result)
-        else:
-            return JSONResponse(content=result, status_code=status.HTTP_200_OK)
-    else:   
-        member: RoomMember = room_obj["room_members"].get(admin_id)
+            raise HTTPException(**result)
+        return JSONResponse(content=ResponseModel.success(data=result, message="user removed from room successfully"), status_code=status.HTTP_200_OK)
+       
+    member: RoomMember = room_obj["room_members"].get(admin_id)
         
-        if member.role != Role.ADMIN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="unable to remove room member",
-            )
+    if member.role != Role.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="must be an admin to remove member",
+        )
 
         
-        result = remove_mem(room_obj, member_id, org_id)
-        if type(result) is ErrorResponseModel: 
-            return HTTPException(**result)
-        else:
-            return JSONResponse(content=result, status_code=status.HTTP_200_OK)
+    result = remove_member(room_obj, member_id, org_id)
+    if type(result) is ErrorResponseModel: 
+        raise HTTPException(**result)
+
+    return JSONResponse(content=ResponseModel.success(data=result, message="user removed from room successfully"), status_code=status.HTTP_200_OK)
 
 @router.put(
     "/org/{org_id}/rooms/{room_id}/members/{member_id}",

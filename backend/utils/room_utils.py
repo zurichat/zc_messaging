@@ -1,5 +1,5 @@
-from starlette import status
-from backend.schema.response import ErrorResponseModel, ResponseModel
+from fastapi import status
+from schema.response import ErrorResponseModel, ResponseModel
 from utils.db import DataStorage
 
 ROOM_COLLECTION = "rooms"
@@ -122,7 +122,7 @@ async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> boo
     raise Exception("Room not found")
 
 
-async def remove_mem(room_obj: dict, mem_id: str, org_id: str):
+async def remove_member(room_obj: dict, mem_id: str, org_id: str):
     DB = DataStorage(org_id)
     remove_member = room_obj["room_members"].pop(mem_id, "not_found")
     
@@ -131,9 +131,7 @@ async def remove_mem(room_obj: dict, mem_id: str, org_id: str):
     
     update_room =  await DB.update(ROOM_COLLECTION, room_obj["id"], room_obj)
         
-    if update_room is None:
-        return ErrorResponseModel.error(status.HTTP_424_FAILED_DEPENDENCY, "unable to remove room member")
-    elif type(update_room) is dict:
+    if update_room is None or type(update_room) is dict:
         return ErrorResponseModel.error(status.HTTP_424_FAILED_DEPENDENCY, "unable to remove room member")
     else:
         return ResponseModel.success(data=room_obj.dict(), message="member removed successfully from room")

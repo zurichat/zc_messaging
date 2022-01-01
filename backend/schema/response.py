@@ -47,14 +47,14 @@ class ErrorResponseModel(BaseModel):
     detail: str
 
     @staticmethod
-    def error(status_code: str, message: str):
-        """Provides a success response data
+    def error(status_code: str, detail: str):
+        """Provides a error response data
 
         Args:
             data (dict): data to be returned
-            message (str, optional): Descriptive messaged. Defaults to "success".
+            detail (str): Descriptive messaged.
 
         Returns:
-            dict: key-value pair of status, message and data
+            dict: key-value pair of status, detail
         """
-        return ErrorResponseModel(status_code=status_code, message=message).dict()
+        return ErrorResponseModel(status_code=status_code, detail=detail).dict()
