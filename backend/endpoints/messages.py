@@ -4,7 +4,8 @@ from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.message_utils import MESSAGE_COLLECTION, get_message
+from utils.message_utils import (MESSAGE_COLLECTION, get_message,
+                                 get_room_messages)
 
 router = APIRouter()
 
@@ -203,4 +204,35 @@ async def update_message(
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail={"message not edited": edited_message},
+    )
+
+
+@router.get(
+    "/org/{org_id}/rooms/{room_id}/messages",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={424: {"detail": "ZC Core failed"}},
+)
+async def get_messages(org_id, room_id):
+    """Fetches all messages sent in a particular room.
+
+    Args:
+        org_id (str): A unique identifier of an organization
+        room_id (str): A unique identifier of the room where messages are fetched from
+
+    Returns:
+        A list of message objects
+
+    Raises:
+        HTTPException [424]: Zc Core failed
+    """
+    response = await get_room_messages(org_id, room_id)
+    if response is None or "status_code" in response:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Zc Core failed",
+        )
+    return JSONResponse(
+        content=ResponseModel.success(data=response, message="Messages retrieved"),
+        status_code=status.HTTP_200_OK,
     )
