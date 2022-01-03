@@ -1,15 +1,10 @@
-from typing import Optional
-
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from fastapi_pagination import Page, add_pagination
-from fastapi_pagination.paginator import paginate
-from schema.message import Message, MessageError, MessageRequest
+from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
-from starlette.responses import JSONResponse, Response
+from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.message_utils import (MESSAGE_COLLECTION, get_all_room_messages,
-                                 get_message, get_messages)
+from utils.message_utils import MESSAGE_COLLECTION, get_message
 
 router = APIRouter()
 
@@ -189,7 +184,7 @@ async def update_message(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="You are not authorized to edit this message",
         )
-        
+
     message["richUiData"] = payload["richUiData"]
     payload["edited"] = True
     edited_message = await DB.update(
@@ -209,40 +204,3 @@ async def update_message(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail={"message not edited": edited_message},
     )
-
-
-@router.get(
-    "/org/{org_id}/rooms/{room_id}/messages",
-    status_code=200,
-    response_model=Page[Message],
-    responses={404: {"model": MessageError}},
-)
-async def room_messages(
-    *, org_id: str, room_id: str, date: Optional[str] = None, response: Response
-):
-
-    """[summary]
-
-    Returns:
-        [type]: [description]
-    """
-    if date is None:
-        messages = await get_all_room_messages(room_id=room_id, org_id=org_id)
-        print(messages)
-        if messages:
-            return paginate(messages)
-        #            return JSONResponse(room_messages, status_code=200)
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return JSONResponse(
-            status_code=response.status_code, content={"message": "No message found"}
-        )
-    messages_by_date = await get_messages(room_id, org_id, date)
-    if messages_by_date:
-        return paginate(messages_by_date)
-    response.status_code = status.HTTP_404_NOT_FOUND
-    return JSONResponse(
-        status_code=response.status_code, content={"message": "No message found"}
-    )
-
-
-add_pagination(router)
