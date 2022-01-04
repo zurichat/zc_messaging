@@ -6,7 +6,7 @@ from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.room_utils import ROOM_COLLECTION, get_room
+from utils.room_utils import ROOM_COLLECTION, get_room, get_room_members
 from utils.sidebar import sidebar
 
 router = APIRouter()
@@ -261,4 +261,65 @@ async def close_conversation(
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail="unable to close conversation",
+    )
+
+
+@router.get(
+    "/org/{org_id}/rooms/{room_id}/members",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"detail": "Room not found"},
+        424: {"detail": "Failure to retrieve room members"},
+    },
+)
+async def get_members(org_id: str, room_id: str):
+    """
+    Get room members.
+
+    Returns all members in a room if the room is found in the database
+    Raises HTTP_404_NOT_FOUND if the room is not found
+    Raises HTTP_424_FAILED_DEPENDENCY if there is an error retrieving the room members
+
+    Args:
+        org_id (str): A unique identifier of an organisation
+        room_id (str): A unique identifier of the room
+
+    Returns:
+        HTTP_200_OK (Room members)
+
+        {
+            "status": "success",
+            "message": "list of room members",
+            "data": {
+                "61696f5ac4133ddaa309dcfe": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+                },
+                "6169704bc4133ddaa309dd07": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+                }
+            }
+        }
+
+    Raises:
+        HTTPException [404]: Room not found
+        HTTPException [424]: Failure to retrieve room members
+    """
+    members = await get_room_members(org_id, room_id)
+    if not members:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
+        )
+    if members.get("status_code") is None:
+        return JSONResponse(
+            content=ResponseModel.success(data=members, message="Room members"),
+            status_code=status.HTTP_200_OK,
+        )
+    raise HTTPException(
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail="Failure to retrieve room members",
     )
