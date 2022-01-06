@@ -22,6 +22,63 @@ class Emoji(BaseModel):
 class MessageRequest(BaseModel):
     """
     Provides a base model for all threads
+
+
+    This is the message model that will be used to create a message
+    {
+        "message_id": "1640204440922",
+        "sender_id": "619ba4671a5f54782939d385",
+        "timestamp": 1640204440922,
+        "emojis": [],
+        "richUiData": {
+            "blocks": [
+                {
+                    "key": "f3s6p",
+                    "text": "@funkymikky4ril HI, I'm mark.. new here",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [
+                        {
+                            "offset": 0,
+                            "length": 15,
+                            "key": 0
+                        },
+                        {
+                            "offset": 22,
+                            "length": 1,
+                            "key": 1
+                        }
+                    ],
+                    "data": {}
+                }
+            ],
+            "entityMap": {
+                "0": {
+                    "type": "mention",
+                    "mutability": "SEGMENTED",
+                    "data": {
+                        "mention": {
+                            "name": "funkymikky4ril",
+                            "link": "funkymikky4ril@yahoo.com",
+                            "avatar": "https://api.zuri.chat/files/profile_image/6146/1e9/208_0.jpg"
+                        }
+                    }
+                },
+                "1": {
+                    "type": "emoji",
+                    "mutability": "IMMUTABLE",
+                    "data": {
+                        "emojiUnicode": ":face_with_raised_eyebrow:"
+                    }
+                }
+            }
+        },
+        "files": ["https://api.zuri.chat/files/profile_image/614679ee1a5607b13c00bcb7/6146f"],
+        "saved_by": []
+        "created_at": "2021-12-22 22:38:33.075643"
+    }
+
     """
 
     sender_id: str
@@ -31,64 +88,6 @@ class MessageRequest(BaseModel):
     saved_by: List[str] = []
     timestamp: int
     created_at: str = str(datetime.utcnow())
-
-
-"""
-    This is the message model that will be used to create a message
-{
-    "message_id": "1640204440922",
-    "sender_id": "619ba4671a5f54782939d385",
-    "timestamp": 1640204440922,
-    "emojis": [],
-    "richUiData": {
-        "blocks": [
-            {
-                "key": "f3s6p",
-                "text": "@funkymikky4ril HI, I'm mark.. new here",
-                "type": "unstyled",
-                "depth": 0,
-                "inlineStyleRanges": [],
-                "entityRanges": [
-                    {
-                        "offset": 0,
-                        "length": 15,
-                        "key": 0
-                    },
-                    {
-                        "offset": 22,
-                        "length": 1,
-                        "key": 1
-                    }
-                ],
-                "data": {}
-            }
-        ],
-        "entityMap": {
-            "0": {
-                "type": "mention",
-                "mutability": "SEGMENTED",
-                "data": {
-                    "mention": {
-                        "name": "funkymikky4ril",
-                        "link": "funkymikky4ril@yahoo.com",
-                        "avatar": "https://api.zuri.chat/files/profile_image/614679ee1a5607b13c00bcb7/6146fa49845b436ea04d10e9/20210928185128_0.jpg"
-                    }
-                }
-            },
-            "1": {
-                "type": "emoji",
-                "mutability": "IMMUTABLE",
-                "data": {
-                    "emojiUnicode": ":face_with_raised_eyebrow:"
-                }
-            }
-        }
-    },
-    "files": ["https://api.zuri.chat/files/profile_image/614679ee1a5607b13c00bcb7/6146fa49845b436ea04d10e9"],
-    "saved_by": []
-    "created_at": "2021-12-22 22:38:33.075643"
-}
-"""
 
 
 class Thread(MessageRequest):
