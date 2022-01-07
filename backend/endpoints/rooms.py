@@ -82,7 +82,6 @@ async def create_room(
     response_model=ResponseModel, 
     status_code=status.HTTP_200_OK,
     responses={
-        200: {"detail": {"room": "room"}},
         404: {"detail": "room or member not found"},
         424: {"detail": "member removal unsuccessful"},
     },)
