@@ -33,15 +33,16 @@ const MessagingBoard = () => {
         refetchOnMountOrArgChange: true
       }
     )
-  const { data: roomMessages, isLoading } = useGetMessagesInRoomQuery(
-    {
-      orgId: currentWorkspaceId,
-      roomId
-    },
-    {
-      refetchOnMountOrArgChange: true
-    }
-  )
+  const { data: roomMessages, isLoading: isLoadingRoomMessages } =
+    useGetMessagesInRoomQuery(
+      {
+        orgId: currentWorkspaceId,
+        roomId
+      },
+      {
+        refetchOnMountOrArgChange: true
+      }
+    )
   const [sendNewMessage, { isLoading: isSending }] =
     useSendMessageInRoomMutation()
   useEffect(() => {
@@ -173,7 +174,7 @@ const MessagingBoard = () => {
     // do something with the file
   }
 
-  return roomId && roomMessages && !isLoading ? (
+  return roomId ? (
     <>
       <Helmet>
         <title>{pageTitle}</title>
@@ -182,7 +183,8 @@ const MessagingBoard = () => {
         <MessagingArea>
           <div style={{ height: "calc(100% - 29px)" }}>
             <MessageBoard
-              messages={roomMessages}
+              isLoadingMessages={isLoadingRoomMessages}
+              messages={roomMessages || []}
               onSendMessage={sendMessageHandler}
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}

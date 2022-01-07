@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit"
+import { setupListeners } from "@reduxjs/toolkit/query"
 import logger from "redux-logger"
 import { messagesApi } from "../services/messages"
 import { roomsApi } from "../services/rooms"
@@ -18,3 +19,5 @@ export const store = configureStore({
     return getDefaultMiddleware().concat(middlewares)
   }
 })
+
+setupListeners(store.dispatch)
