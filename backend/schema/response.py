@@ -31,3 +31,30 @@ class ResponseModel(BaseModel):
             dict: key-value pair of status, message and data
         """
         return ResponseModel(status="success", message=message, data=data).dict()
+
+class ErrorResponseModel(BaseModel):
+    """Creates an error response model for the API.
+
+    Provides a structure for providing an error response to the API.
+    Provides a static method for error responses
+
+    Attributes:
+        status: The status of the response.
+        detail: The message of the response.
+    """
+
+    status_code: int
+    detail: str
+
+    @staticmethod
+    def error(status_code: str, detail: str):
+        """Provides a error response data
+
+        Args:
+            data (dict): data to be returned
+            detail (str): Descriptive messaged.
+
+        Returns:
+            dict: key-value pair of status, detail
+        """
+        return ErrorResponseModel(status_code=status_code, detail=detail).dict()

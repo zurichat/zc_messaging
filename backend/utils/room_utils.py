@@ -1,4 +1,7 @@
+from fastapi import status
+from schema.response import ErrorResponseModel, ResponseModel
 from utils.db import DataStorage
+from requests.exceptions import RequestException
 
 ROOM_COLLECTION = "rooms"
 DEFAULT_DM_IMG = (
@@ -118,3 +121,19 @@ async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> boo
     if response and "status_code" not in response:
         return response["room_members"][member_id]["starred"]
     raise Exception("Room not found")
+
+
+async def remove_member(org_id: str, room_data: dict, member_id: str):
+    DB = DataStorage(org_id)
+    remove_member = room_data["room_members"].pop(member_id, "not_found")
+    
+    if remove_member == "not_found":
+        raise ValueError("user not a member of the room")
+    
+    update_room =  await DB.update(ROOM_COLLECTION, room_data["id"], room_data)
+        
+    if update_room is None or type(update_room) is dict:
+        raise RequestException("unable to remove room member")
+    
+    return update_room
+
