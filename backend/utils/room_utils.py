@@ -1,6 +1,7 @@
 from fastapi import status
 from schema.response import ErrorResponseModel, ResponseModel
 from utils.db import DataStorage
+from requests.exceptions import RequestException
 
 ROOM_COLLECTION = "rooms"
 DEFAULT_DM_IMG = (
@@ -127,15 +128,12 @@ async def remove_member(org_id: str, room_data: dict, member_id: str):
     remove_member = room_data["room_members"].pop(member_id, "not_found")
     
     if remove_member == "not_found":
-        return False
-        # return ErrorResponseModel.error(status.HTTP_404_NOT_FOUND, "user not a member of the room")
+        raise ValueError("user not a member of the room")
     
     update_room =  await DB.update(ROOM_COLLECTION, room_data["id"], room_data)
         
     if update_room is None or type(update_room) is dict:
-        return False
-        # return ErrorResponseModel.error(status.HTTP_424_FAILED_DEPENDENCY, "unable to remove room member")
-    else:
-        return True
-        # return ResponseModel.success(data=room_data.dict(), message="member removed successfully from room")
+        raise RequestException("unable to remove room member")
+    
+    return update_room
 

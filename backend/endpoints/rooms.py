@@ -1,3 +1,4 @@
+from requests.exceptions import RequestException
 from schema.response import ErrorResponseModel
 from schema.room import Role, RoomMember, RoomType
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
@@ -125,27 +126,22 @@ async def remove_member(org_id: str, room_id: str, member_id: str, admin_id: Opt
             status_code=status.HTTP_404_NOT_FOUND,
             detail="user not a member of the room",
         )
+
+    member = room_obj["room_members"].get(admin_id)
     
-    if admin_id is None:
-        result = remove_member(room_obj, member_id, org_id)
-        if type(result) is ErrorResponseModel: 
-            raise HTTPException(**result)
-        return JSONResponse(content=ResponseModel.success(data=result, message="user removed from room successfully"), status_code=status.HTTP_200_OK)
-       
-    member: RoomMember = room_obj["room_members"].get(admin_id)
-        
-    if member.role != Role.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="must be an admin to remove member",
-        )
+    if admin_id is None or (member is not None and member.get("role") == Role.ADMIN):
+        try:
+            result = remove_member(room_obj, member_id, org_id)
+            return JSONResponse(content=ResponseModel.success(data=result, message="user removed from room successfully"), status_code=status.HTTP_200_OK)
+        except ValueError as error:
+            raise HTTPException(detail=error, status_code=status.HTTP_404_NOT_FOUND)
+        except RequestException as error:
+            raise HTTPException(detail=error, status_code=status.HTTP_424_FAILED_DEPENDENCY)
 
-        
-    result = remove_member(room_obj, member_id, org_id)
-    if type(result) is ErrorResponseModel: 
-        raise HTTPException(**result)
-
-    return JSONResponse(content=ResponseModel.success(data=result, message="user removed from room successfully"), status_code=status.HTTP_200_OK)
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="must be an admin to remove member",
+    )
 
 @router.put(
     "/org/{org_id}/rooms/{room_id}/members/{member_id}",
