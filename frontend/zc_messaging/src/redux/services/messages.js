@@ -34,7 +34,7 @@ export const messagesApi = createApi({
               })
           }
         }
-        return []
+        return { data: [] }
       }
     }),
     sendMessageInRoom: builder.mutation({
