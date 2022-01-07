@@ -122,17 +122,20 @@ async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> boo
     raise Exception("Room not found")
 
 
-async def remove_member(room_obj: dict, mem_id: str, org_id: str):
+async def remove_member(org_id: str, room_data: dict, member_id: str):
     DB = DataStorage(org_id)
-    remove_member = room_obj["room_members"].pop(mem_id, "not_found")
+    remove_member = room_data["room_members"].pop(member_id, "not_found")
     
     if remove_member == "not_found":
-        return ErrorResponseModel.error(status.HTTP_404_NOT_FOUND, "user not a member of the room")
+        return False
+        # return ErrorResponseModel.error(status.HTTP_404_NOT_FOUND, "user not a member of the room")
     
-    update_room =  await DB.update(ROOM_COLLECTION, room_obj["id"], room_obj)
+    update_room =  await DB.update(ROOM_COLLECTION, room_data["id"], room_data)
         
     if update_room is None or type(update_room) is dict:
-        return ErrorResponseModel.error(status.HTTP_424_FAILED_DEPENDENCY, "unable to remove room member")
+        return False
+        # return ErrorResponseModel.error(status.HTTP_424_FAILED_DEPENDENCY, "unable to remove room member")
     else:
-        return ResponseModel.success(data=room_obj.dict(), message="member removed successfully from room")
+        return True
+        # return ResponseModel.success(data=room_data.dict(), message="member removed successfully from room")
 

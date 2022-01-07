@@ -1,7 +1,7 @@
 from schema.response import ErrorResponseModel
 from schema.room import Role, RoomMember, RoomType
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from typing import Dict
+from typing import Dict, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -86,7 +86,7 @@ async def create_room(
         404: {"detail": "room or member not found"},
         424: {"detail": "member removal unsuccessful"},
     },)
-async def remove_member(org_id: str, member_id: str, room_id: str, admin_id: str):
+async def remove_member(org_id: str, room_id: str, member_id: str, admin_id: Optional[str] = None):
     """Removes a member from a room either when removed by an admin or member leaves the room.
 
     Fetches the room which the member is removed from from the database collection
@@ -127,7 +127,7 @@ async def remove_member(org_id: str, member_id: str, room_id: str, admin_id: str
             detail="user not a member of the room",
         )
     
-    if admin_id == None:
+    if admin_id is None:
         result = remove_member(room_obj, member_id, org_id)
         if type(result) is ErrorResponseModel: 
             raise HTTPException(**result)
