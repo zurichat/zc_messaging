@@ -6,7 +6,7 @@ from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.room_utils import ROOM_COLLECTION, get_room
+from utils.room_utils import ROOM_COLLECTION, get_org_rooms, get_room
 from utils.sidebar import sidebar
 
 router = APIRouter()
@@ -261,4 +261,58 @@ async def close_conversation(
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail="unable to close conversation",
+    )
+
+
+@router.get(
+    "/org/{org_id}/rooms",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        424: {"detail": "Database not available"},
+    },
+)
+async def get_channels(
+    org_id: str,
+    member_id: str = None,
+):
+    """Fetches all public channels available in an organisation.
+
+        If a member_id is provided, all private channels that member has joined are also fetched
+
+    Args:
+        org_id (str): A unique identifier of an organisation
+        member_id (str[Optional]): A unique identifier of a member of the organisation
+
+    Returns:
+        [list]: list of room objects
+
+    Raises:
+         HTTP_424_FAILED_DEPENDENCY: Database not available
+    """
+    room_type = "CHANNEL"
+
+    public_channels = await get_org_rooms(org_id, room_type=room_type, is_private=False)
+    if public_channels is None:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Database not available",
+        )
+
+    if member_id:
+        joined_private_channels = await get_org_rooms(
+            org_id, member_id=member_id, room_type=room_type, is_private=True
+        )
+        rooms = public_channels + joined_private_channels
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=ResponseModel.success(
+                data=rooms, message="public and joined channels retrieved successfully"
+            ),
+        )
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ResponseModel.success(
+            data=public_channels, message="public channels retrieved successfully"
+        ),
     )
