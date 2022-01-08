@@ -113,7 +113,7 @@ async def remove_member(
     if room_obj == {}:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="room does not exists",
+            detail="room does not exist",
         )
     if room_obj["room_type"] != RoomType.CHANNEL:
         raise HTTPException(
