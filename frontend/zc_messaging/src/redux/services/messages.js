@@ -7,6 +7,9 @@ import { BASE_URL } from "../../utils/constants"
 export const messagesApi = createApi({
   reducerPath: "messagesApi",
   baseQuery: fetchBaseQuery({ baseUrl: BASE_URL }),
+  // refetchOnFocus: true,
+  refetchOnReconnect: true,
+  refetchOnMountOrArgChange: true,
   endpoints: builder => ({
     getMessagesInRoom: builder.query({
       async queryFn(_arg, _queryApi, _extraOptions, fetchWithBQ) {
@@ -34,7 +37,7 @@ export const messagesApi = createApi({
               })
           }
         }
-        return []
+        return { data: [] }
       }
     }),
     sendMessageInRoom: builder.mutation({
