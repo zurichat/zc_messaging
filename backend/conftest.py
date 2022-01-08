@@ -49,3 +49,37 @@ def fixture_mock_centrifugo(mocker):
         side_effect=async_mock_centrifugo,
     )
     return async_mock_centrifugo
+
+
+@pytest.fixture(name="mock_get_message")
+def fixture_mock_get_message(mocker):
+    """[summary]
+
+    Args:
+        mocker ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    async_mock_get_message = AsyncMock()
+    mocker.patch(
+        "endpoints.messages.DataStorage.read", side_effect=async_mock_get_message
+    )
+    return async_mock_get_message
+
+
+@pytest.fixture(name="mock_zc_core_update")
+def fixture_mock_zc_core_update(mocker):
+    """[summary]
+
+    Args:
+        mocker ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    mock_zc_core_update_data = AsyncMock()
+    mocker.patch(
+        "endpoints.messages.DataStorage.update", side_effect=mock_zc_core_update_data
+    )
+    return mock_zc_core_update_data

@@ -4,6 +4,7 @@ from main import app
 
 client = TestClient(app)
 send_message_test_url = "api/v1/org/619ba4/rooms/123456/messages"
+update_message_test_url = "api/v1/org/619ba4/rooms/619e28/messages/61cb65"
 test_payload = {
     "sender_id": "e21e10",
     "emojis": [],
@@ -163,3 +164,122 @@ async def test_send_message_check_status_code(mock_get_user_room, mock_write):
     response = client.post(send_message_test_url, json=test_payload)
     assert response.status_code == 424
     assert response.json() == {"detail": {"Message not sent": write_response}}
+
+
+@pytest.mark.asyncio
+async def test_update_message_sucessful(
+    mock_get_message, mock_zc_core_update, mock_centrifugo
+):
+    """[summary]
+
+    Args:
+        mock_get_message ([type]): [description]
+        mock_zc_core_update ([type]): [description]
+        mock_centrifugo ([type]): [description]
+    """
+    update_payload = {
+        "sender_id": "619ba4671a5f54782939d385",
+        "richUiData": {
+            "blocks": [
+                {
+                    "data": {},
+                    "depth": 0,
+                    "entityRanges": [],
+                    "inlineStyleRanges": [],
+                    "key": "eljik",
+                    "text": "HI, I'm mark",
+                    "type": "unstyled",
+                }
+            ],
+            "entityMap": {},
+        },
+        "timestamp": 0,
+    }
+    mock_get_message.return_value = {
+        "_id": "61cb65f378fb01b18fac147b",
+        "created_at": "2021-12-28 19:30:51.743693",
+        "edited": True,
+        "emojis": [
+            {
+                "count": 3,
+                "emoji": "frog",
+                "name": "frog",
+                "reactedUsersId": [
+                    "6169704bc4133ddaa309dd07",
+                    "61696f5ac4133ddaa309dcfe",
+                    "619baa5c1a5f54782939d386",
+                ],
+            }
+        ],
+        "files": [],
+        "org_id": "619ba4671a5f54782939d384",
+        "richUiData": {
+            "blocks": [
+                {
+                    "data": {},
+                    "depth": 0,
+                    "entityRanges": [],
+                    "inlineStyleRanges": [],
+                    "key": "eljik",
+                    "text": "HI, I'm mark.. new here",
+                    "type": "unstyled",
+                }
+            ],
+            "entityMap": {},
+        },
+        "room_id": "619e28c31a5f54782939d59a",
+        "saved_by": [],
+        "sender_id": "619ba4671a5f54782939d385",
+        "threads": [],
+        "timestamp": 0,
+    }
+    mock_zc_core_update.return_value = {
+        "status": 200,
+        "message": "success",
+        "data": {"matched_documents": 1, "modified_documents": 1},
+    }
+    mock_centrifugo.return_value = {"status_code": 200}
+    response = client.put(update_message_test_url, json=update_payload)
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "success",
+        "message": "Message edited",
+        "data": {
+            "_id": "61cb65f378fb01b18fac147b",
+            "created_at": "2021-12-28 19:30:51.743693",
+            "edited": True,
+            "emojis": [
+                {
+                    "count": 3,
+                    "emoji": "frog",
+                    "name": "frog",
+                    "reactedUsersId": [
+                        "6169704bc4133ddaa309dd07",
+                        "61696f5ac4133ddaa309dcfe",
+                        "619baa5c1a5f54782939d386",
+                    ],
+                }
+            ],
+            "files": [],
+            "org_id": "619ba4671a5f54782939d384",
+            "richUiData": {
+                "blocks": [
+                    {
+                        "data": {},
+                        "depth": 0,
+                        "entityRanges": [],
+                        "inlineStyleRanges": [],
+                        "key": "eljik",
+                        "text": "HI, I'm mark",
+                        "type": "unstyled",
+                    }
+                ],
+                "entityMap": {},
+            },
+            "room_id": "619e28c31a5f54782939d59a",
+            "saved_by": [],
+            "sender_id": "619ba4671a5f54782939d385",
+            "threads": [],
+            "timestamp": 0,
+        },
+    }
