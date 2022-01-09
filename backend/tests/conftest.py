@@ -53,13 +53,13 @@ def fixture_mock_centrifugo(mocker):
 
 @pytest.fixture(name="mock_get_message")
 def fixture_mock_get_message(mocker):
-    """[summary]
+    """Patch for reading zc core for retrieving a single message
 
     Args:
-        mocker ([type]): [description]
+        mocker (Mock): For patching a third-party api call
 
     Returns:
-        [type]: [description]
+        AsyncMock: An instance of the asyncmock class
     """
     zc_core_read_data = AsyncMock()
     mocker.patch("endpoints.messages.DataStorage.read", side_effect=zc_core_read_data)
@@ -68,13 +68,13 @@ def fixture_mock_get_message(mocker):
 
 @pytest.fixture(name="mock_update_message")
 def fixture_mock_update_message(mocker):
-    """[summary]
+    """Patch for updating a document to zc core
 
     Args:
-        mocker ([type]): [description]
+        mocker (Mock): For patching a third-party api call
 
     Returns:
-        [type]: [description]
+        AsyncMock: An instance of the asyncmock class
     """
     zc_core_update_data = AsyncMock()
     mocker.patch(

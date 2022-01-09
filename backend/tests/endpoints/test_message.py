@@ -216,12 +216,12 @@ async def test_send_message_check_status_code(mock_get_user_room, mock_write):
 async def test_update_message_sucessful(
     mock_get_message, mock_update_message, mock_centrifugo
 ):
-    """[summary]
+    """Update message successful.
 
     Args:
-        mock_get_message ([type]): [description]
-        mock_update_message ([type]): [description]
-        mock_centrifugo ([type]): [description]
+        mock_get_message (AsyncMock): Asynchronous external api call
+        mock_update_message (AsyncMock): Asynchronous external api call
+        mock_centrifugo (AsyncMock): Asynchronous external api call
     """
     mock_get_message.return_value = fake_zc_core_message_data
     mock_update_message.return_value = {
@@ -267,10 +267,10 @@ async def test_update_message_sucessful(
 
 @pytest.mark.asyncio
 async def test_update_message_empty_message(mock_get_message):
-    """[summary]
+    """Update message unsuccessful with an invalid message_id.
 
     Args:
-        mock_get_message ([type]): [description]
+        mock_get_message (AsyncMock): Asynchronous external api call
     """
     mock_get_message.return_value = {}
     response = client.put(update_message_test_url, json=update_message_test_payload)
@@ -280,10 +280,10 @@ async def test_update_message_empty_message(mock_get_message):
 
 @pytest.mark.asyncio
 async def test_update_message_wrong_sender_id(mock_get_message):
-    """[summary]
+    """Update message unsuccessful with a wrong sender_id provided.
 
     Args:
-        mock_get_message ([type]): [description]
+        mock_get_message (AsyncMock): Asynchronous external api call
     """
     fake_zc_core_message_data["sender_id"] = "6er34"
     mock_get_message.return_value = fake_zc_core_message_data
@@ -294,11 +294,11 @@ async def test_update_message_wrong_sender_id(mock_get_message):
 
 @pytest.mark.asyncio
 async def test_update_message_check_status_code(mock_get_message, mock_update_message):
-    """[summary]
+    """Update message unsuccessful when updating to zc core fails.
 
     Args:
-        mock_get_message ([type]): [description]
-        mock_update_message ([type]): [description]
+        mock_get_message (AsyncMock): Asynchronous external api call
+        mock_update_message (AsyncMock): Asynchronous external api call
     """
     fake_zc_core_message_data["sender_id"] = "619ba4"
     mock_get_message.return_value = fake_zc_core_message_data
