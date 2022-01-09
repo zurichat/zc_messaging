@@ -1,3 +1,4 @@
+from fastapi_pagination.api import response
 import pytest
 from fastapi.testclient import TestClient
 from main import app
@@ -143,10 +144,10 @@ async def test_send_message_successful(mock_get_user_room, mock_write, mock_cent
     mock_write.return_value = write_response
     mock_centrifugo.return_value = centrifugo_response
 
-    response_0 = client.post(send_message_test_url, json=send_message_test_payload)
-    assert response_0.status_code == 201
-    success_response["data"]["created_at"] = response_0.json()["data"]["created_at"]
-    assert response_0.json() == success_response
+    result = client.post(send_message_test_url, json=send_message_test_payload)
+    assert result.status_code == 201
+    success_response["data"]["created_at"] = result.json()["data"]["created_at"]
+    assert result.json() == success_response
 
 
 @pytest.mark.asyncio
@@ -159,9 +160,9 @@ async def test_send_message_sender_not_in_room(mock_get_user_room):
 
     mock_get_user_room.return_value = fake_core_room_data
     send_message_test_payload["sender_id"] = "yur859"
-    response_1 = client.post(send_message_test_url, json=send_message_test_payload)
-    assert response_1.status_code == 404
-    assert response_1.json() == {"detail": "sender not a member of this room"}
+    resp = client.post(send_message_test_url, json=send_message_test_payload)
+    assert resp.status_code == 404
+    assert resp.json() == {"detail": "sender not a member of this room"}
 
 
 @pytest.mark.asyncio
@@ -174,9 +175,9 @@ async def test_send_message_empty_room(mock_get_user_room):
 
     send_message_test_payload["sender_id"] = "e21e10"
     mock_get_user_room.return_value = {}
-    response_2 = client.post(send_message_test_url, json=send_message_test_payload)
-    assert response_2.status_code == 404
-    assert response_2.json() == {"detail": "Room not available"}
+    res = client.post(send_message_test_url, json=send_message_test_payload)
+    assert res.status_code == 404
+    assert res.json() == {"detail": "Room not available"}
 
 
 @pytest.mark.asyncio
@@ -190,9 +191,9 @@ async def test_send_message_wrting_to_core_returns_none(mock_get_user_room, mock
 
     mock_get_user_room.return_value = fake_core_room_data
     mock_write.return_value = None
-    response_3 = client.post(send_message_test_url, json=send_message_test_payload)
-    assert response_3.status_code == 424
-    assert response_3.json() == {"detail": {"Message not sent": None}}
+    response = client.post(send_message_test_url, json=send_message_test_payload)
+    assert response.status_code == 424
+    assert response.json() == {"detail": {"Message not sent": None}}
 
 
 @pytest.mark.asyncio
@@ -207,9 +208,9 @@ async def test_send_message_check_status_code(mock_get_user_room, mock_write):
     write_response = {"status_code": 422, "message": "unprocessible error"}
     mock_get_user_room.return_value = fake_core_room_data
     mock_write.return_value = write_response
-    response_4 = client.post(send_message_test_url, json=send_message_test_payload)
-    assert response_4.status_code == 424
-    assert response_4.json() == {"detail": {"Message not sent": write_response}}
+    response = client.post(send_message_test_url, json=send_message_test_payload)
+    assert response.status_code == 424
+    assert response.json() == {"detail": {"Message not sent": write_response}}
 
 
 @pytest.mark.asyncio
@@ -230,9 +231,9 @@ async def test_update_message_sucessful(
         "data": {"matched_documents": 1, "modified_documents": 1},
     }
     mock_centrifugo.return_value = {"status_code": 200}
-    response_5 = client.put(update_message_test_url, json=update_message_test_payload)
-    assert response_5.status_code == 200
-    assert response_5.json() == {
+    response = client.put(update_message_test_url, json=update_message_test_payload)
+    assert response.status_code == 200
+    assert response.json() == {
         "status": "success",
         "message": "Message edited",
         "data": {
@@ -273,9 +274,9 @@ async def test_update_message_empty_message(mock_get_message):
         mock_get_message ([type]): [description]
     """
     mock_get_message.return_value = {}
-    response_6 = client.put(update_message_test_url, json=update_message_test_payload)
-    assert response_6.status_code == 404
-    assert response_6.json() == {"detail": "Message not found"}
+    response = client.put(update_message_test_url, json=update_message_test_payload)
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Message not found"}
 
 
 @pytest.mark.asyncio
@@ -287,9 +288,9 @@ async def test_update_message_wrong_sender_id(mock_get_message):
     """
     fake_zc_core_message_data["sender_id"] = "6er34"
     mock_get_message.return_value = fake_zc_core_message_data
-    response_7 = client.put(update_message_test_url, json=update_message_test_payload)
-    assert response_7.status_code == 401
-    assert response_7.json() == {
+    response = client.put(update_message_test_url, json=update_message_test_payload)
+    assert response.status_code == 401
+    assert response.json() == {
         "detail": "You are not authorized to edit this message"
     }
 
@@ -308,8 +309,8 @@ async def test_update_message_check_status_code(mock_get_message, mock_update_me
         "status_code": 422,
         "message": "unprocessible error",
     }
-    response_8 = client.put(update_message_test_url, json=update_message_test_payload)
-    assert response_8.status_code == 424
-    assert response_8.json() == {
+    response = client.put(update_message_test_url, json=update_message_test_payload)
+    assert response.status_code == 424
+    assert response.json() == {
         "detail": {"message not edited": mock_update_message.return_value}
     }
