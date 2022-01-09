@@ -14,7 +14,7 @@ def fixture_mock_get_user_room(mocker):
        AsyncMock: An instance of the asyncmock class
     """
     core_read_mock = AsyncMock()
-    mocker.patch("utils.room_utils.DataStorage.read", side_effect=core_read_mock)
+    mocker.patch("endpoints.rooms.DataStorage.read", side_effect=core_read_mock)
     return core_read_mock
 
 
@@ -49,3 +49,35 @@ def fixture_mock_centrifugo(mocker):
         side_effect=async_mock_centrifugo,
     )
     return async_mock_centrifugo
+
+
+@pytest.fixture(name="mock_get_message")
+def fixture_mock_get_message(mocker):
+    """[summary]
+
+    Args:
+        mocker ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    zc_core_read_data = AsyncMock()
+    mocker.patch("endpoints.messages.DataStorage.read", side_effect=zc_core_read_data)
+    return zc_core_read_data
+
+
+@pytest.fixture(name="mock_update_message")
+def fixture_mock_update_message(mocker):
+    """[summary]
+
+    Args:
+        mocker ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    zc_core_update_data = AsyncMock()
+    mocker.patch(
+        "endpoints.messages.DataStorage.update", side_effect=zc_core_update_data
+    )
+    return zc_core_update_data

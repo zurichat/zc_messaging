@@ -39,6 +39,9 @@ pydantic==1.8.2
 pylint==2.11.1
 pyparsing==3.0.1
 pytest==6.2.5
+pytest-anyio==0.0.0
+pytest-asyncio==0.16.0
+pytest-mock==3.6.1
 python-dateutil==2.8.2
 python-dotenv==0.19.1
 PyYAML==6.0
@@ -54,7 +57,8 @@ tomli==1.2.2
 trio==0.19.0
 typing-extensions==3.10.0.2
 urllib3==1.26.7
-uvicorn[standard]
+uvicorn==0.15.0
+uvloop==0.16.0
 virtualenv==20.9.0
 watchgod==0.7
 websockets==10.0
