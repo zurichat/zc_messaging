@@ -175,7 +175,6 @@ async def update_message(
     """
     DB = DataStorage(org_id)
     message = await get_message(org_id, room_id, message_id)
-
     if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
