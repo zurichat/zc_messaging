@@ -1,4 +1,3 @@
-from fastapi_pagination.api import response
 import pytest
 from fastapi.testclient import TestClient
 from main import app
@@ -144,10 +143,10 @@ async def test_send_message_successful(mock_get_user_room, mock_write, mock_cent
     mock_write.return_value = write_response
     mock_centrifugo.return_value = centrifugo_response
 
-    result = client.post(send_message_test_url, json=send_message_test_payload)
-    assert result.status_code == 201
-    success_response["data"]["created_at"] = result.json()["data"]["created_at"]
-    assert result.json() == success_response
+    response = client.post(send_message_test_url, json=send_message_test_payload)
+    assert response.status_code == 201
+    success_response["data"]["created_at"] = response.json()["data"]["created_at"]
+    assert response.json() == success_response
 
 
 @pytest.mark.asyncio
@@ -160,9 +159,9 @@ async def test_send_message_sender_not_in_room(mock_get_user_room):
 
     mock_get_user_room.return_value = fake_core_room_data
     send_message_test_payload["sender_id"] = "yur859"
-    resp = client.post(send_message_test_url, json=send_message_test_payload)
-    assert resp.status_code == 404
-    assert resp.json() == {"detail": "sender not a member of this room"}
+    response = client.post(send_message_test_url, json=send_message_test_payload)
+    assert response.status_code == 404
+    assert response.json() == {"detail": "sender not a member of this room"}
 
 
 @pytest.mark.asyncio
@@ -175,9 +174,9 @@ async def test_send_message_empty_room(mock_get_user_room):
 
     send_message_test_payload["sender_id"] = "e21e10"
     mock_get_user_room.return_value = {}
-    res = client.post(send_message_test_url, json=send_message_test_payload)
-    assert res.status_code == 404
-    assert res.json() == {"detail": "Room not available"}
+    response = client.post(send_message_test_url, json=send_message_test_payload)
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Room not available"}
 
 
 @pytest.mark.asyncio
@@ -290,9 +289,7 @@ async def test_update_message_wrong_sender_id(mock_get_message):
     mock_get_message.return_value = fake_zc_core_message_data
     response = client.put(update_message_test_url, json=update_message_test_payload)
     assert response.status_code == 401
-    assert response.json() == {
-        "detail": "You are not authorized to edit this message"
-    }
+    assert response.json() == {"detail": "You are not authorized to edit this message"}
 
 
 @pytest.mark.asyncio
