@@ -1,11 +1,12 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Message, MessageRequest
+from schema.message import Emoji, Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.message_utils import (MESSAGE_COLLECTION, get_message,
                                  get_room_messages)
+from utils.room_utils import get_room_members
 
 router = APIRouter()
 
@@ -234,5 +235,196 @@ async def get_messages(org_id, room_id):
         )
     return JSONResponse(
         content=ResponseModel.success(data=response, message="Messages retrieved"),
+        status_code=status.HTTP_200_OK,
+    )
+
+
+@router.put(
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}/reaction",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"description": "Invalid room member"},
+        404: {"description": "Message not found"},
+        424: {
+            "description": "Failed to retrieve room members / Failed to add reaction or remove reaction"
+        },
+    },
+)
+async def reactions(
+    request: Emoji,
+    org_id: str,
+    room_id: str,
+    message_id: str,
+    background_tasks: BackgroundTasks,
+):
+    """
+    Checks if there are any reactions for the message.
+    Adds a reaction to a message.
+    Adds a user to list of reacted users if reaction already exists.
+    Removes the user from the list of reacted users if user already reacted to the message.
+    Removes a reaction from a message if reacted user count is 0.
+
+    Args:
+        request: Request object
+        org_id: A unique identifier of the organization.
+        room_id: A unique identifier of the room.
+        message_id: A unique identifier of the message that is being edited.
+        background_tasks: A daemon thread for publishing to centrifugo
+
+    Returns:
+        HTTP_200_OK {reaction added}:
+        A dict containing data about the reaction that was added or removed.
+
+        {
+            "room_id": "619e28c31a5f54782939d59a",
+            "message_id": "61cb65f378fb01b18fac147b",
+            "emojis": [
+                {
+                    "name": "lol",
+                    "count": 2,
+                    "emoji": "lol",
+                    "reactedUsersId": [
+                        "619ba4671a5f54782939d385",
+                        "6169704bc4133ddaa309dd07"
+                    ]
+                }
+            ]
+        }
+
+    Raises:
+        HTTPException [401]: Invalid room member
+        HTTPException [404]: Message not found
+        HTTPException [424]: Failed to retrieve room members
+        HTTPException [424]: Failed to add reaction
+        HTTPException [424]: Failed to remove reaction
+    """
+    DB = DataStorage(org_id)
+
+    message = await get_message(org_id, room_id, message_id)
+    if not message:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found",
+        )
+    reactions = message.get("emojis")
+
+    members = await get_room_members(org_id, room_id)
+    if not members:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Failed to retrieve room members",
+        )
+
+    new_reaction = request.dict()
+    if new_reaction["reactedUsersId"][0] not in list(members):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid room member",
+        )
+
+    if not reactions:
+        reactions = [new_reaction]
+        updated_emoji = await DB.update(
+            MESSAGE_COLLECTION, document_id=message_id, data={"emojis": reactions}
+        )
+        if updated_emoji and updated_emoji.get("status_code") is not None:
+            raise HTTPException(
+                status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                detail="Failed to add reaction",
+            )
+        # publish to centrifugo in the background
+        background_tasks.add_task(
+            centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_reaction
+        )
+        return JSONResponse(
+            content=ResponseModel.success(data=new_reaction, message="Reaction added"),
+            status_code=status.HTTP_200_OK,
+        )
+
+    for emoji in reactions:
+        if emoji["name"] == new_reaction["name"]:
+
+            if new_reaction["reactedUsersId"][0] not in emoji["reactedUsersId"]:
+                emoji["reactedUsersId"].append(new_reaction["reactedUsersId"][0])
+                emoji["count"] += 1
+
+                added = await DB.update(
+                    MESSAGE_COLLECTION,
+                    document_id=message_id,
+                    data={"emojis": reactions},
+                )
+                if added and added.get("status_code") is not None:
+                    raise HTTPException(
+                        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                        detail="Failed to add reaction",
+                    )
+                # publish to centrifugo in the background
+                background_tasks.add_task(
+                    centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, emoji
+                )
+                return JSONResponse(
+                    content=ResponseModel.success(data=emoji, message="Reaction added"),
+                    status_code=status.HTTP_200_OK,
+                )
+
+            emoji["reactedUsersId"].remove(new_reaction["reactedUsersId"][0])
+            emoji["count"] -= 1
+
+            if emoji["count"] != 0:
+                updated = await DB.update(
+                    MESSAGE_COLLECTION,
+                    document_id=message_id,
+                    data={"emojis": reactions},
+                )
+                if updated and updated.get("status_code") is not None:
+                    raise HTTPException(
+                        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                        detail="Failed to remove reaction",
+                    )
+                # publish to centrifugo in the background
+                background_tasks.add_task(
+                    centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, emoji
+                )
+                return JSONResponse(
+                    content=ResponseModel.success(
+                        data=emoji, message="Reaction removed"
+                    ),
+                    status_code=status.HTTP_200_OK,
+                )
+
+            reactions.remove(emoji)
+            removed = await DB.update(
+                MESSAGE_COLLECTION, document_id=message_id, data={"emojis": reactions}
+            )
+            if removed and removed.get("status_code") is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                    detail="Failed to remove reaction",
+                )
+            # publish to centrifugo in the background
+            background_tasks.add_task(
+                centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, removed
+            )
+            return JSONResponse(
+                content=ResponseModel.success(data=emoji, message="Reaction removed"),
+                status_code=status.HTTP_200_OK,
+            )
+
+    reactions.append(new_reaction)
+    new = await DB.update(
+        MESSAGE_COLLECTION, document_id=message_id, data={"emojis": reactions}
+    )
+    if new and new.get("status_code") is not None:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Failed to add reaction",
+        )
+    # publish to centrifugo in the background
+    background_tasks.add_task(
+        centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, new_reaction
+    )
+    return JSONResponse(
+        content=ResponseModel.success(data=new_reaction, message="Reaction added"),
         status_code=status.HTTP_200_OK,
     )

@@ -14,7 +14,7 @@ class Emoji(BaseModel):
     """
 
     name: str
-    count: int
+    count: int = 1
     emoji: str
     reactedUsersId: List[str] = []
 
