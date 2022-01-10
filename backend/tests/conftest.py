@@ -14,7 +14,7 @@ def fixture_mock_get_user_room(mocker):
        AsyncMock: An instance of the asyncmock class
     """
     core_read_mock = AsyncMock()
-    mocker.patch("utils.room_utils.rooms.DataStorage.read", side_effect=core_read_mock)
+    mocker.patch("utils.room_utils.DataStorage.read", side_effect=core_read_mock)
     return core_read_mock
 
 
