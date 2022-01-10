@@ -144,11 +144,11 @@ async def remove_room_member(org_id: str, room_data: dict, member_id: str) -> di
     DB = DataStorage(org_id)
     remove_member = room_data["room_members"].pop(member_id, "not_found")
 
-    room_id = room_data["_id"]
-    room_members = {"room_members": room_data["room_members"]}
-
     if remove_member == "not_found":
         raise ValueError("user not a member of the room")
+
+    room_id = room_data["_id"]
+    room_members = {"room_members": room_data["room_members"]}
 
     update_room = await DB.update(ROOM_COLLECTION, room_id, room_members)
 
