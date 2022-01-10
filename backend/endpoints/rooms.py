@@ -127,6 +127,12 @@ async def remove_member(
             detail="user not a member of the room",
         )
 
+    if admin_id not in room_id["room_members"]:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="admin id specified not a member of the room",
+        )
+
     member = room_obj["room_members"].get(
         admin_id
     )  # member will be none if no admin is supplied
@@ -141,12 +147,7 @@ async def remove_member(
         result = await remove_room_member(
             org_id=org_id, room_data=room_obj, member_id=member_id
         )
-        return JSONResponse(
-            content=ResponseModel.success(
-                data=result, message="user removed from room successfully"
-            ),
-            status_code=status.HTTP_200_OK,
-        )
+
     except ValueError as value_error:
         raise HTTPException(
             detail=value_error, status_code=status.HTTP_404_NOT_FOUND
@@ -157,6 +158,13 @@ async def remove_member(
             detail=json.dumps(str(connect_error)),
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
         ) from connect_error
+    else:
+        return JSONResponse(
+            content=ResponseModel.success(
+                data=result, message="user removed from room successfully"
+            ),
+            status_code=status.HTTP_200_OK,
+        )
 
 
 @router.put(
