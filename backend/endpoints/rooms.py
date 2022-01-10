@@ -127,7 +127,7 @@ async def remove_member(
             detail="user not a member of the room",
         )
 
-    if admin_id not in room_id["room_members"]:
+    if admin_id not in room_data["room_members"]:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="admin id specified not a member of the room",
