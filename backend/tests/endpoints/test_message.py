@@ -24,7 +24,6 @@ test_payload = {
     "timestamp": 0,
 }
 
-
 fake_core_data = {
     "_id": "619e28c31a5f54782939d59a",
     "created_at": "2021-11-24 11:23:11.361210",
