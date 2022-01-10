@@ -109,29 +109,35 @@ async def remove_member(
         HTTP_403_FORBIDDEN: not authorized to remove room  member
         HTTP_424_FAILED_DEPENDENCY: member removal unsuccessful
     """
-    room_obj = await get_room(org_id, room_id)
-    if room_obj == {}:
+    room_data = await get_room(org_id, room_id)
+    if not room_data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="room does not exist",
         )
-    if room_obj["room_type"] != RoomType.CHANNEL:
+    if room_data["room_type"] != RoomType.CHANNEL:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="cannot remove member from DM rooms",
         )
 
-    if member_id not in room_obj["room_members"]:
+    if member_id not in room_data["room_members"]:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="user not a member of the room",
         )
 
-    member = room_obj["room_members"].get(
+    if admin_id not in room_data["room_members"]:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="admin id specified not a member of the room",
+        )
+
+    admin_data = room_data["room_members"].get(
         admin_id
     )  # member will be none if no admin is supplied
 
-    if member is not None and member.get("role") != Role.ADMIN:
+    if admin_data is not None and admin_data.get("role") != Role.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="must be an admin to remove member",
@@ -139,14 +145,9 @@ async def remove_member(
 
     try:
         result = await remove_room_member(
-            org_id=org_id, room_data=room_obj, member_id=member_id
+            org_id=org_id, room_data=room_data, member_id=member_id
         )
-        return JSONResponse(
-            content=ResponseModel.success(
-                data=result, message="user removed from room successfully"
-            ),
-            status_code=status.HTTP_200_OK,
-        )
+
     except ValueError as value_error:
         raise HTTPException(
             detail=value_error, status_code=status.HTTP_404_NOT_FOUND
@@ -157,6 +158,13 @@ async def remove_member(
             detail=json.dumps(str(connect_error)),
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
         ) from connect_error
+    else:
+        return JSONResponse(
+            content=ResponseModel.success(
+                data=result, message="user removed from room successfully"
+            ),
+            status_code=status.HTTP_200_OK,
+        )
 
 
 @router.put(

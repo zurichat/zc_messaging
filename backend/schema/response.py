@@ -20,7 +20,7 @@ class ResponseModel(BaseModel):
     data: Any
 
     @staticmethod
-    def success(data, message="success"):
+    def success(data, message="success") -> dict:
         """Provides a success response data
 
         Args:
@@ -33,12 +33,12 @@ class ResponseModel(BaseModel):
         return ResponseModel(status="success", message=message, data=data).dict()
 
     @staticmethod
-    def error(message):
-        """Provides a error response data
+    def error(message) -> dict:
+        """Provides an error response data
 
         Args:
             data (dict): data to be returned
-            detail (str): Descriptive messaged.
+            detail (str): Descriptive error message.
 
         Returns:
             dict: key-value pair of status, detail
