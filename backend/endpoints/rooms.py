@@ -377,7 +377,7 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
         org_id (str): A unique identifier of an organisation
         room_id (str): A unique identifier of the room
     Returns:
-        HTTP_200_OK (Room members retrieved)
+        HTTP_200_OK (Room members retrieved successfully):
 
         {
             "status": "success",
@@ -405,7 +405,7 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
 
     if not room:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Room doesn't exist"
         )
 
     members = room["room_members"]
@@ -430,7 +430,7 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content=ResponseModel.success(
-                data=filtered_members, message="Room members retrieved"
+                data=filtered_members, message="Room members retrieved successfully"
             ),
         )
 
@@ -439,6 +439,6 @@ async def get_members(org_id: str, room_id: str, keyword: Optional[str] = None):
         status_code=status.HTTP_200_OK,
         content=ResponseModel.success(
             data=members,
-            message="Room members retrieved",
+            message="Room members retrieved successfully",
         ),
     )
