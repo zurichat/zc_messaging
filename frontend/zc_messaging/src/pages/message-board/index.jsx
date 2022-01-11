@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { Helmet } from "react-helmet"
-import { MessageBoard } from "@zuri/zuri-ui"
+import { MessageBoard, PluginHeader } from "@zuri/zuri-ui"
 import { SubscribeToChannel } from "@zuri/utilities"
 import { Container, MessagingArea, TypingNotice } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
@@ -22,6 +22,7 @@ const MessagingBoard = () => {
   const authUser = useSelector(state => state.authUser)
   const currentWorkspaceId = localStorage.getItem("currentWorkspace")
   const [pageTitle, setPageTitle] = useState("")
+  const [roomName, setRoomName] = useState("unknown-channel")
   const { data: roomsAvailable, isLoading: IsLoadingRoomsAvailable } =
     useGetRoomsAvailableToUserQuery(
       {
@@ -33,15 +34,16 @@ const MessagingBoard = () => {
         refetchOnMountOrArgChange: true
       }
     )
-  const { data: roomMessages, isLoading } = useGetMessagesInRoomQuery(
-    {
-      orgId: currentWorkspaceId,
-      roomId
-    },
-    {
-      refetchOnMountOrArgChange: true
-    }
-  )
+  const { data: roomMessages, isLoading: isLoadingRoomMessages } =
+    useGetMessagesInRoomQuery(
+      {
+        orgId: currentWorkspaceId,
+        roomId
+      },
+      {
+        refetchOnMountOrArgChange: true
+      }
+    )
   const [sendNewMessage, { isLoading: isSending }] =
     useSendMessageInRoomMutation()
   useEffect(() => {
@@ -52,6 +54,7 @@ const MessagingBoard = () => {
     }
     if (roomsAvailable) {
       const room = roomsAvailable[roomId]
+      setRoomName(room?.room_name)
       setPageTitle(generatePageTitle(room?.room_name))
     }
     if (roomId && authUser.user_id) {
@@ -173,16 +176,18 @@ const MessagingBoard = () => {
     // do something with the file
   }
 
-  return roomId && roomMessages && !isLoading ? (
+  return roomId ? (
     <>
       <Helmet>
         <title>{pageTitle}</title>
       </Helmet>
+      <PluginHeader name={`#${roomName}`} />
       <Container>
         <MessagingArea>
           <div style={{ height: "calc(100% - 29px)" }}>
             <MessageBoard
-              messages={roomMessages}
+              isLoadingMessages={isLoadingRoomMessages}
+              messages={roomMessages || []}
               onSendMessage={sendMessageHandler}
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}
