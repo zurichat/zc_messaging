@@ -118,3 +118,44 @@ async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> boo
     if response and "status_code" not in response:
         return response["room_members"][member_id]["starred"]
     raise Exception("Room not found")
+
+
+async def remove_room_member(org_id: str, room_data: dict, member_id: str) -> dict:
+    """Removes a member from a room
+
+    Args:
+        org_id (str): The organization id
+        room_data (dict): The room data
+        member_id (str): The member id to be removed
+
+    Raises:
+        ValueError: user not found in room
+        RequestException: zc core fails to remove user from room
+
+    Returns:
+        [dict]: sample response includes
+            {
+                "matched_documents": 1,
+                "modified_documents": 1,
+                "member_id":"1234567yrtrt"
+                "room_id":"2312244dsdsd"
+            },
+    """
+    DB = DataStorage(org_id)
+    remove_member = room_data["room_members"].pop(member_id, "not_found")
+
+    if remove_member == "not_found":
+        raise ValueError("user not a member of the room")
+
+    room_id = room_data["_id"]
+    room_members = {"room_members": room_data["room_members"]}
+
+    update_room = await DB.update(ROOM_COLLECTION, room_id, room_members)
+
+    if update_room is None or update_room.get("status_code") is not None:
+        raise ConnectionError("unable to remove room member")
+
+    response = update_room["data"]
+    response["member_id"] = member_id
+    response["room_id"] = room_data["_id"]
+    return response
