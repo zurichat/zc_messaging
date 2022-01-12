@@ -213,7 +213,7 @@ async def test_send_message_check_status_code(mock_get_user_room, mock_write):
 
 
 @pytest.mark.asyncio
-async def test_update_message_sucessful(
+async def test_update_message_successful(
     mock_get_message, mock_update_message, mock_centrifugo
 ):
     """Update message successful.
