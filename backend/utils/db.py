@@ -1,4 +1,6 @@
 import requests
+from fastapi import status
+from fastapi.exceptions import HTTPException
 
 PLUGIN_KEY = "chat.zuri.chat"
 BASE_URL = "https://staging.api.zuri.chat"
@@ -28,6 +30,9 @@ class DataStorage:
             self.plugin_id = plugin["id"] if plugin else None
         except requests.exceptions.RequestException as exception:
             print(exception)
+            raise HTTPException from exception(
+                status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Request Timeout"
+            )
 
     async def write(self, collection_name, data):
         """Function to write into db
@@ -47,7 +52,7 @@ class DataStorage:
             "collection_name": collection_name,
             "payload": data,
         }
-        
+
         try:
             response = requests.post(url=self.write_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -76,7 +81,7 @@ class DataStorage:
             "object_id": document_id,
             "payload": data,
         }
-        
+
         try:
             response = requests.put(url=self.write_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -114,7 +119,7 @@ class DataStorage:
             "plugin_id": self.plugin_id,
             "options": options,
         }
-        
+
         try:
             response = requests.post(url=self.read_query_api, json=body)
         except requests.exceptions.RequestException as exception:
@@ -143,7 +148,7 @@ class DataStorage:
             "collection_name": collection_name,
             "object_id": document_id,
         }
-        
+
         try:
             response = requests.post(url=self.delete_api, json=body)
         except requests.exceptions.RequestException as exception:
