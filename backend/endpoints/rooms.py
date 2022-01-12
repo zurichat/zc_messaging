@@ -195,17 +195,18 @@ async def join_room(
 
     Returns:
         HTTP_200_OK: {
-                        "status": 200,
-                        "message": "success",
-                        "data": {
-                            "matched_documents": 1,
-                            "modified_documents": 1
-                        }
-                    }
+                "status": 200,
+                "message": "success",
+                "room_members": {
+                    "619123member1": {"closed": False, "role": "admin", "starred": False},
+                    "619123member2": {"closed": False, "role": "admin", "starred": False},
+                    "619123member3": {"closed": False, "role": "admin", "starred": False}
+                }
+            }
     Raises:
         HTTP_400_BAD_REQUEST: the max number for a Group_DM is 9
         HTTP_401_UNAUTHORIZED: member not in room or not an admin
-        HTTP_403_FORBIDDEN: DM room or not found
+        HTTP_403_FORBIDDEN: room not found || DM room cannot be joined
         HTTP_424_FAILED_DEPENDENCY: failed to add new members to room
     """
     DB = DataStorage(org_id)  # initializes the datastorage class with the org id
@@ -219,17 +220,19 @@ async def join_room(
     if not room or room["room_type"].upper() == RoomType.DM:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="DM room cannot be joined or not found",
+            detail="room not found" if not room else "DM room cannot be joined",
         )
 
     member = room.get("room_members").get(str(member_id))
-    if member is None or member["role"].lower() != Role.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="member not in room or not an admin",
-        )
 
     if room["room_type"].upper() == RoomType.CHANNEL:
+        if room["is_private"] is True and (
+            member is None or member["role"].lower() != Role.ADMIN
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="only admins can add new members",
+            )
         room["room_members"].update(members)
 
     if room["room_type"].upper() == RoomType.GROUP_DM:
