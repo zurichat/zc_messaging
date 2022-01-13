@@ -49,3 +49,18 @@ def fixture_mock_centrifugo(mocker):
         side_effect=async_mock_centrifugo,
     )
     return async_mock_centrifugo
+
+
+@pytest.fixture(name="mock_update")
+def fixture_mock_update(mocker):
+    """Patch for writing to zc core.
+
+    Args:
+       mocker (Mock): For patching a third-party api call
+
+    Returns:
+        AsyncMock: An instance of the asyncmock class
+    """
+    async_mock_update = AsyncMock()
+    mocker.patch("endpoints.rooms.DataStorage.update", side_effect=async_mock_update)
+    return async_mock_update
