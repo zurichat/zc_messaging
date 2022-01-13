@@ -61,6 +61,37 @@ fake_core_room_data = {
     "topic": "Information",
 }
 
+plugins_data = {
+    "id": "617db02f27c36150b422bc4d",
+    "name": "ZC Messaging",
+    "description": "ZC Messaging; This is the plugin that handles both the DM and Channels.",
+    "developer_name": "ZC Messaging Team",
+    "developer_email": "dfelastevetest@gmail.com",
+    "template_url": "https://chat.zuri.chat",
+    "sidebar_url": "https://chat.zuri.chat/api/v1/sidebar",
+    "install_url": "https://chat.zuri.chat/api/v1/install",
+    "icon_url": "",
+    "install_count": 31,
+    "approved": True,
+    "version": "",
+    "category": "",
+    "approved_at": "2021-10-30 22:50:55.179182235 +0200 CEST m=+9357.492418736",
+    "created_at": "",
+    "updated_at": "",
+    "sync_request_url": "",
+    "queue": [
+        {
+            "id": 1,
+            "event": "enter_organization",
+            "message": {
+                "member_id": "61c2458f5a3812d0a9d0b2cd",
+                "organization_id": "61c2382c5a3812d0a9d0b2c6",
+            },
+        }
+    ],
+    "queuepid": 1,
+}
+
 fake_zc_core_message_data = {
     "_id": "346556",
     "created_at": "2021-12-28 19:27:13.620083",
@@ -91,12 +122,14 @@ fake_zc_core_message_data = {
 
 
 @pytest.mark.asyncio
-async def test_send_message_successful(mock_get_user_room, mock_write, mock_centrifugo):
+async def test_send_message_successful(
+    mock_dataStorage_read, mock_dataStorage_write, mock_centrifugo
+):
     """Send message successful
 
     Args:
         mock_get_room (AsyncMock): Asynchronous external api call
-        mock_write (AsyncMock): Asynchronous external api call
+        mock_dataStorage_write (AsyncMock): Asynchronous external api call
         mock_centrifugo (AsyncMock): Asynchronous external api call
     """
     success_response = {
@@ -139,8 +172,8 @@ async def test_send_message_successful(mock_get_user_room, mock_write, mock_cent
 
     centrifugo_response = {"status_code": 200}
 
-    mock_get_user_room.return_value = fake_core_room_data
-    mock_write.return_value = write_response
+    mock_dataStorage_read.return_value = fake_core_room_data
+    mock_dataStorage_write.return_value = write_response
     mock_centrifugo.return_value = centrifugo_response
 
     response = client.post(send_message_test_url, json=send_message_test_payload)
@@ -150,14 +183,14 @@ async def test_send_message_successful(mock_get_user_room, mock_write, mock_cent
 
 
 @pytest.mark.asyncio
-async def test_send_message_sender_not_in_room(mock_get_user_room):
+async def test_send_message_sender_not_in_room(mock_dataStorage_read):
     """Send message unsuccessful when sender is not part of the members of the room.
 
     Args:
         mock_get_room (AsyncMock): Asynchronous external api call
     """
 
-    mock_get_user_room.return_value = fake_core_room_data
+    mock_dataStorage_read.return_value = fake_core_room_data
     send_message_test_payload["sender_id"] = "yur859"
     response = client.post(send_message_test_url, json=send_message_test_payload)
     assert response.status_code == 404
@@ -165,7 +198,7 @@ async def test_send_message_sender_not_in_room(mock_get_user_room):
 
 
 @pytest.mark.asyncio
-async def test_send_message_empty_room(mock_get_user_room):
+async def test_send_message_empty_room(mock_dataStorage_read):
     """Send message unsuccessful when get_rooms returns an empty dictonary.
 
     Args:
@@ -173,40 +206,44 @@ async def test_send_message_empty_room(mock_get_user_room):
     """
 
     send_message_test_payload["sender_id"] = "e21e10"
-    mock_get_user_room.return_value = {}
+    mock_dataStorage_read.return_value = {}
     response = client.post(send_message_test_url, json=send_message_test_payload)
     assert response.status_code == 404
     assert response.json() == {"detail": "Room not available"}
 
 
 @pytest.mark.asyncio
-async def test_send_message_wrting_to_core_returns_none(mock_get_user_room, mock_write):
+async def test_send_message_wrting_to_core_returns_none(
+    mock_dataStorage_read, mock_dataStorage_write
+):
     """Send message unsuccessful when writing to zc core return none.
 
     Args:
         mock_get_room (AsyncMock): Asynchronous external api call
-        mock_write (AsyncMock): Asynchronous external api call
+        mock_dataStorage_write (AsyncMock): Asynchronous external api call
     """
 
-    mock_get_user_room.return_value = fake_core_room_data
-    mock_write.return_value = None
+    mock_dataStorage_read.return_value = fake_core_room_data
+    mock_dataStorage_write.return_value = None
     response = client.post(send_message_test_url, json=send_message_test_payload)
     assert response.status_code == 424
     assert response.json() == {"detail": {"Message not sent": None}}
 
 
 @pytest.mark.asyncio
-async def test_send_message_check_status_code(mock_get_user_room, mock_write):
+async def test_send_message_check_status_code(
+    mock_dataStorage_read, mock_dataStorage_write
+):
     """Send message unsuccessful when writing to zc core return a response with status_code.
 
     Args:
         mock_get_room (AsyncMock): Asynchronous external api call
-        mock_write (AsyncMock): Asynchronous external api call
+        mock_dataStorage_write (AsyncMock): Asynchronous external api call
     """
 
     write_response = {"status_code": 422, "message": "unprocessible error"}
-    mock_get_user_room.return_value = fake_core_room_data
-    mock_write.return_value = write_response
+    mock_dataStorage_read.return_value = fake_core_room_data
+    mock_dataStorage_write.return_value = write_response
     response = client.post(send_message_test_url, json=send_message_test_payload)
     assert response.status_code == 424
     assert response.json() == {"detail": {"Message not sent": write_response}}
@@ -214,17 +251,17 @@ async def test_send_message_check_status_code(mock_get_user_room, mock_write):
 
 @pytest.mark.asyncio
 async def test_update_message_successful(
-    mock_get_message, mock_update_message, mock_centrifugo
+    mock_dataStorage_read, mock_dataStorage_update, mock_centrifugo
 ):
     """Update message successful.
 
     Args:
-        mock_get_message (AsyncMock): Asynchronous external api call
-        mock_update_message (AsyncMock): Asynchronous external api call
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
+        mock_dataStorage_update (AsyncMock): Asynchronous external api call
         mock_centrifugo (AsyncMock): Asynchronous external api call
     """
-    mock_get_message.return_value = fake_zc_core_message_data
-    mock_update_message.return_value = {
+    mock_dataStorage_read.return_value = fake_zc_core_message_data
+    mock_dataStorage_update.return_value = {
         "status": 200,
         "message": "success",
         "data": {"matched_documents": 1, "modified_documents": 1},
@@ -266,48 +303,51 @@ async def test_update_message_successful(
 
 
 @pytest.mark.asyncio
-async def test_update_message_empty_message(mock_get_message):
+async def test_update_message_empty_message(mock_dataStorage_read):
     """Update message unsuccessful with an invalid message_id.
 
     Args:
-        mock_get_message (AsyncMock): Asynchronous external api call
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
     """
-    mock_get_message.return_value = {}
+    mock_dataStorage_read.return_value = {}
     response = client.put(update_message_test_url, json=update_message_test_payload)
     assert response.status_code == 404
     assert response.json() == {"detail": "Message not found"}
 
 
 @pytest.mark.asyncio
-async def test_update_message_wrong_sender_id(mock_get_message):
+async def test_update_message_wrong_sender_id(mock_dataStorage_read):
     """Update message unsuccessful with a wrong sender_id provided.
 
     Args:
-        mock_get_message (AsyncMock): Asynchronous external api call
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
     """
     fake_zc_core_message_data["sender_id"] = "6er34"
-    mock_get_message.return_value = fake_zc_core_message_data
+    mock_dataStorage_read.return_value = fake_zc_core_message_data
     response = client.put(update_message_test_url, json=update_message_test_payload)
     assert response.status_code == 401
     assert response.json() == {"detail": "You are not authorized to edit this message"}
 
 
 @pytest.mark.asyncio
-async def test_update_message_check_status_code(mock_get_message, mock_update_message):
+async def test_update_message_check_status_code(
+    mock_dataStorage_read, mock_dataStorage_update, mock_init
+):
     """Update message unsuccessful when updating to zc core fails.
 
     Args:
-        mock_get_message (AsyncMock): Asynchronous external api call
-        mock_update_message (AsyncMock): Asynchronous external api call
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
+        mock_dataStorage_update (AsyncMock): Asynchronous external api call
     """
     fake_zc_core_message_data["sender_id"] = "619ba4"
-    mock_get_message.return_value = fake_zc_core_message_data
-    mock_update_message.return_value = {
+    mock_dataStorage_read.return_value = fake_zc_core_message_data
+    mock_init.return_value = plugins_data
+    mock_dataStorage_update.return_value = {
         "status_code": 422,
         "message": "unprocessible error",
     }
     response = client.put(update_message_test_url, json=update_message_test_payload)
     assert response.status_code == 424
     assert response.json() == {
-        "detail": {"message not edited": mock_update_message.return_value}
+        "detail": {"message not edited": mock_dataStorage_update.return_value}
     }
