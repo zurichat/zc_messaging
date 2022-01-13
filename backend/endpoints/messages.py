@@ -1,4 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from fastapi_pagination import Page, add_pagination, paginate
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
@@ -8,6 +9,7 @@ from utils.message_utils import (MESSAGE_COLLECTION, get_message,
                                  get_room_messages)
 
 router = APIRouter()
+
 
 
 @router.post(
@@ -186,10 +188,10 @@ async def update_message(
             detail="You are not authorized to edit this message",
         )
 
-    message["richUiData"] = payload["richUiData"]
-    payload["edited"] = True
+    message.update(payload)
+    message["edited"] = True
     edited_message = await DB.update(
-        MESSAGE_COLLECTION, document_id=message_id, data=payload
+        MESSAGE_COLLECTION, document_id=message_id, data=message
     )
 
     if edited_message and edited_message.get("status_code") is None:
@@ -209,7 +211,7 @@ async def update_message(
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=ResponseModel,
+    response_model=Page[Message],
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
@@ -232,7 +234,7 @@ async def get_messages(org_id, room_id):
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Zc Core failed",
         )
-    return JSONResponse(
-        content=ResponseModel.success(data=response, message="Messages retrieved"),
-        status_code=status.HTTP_200_OK,
-    )
+    return paginate(response)
+
+
+add_pagination(router)
