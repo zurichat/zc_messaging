@@ -79,18 +79,3 @@ def fixture_mock_dataStorage_delete(mocker):
     zc_core_update_data = AsyncMock()
     mocker.patch("utils.db.DataStorage.delete", side_effect=zc_core_update_data)
     return zc_core_update_data
-
-
-@pytest.fixture(name="mock_init")
-def fixture_mock_init(mocker):
-    """[summary]
-
-    Args:
-        mocker ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-    init_data = AsyncMock()
-    mocker.patch("utils.db.DataStorage.__init__", side_effect=init_data)
-    return init_data

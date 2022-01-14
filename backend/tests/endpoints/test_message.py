@@ -1,6 +1,11 @@
+from unittest import mock
+from unittest.mock import Mock
+
 import pytest
 from fastapi.testclient import TestClient
 from main import app
+from requests import exceptions
+from utils.db import DataStorage
 
 client = TestClient(app)
 send_message_test_url = "api/v1/org/619ba4/rooms/123456/messages"
@@ -61,36 +66,6 @@ fake_core_room_data = {
     "topic": "Information",
 }
 
-plugins_data = {
-    "id": "617db02f27c36150b422bc4d",
-    "name": "ZC Messaging",
-    "description": "ZC Messaging; This is the plugin that handles both the DM and Channels.",
-    "developer_name": "ZC Messaging Team",
-    "developer_email": "dfelastevetest@gmail.com",
-    "template_url": "https://chat.zuri.chat",
-    "sidebar_url": "https://chat.zuri.chat/api/v1/sidebar",
-    "install_url": "https://chat.zuri.chat/api/v1/install",
-    "icon_url": "",
-    "install_count": 31,
-    "approved": True,
-    "version": "",
-    "category": "",
-    "approved_at": "2021-10-30 22:50:55.179182235 +0200 CEST m=+9357.492418736",
-    "created_at": "",
-    "updated_at": "",
-    "sync_request_url": "",
-    "queue": [
-        {
-            "id": 1,
-            "event": "enter_organization",
-            "message": {
-                "member_id": "61c2458f5a3812d0a9d0b2cd",
-                "organization_id": "61c2382c5a3812d0a9d0b2c6",
-            },
-        }
-    ],
-    "queuepid": 1,
-}
 
 fake_zc_core_message_data = {
     "_id": "346556",
@@ -122,6 +97,7 @@ fake_zc_core_message_data = {
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_send_message_successful(
     mock_dataStorage_read, mock_dataStorage_write, mock_centrifugo
 ):
@@ -132,6 +108,8 @@ async def test_send_message_successful(
         mock_dataStorage_write (AsyncMock): Asynchronous external api call
         mock_centrifugo (AsyncMock): Asynchronous external api call
     """
+    db = DataStorage("619ba4")
+    db.plugin_id = "34453"
     success_response = {
         "status": "success",
         "message": "new message sent",
@@ -183,13 +161,15 @@ async def test_send_message_successful(
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_send_message_sender_not_in_room(mock_dataStorage_read):
     """Send message unsuccessful when sender is not part of the members of the room.
 
     Args:
         mock_get_room (AsyncMock): Asynchronous external api call
     """
-
+    db = DataStorage("619ba4")
+    db.plugin_id = "34453"
     mock_dataStorage_read.return_value = fake_core_room_data
     send_message_test_payload["sender_id"] = "yur859"
     response = client.post(send_message_test_url, json=send_message_test_payload)
@@ -198,13 +178,15 @@ async def test_send_message_sender_not_in_room(mock_dataStorage_read):
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_send_message_empty_room(mock_dataStorage_read):
     """Send message unsuccessful when get_rooms returns an empty dictonary.
 
     Args:
         mock_get_room (AsyncMock): Asynchronous external api call
     """
-
+    db = DataStorage("619ba4")
+    db.plugin_id = "34453"
     send_message_test_payload["sender_id"] = "e21e10"
     mock_dataStorage_read.return_value = {}
     response = client.post(send_message_test_url, json=send_message_test_payload)
@@ -213,6 +195,7 @@ async def test_send_message_empty_room(mock_dataStorage_read):
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_send_message_wrting_to_core_returns_none(
     mock_dataStorage_read, mock_dataStorage_write
 ):
@@ -222,7 +205,8 @@ async def test_send_message_wrting_to_core_returns_none(
         mock_get_room (AsyncMock): Asynchronous external api call
         mock_dataStorage_write (AsyncMock): Asynchronous external api call
     """
-
+    db = DataStorage("619ba4")
+    db.plugin_id = "34453"
     mock_dataStorage_read.return_value = fake_core_room_data
     mock_dataStorage_write.return_value = None
     response = client.post(send_message_test_url, json=send_message_test_payload)
@@ -231,6 +215,7 @@ async def test_send_message_wrting_to_core_returns_none(
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_send_message_check_status_code(
     mock_dataStorage_read, mock_dataStorage_write
 ):
@@ -240,7 +225,8 @@ async def test_send_message_check_status_code(
         mock_get_room (AsyncMock): Asynchronous external api call
         mock_dataStorage_write (AsyncMock): Asynchronous external api call
     """
-
+    db = DataStorage("619ba4")
+    db.plugin_id = "34453"
     write_response = {"status_code": 422, "message": "unprocessible error"}
     mock_dataStorage_read.return_value = fake_core_room_data
     mock_dataStorage_write.return_value = write_response
@@ -250,6 +236,7 @@ async def test_send_message_check_status_code(
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_update_message_successful(
     mock_dataStorage_read, mock_dataStorage_update, mock_centrifugo
 ):
@@ -260,6 +247,8 @@ async def test_update_message_successful(
         mock_dataStorage_update (AsyncMock): Asynchronous external api call
         mock_centrifugo (AsyncMock): Asynchronous external api call
     """
+    db = DataStorage("619ba4")
+    db.plugin_id = "34453"
     mock_dataStorage_read.return_value = fake_zc_core_message_data
     mock_dataStorage_update.return_value = {
         "status": 200,
@@ -303,12 +292,15 @@ async def test_update_message_successful(
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_update_message_empty_message(mock_dataStorage_read):
     """Update message unsuccessful with an invalid message_id.
 
     Args:
         mock_dataStorage_read (AsyncMock): Asynchronous external api call
     """
+    db = DataStorage("619ba4")
+    db.plugin_id = "34453"
     mock_dataStorage_read.return_value = {}
     response = client.put(update_message_test_url, json=update_message_test_payload)
     assert response.status_code == 404
@@ -316,12 +308,15 @@ async def test_update_message_empty_message(mock_dataStorage_read):
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_update_message_wrong_sender_id(mock_dataStorage_read):
     """Update message unsuccessful with a wrong sender_id provided.
 
     Args:
         mock_dataStorage_read (AsyncMock): Asynchronous external api call
     """
+    db = DataStorage("619ba4")
+    db.plugin_id = "34453"
     fake_zc_core_message_data["sender_id"] = "6er34"
     mock_dataStorage_read.return_value = fake_zc_core_message_data
     response = client.put(update_message_test_url, json=update_message_test_payload)
@@ -330,8 +325,9 @@ async def test_update_message_wrong_sender_id(mock_dataStorage_read):
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_update_message_check_status_code(
-    mock_dataStorage_read, mock_dataStorage_update, mock_init
+    mock_dataStorage_read, mock_dataStorage_update
 ):
     """Update message unsuccessful when updating to zc core fails.
 
@@ -339,9 +335,10 @@ async def test_update_message_check_status_code(
         mock_dataStorage_read (AsyncMock): Asynchronous external api call
         mock_dataStorage_update (AsyncMock): Asynchronous external api call
     """
+    db = DataStorage("619ba4")
+    db.plugin_id = "34453"
     fake_zc_core_message_data["sender_id"] = "619ba4"
     mock_dataStorage_read.return_value = fake_zc_core_message_data
-    mock_init.return_value = plugins_data
     mock_dataStorage_update.return_value = {
         "status_code": 422,
         "message": "unprocessible error",
@@ -351,3 +348,13 @@ async def test_update_message_check_status_code(
     assert response.json() == {
         "detail": {"message not edited": mock_dataStorage_update.return_value}
     }
+
+
+@pytest.mark.asyncio
+async def test_connection_timeout():
+    """Test for connection timeout"""
+    with mock.patch.object(
+        DataStorage, "__init__", Mock(return_value=exceptions.RequestException)
+    ) as mocker:
+        DataStorage.__init__("12334")
+        mocker.assert_called_with("12334")
