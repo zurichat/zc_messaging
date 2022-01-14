@@ -1,10 +1,8 @@
 from unittest import mock
-from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
 from main import app
-from requests import exceptions
 from utils.db import DataStorage
 
 client = TestClient(app)
@@ -348,13 +346,3 @@ async def test_update_message_check_status_code(
     assert response.json() == {
         "detail": {"message not edited": mock_dataStorage_update.return_value}
     }
-
-
-@pytest.mark.asyncio
-async def test_connection_timeout():
-    """Test for connection timeout"""
-    with mock.patch.object(
-        DataStorage, "__init__", Mock(return_value=exceptions.RequestException)
-    ) as mocker:
-        DataStorage.__init__("12334")
-        mocker.assert_called_with("12334")
