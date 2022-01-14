@@ -5,24 +5,43 @@ from main import app
 client = TestClient(app)
 
 
-get_room_members_url = "api/v1/org/619ba46/rooms/61dcf85/members"
+get_room_members_url = (
+    "api/v1/org/6619ba4671a5f54782939d384//rooms/61dcf855eba8adb50ca13a24/members"
+)
+
 fake_data_group_dm = {
     "room_name": "test group dm",
     "room_type": "GROUP_DM",
     "room_members": {
-        "61696f5": {"role": "admin", "starred": False, "closed": False},
-        "6169704": {"role": "admin", "starred": False, "closed": False},
-        "619ba46": {"role": "admin", "starred": False, "closed": False},
-        "619baa5": {"role": "member", "starred": False, "closed": False},
+        "61696f5ac4133ddaa309dcfe": {
+            "closed": False,
+            "role": "admin",
+            "starred": False,
+        },
+        "6169704bc4133ddaa309dd07": {
+            "closed": False,
+            "role": "admin",
+            "starred": False,
+        },
+        "619ba4671a5f54782939d385": {
+            "closed": False,
+            "role": "admin",
+            "starred": False,
+        },
+        "619baa5c1a5f54782939d386": {
+            "closed": False,
+            "role": "member",
+            "starred": False,
+        },
     },
     "created_at": "2022-01-11 03:18:02.364291",
     "description": None,
     "topic": None,
     "is_private": True,
     "is_archived": False,
-    "id": "61dcf85",
-    "org_id": "619ba46",
-    "created_by": "619ba46",
+    "id": "61dcf855eba8adb50ca13a24",
+    "org_id": "619ba4671a5f54782939d384",
+    "created_by": "619ba4671a5f54782939d385",
 }
 
 
@@ -33,11 +52,28 @@ async def test_get_room_members_successful(mock_get_user_room):
         mock_get_user_room (AsyncMock): Asynchronous external api call
     """
     members = {
-        "61696f5": {"role": "admin", "starred": False, "closed": False},
-        "6169704": {"role": "admin", "starred": False, "closed": False},
-        "619ba46": {"role": "admin", "starred": False, "closed": False},
-        "619baa5": {"role": "member", "starred": False, "closed": False},
+        "61696f5ac4133ddaa309dcfe": {
+            "closed": False,
+            "role": "admin",
+            "starred": False,
+        },
+        "6169704bc4133ddaa309dd07": {
+            "closed": False,
+            "role": "admin",
+            "starred": False,
+        },
+        "619ba4671a5f54782939d385": {
+            "closed": False,
+            "role": "admin",
+            "starred": False,
+        },
+        "619baa5c1a5f54782939d386": {
+            "closed": False,
+            "role": "member",
+            "starred": False,
+        },
     }
+
     read_response = {
         "status": "success",
         "message": "Room members retrieved successfully",
@@ -45,7 +81,7 @@ async def test_get_room_members_successful(mock_get_user_room):
     }
 
     mock_get_user_room.return_value = fake_data_group_dm
-    response = client.get(url=get_room_members_url)
+    response = client.get(get_room_members_url)
     assert response.status_code == 200
     assert response.json() == read_response
 
@@ -61,32 +97,36 @@ async def test_get_room_members_room_not_found(mock_get_user_room):
         "detail": "Room not found",
     }
 
-    response = client.get(url=get_room_members_url)
+    response = client.get(get_room_members_url)
     assert response.status_code == 404
     assert response.json() == read_response
 
 
 @pytest.mark.asyncio
-async def test_get_room_members_status_code(mock_get_user_room):
-    """Tests when room is not found
+async def test_get_members_reading_from_zc_core_returns_none(mock_get_user_room):
+    """Get members reading from zc core returns none.
     Args:
         mock_get_user_room (AsyncMock): Asynchronous external api call
     """
-    mock_get_user_room.return_value = fake_data_group_dm
+    mock_get_user_room.return_value = None
 
-    response = client.get(url=get_room_members_url)
-    assert response.status_code == 200
+    response = client.get(get_room_members_url)
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Room not found"}
 
 
 @pytest.mark.asyncio
-async def test_get_room_members_invalid_url(mock_get_user_room):
-    """Tests when room is not found
+async def test_get_members_check_status_code(mock_get_user_room, mock_dataStorage_read):
+    """Get members unsuccessful when getting from zc core fails.
     Args:
         mock_get_user_room (AsyncMock): Asynchronous external api call
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
     """
-    fake_url = "api/v1/org/939d384/rooms/0chfy68/members"
-    mock_get_user_room.return_value = fake_data_group_dm
+    read_response = {"status_code": 424, "message": "Failed to retrieve room members"}
 
-    response = client.get(url=get_room_members_url)
-    assert get_room_members_url != fake_url
-    assert response.status_code == 200
+    mock_get_user_room.return_value = fake_data_group_dm
+    mock_dataStorage_read.return_value = read_response
+
+    response = client.get(get_room_members_url)
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Room not found"}

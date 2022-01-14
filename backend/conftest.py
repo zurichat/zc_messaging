@@ -49,3 +49,16 @@ def fixture_mock_centrifugo(mocker):
         side_effect=async_mock_centrifugo,
     )
     return async_mock_centrifugo
+
+
+@pytest.fixture(name="mock_dataStorage_read")
+def fixture_mock_dataStorage_read(mocker):
+    """Patch for reading data from zc core.
+    Args:
+       mocker (Mock): For patching a third-party api call
+    Returns:
+       AsyncMock: An instance of the asyncmock class
+    """
+    core_read_mock = AsyncMock()
+    mocker.patch("utils.db.DataStorage.read", side_effect=core_read_mock)
+    return core_read_mock
