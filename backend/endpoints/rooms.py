@@ -170,6 +170,7 @@ async def remove_member(
 @router.put(
     "/org/{org_id}/rooms/{room_id}/members/{member_id}",
     status_code=status.HTTP_200_OK,
+    response_model=ResponseModel,
     responses={
         400: {"detail": "the max number for a Group_DM is 9"},
         401: {"detail": "member not an admin"},
@@ -258,7 +259,9 @@ async def join_room(
     if update_response and update_response.get("status_code", None) is None:
         return JSONResponse(
             status_code=status.HTTP_200_OK,
-            content=update_members,
+            content=ResponseModel.success(
+                data=update_members, message="member(s) successfully added"
+            ),
         )
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
