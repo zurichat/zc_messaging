@@ -404,7 +404,7 @@ async def get_members(org_id: str, room_id: str):
             status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
         )
 
-    members = room.get("room_members")
+    members = room["room_members"]
     if members and members.get("status_code") is not None:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
