@@ -28,12 +28,14 @@ fake_core_room_data = {
 
 
 @pytest.mark.asyncio
-async def test_join_room_success(mock_get_user_room, mock_update, mock_centrifugo):
+async def test_join_room_success(
+    mock_get_user_room, mock_dataStorage_update, mock_centrifugo
+):
     """Tests when a member successfully joins a room
 
     Args:
         mock_get_user_room (AsyncMock): Asynchronous external api call
-        mock_update (AsyncMock): Asynchronous external api call
+        mock_dataStorage_update (AsyncMock): Asynchronous external api call
         mock_centrifugo (AsyncMock): Asynchronous external api call
     """
     success_response = {
@@ -53,7 +55,7 @@ async def test_join_room_success(mock_get_user_room, mock_update, mock_centrifug
     centrifugo_response = {"status_code": 200}
 
     mock_get_user_room.return_value = fake_core_room_data
-    mock_update.return_value = update_response
+    mock_dataStorage_update.return_value = update_response
     mock_centrifugo.return_value = centrifugo_response
 
     response = client.put(url=join_room_test_url, json=test_join_room_payload)
@@ -62,12 +64,14 @@ async def test_join_room_success(mock_get_user_room, mock_update, mock_centrifug
 
 
 @pytest.mark.asyncio
-async def test_join_private_room(mock_get_user_room, mock_update, mock_centrifugo):
+async def test_join_private_room(
+    mock_get_user_room, mock_dataStorage_update, mock_centrifugo
+):
     """Tests when a member is successfully added to a private room
 
     Args:
         mock_get_user_room (AsyncMock): Asynchronous external api call
-        mock_update (AsyncMock): Asynchronous external api call
+        mock_dataStorage_update (AsyncMock): Asynchronous external api call
         mock_centrifugo (AsyncMock): Asynchronous external api call
     """
     fake_core_room_data["is_private"] = True
@@ -88,7 +92,7 @@ async def test_join_private_room(mock_get_user_room, mock_update, mock_centrifug
     centrifugo_response = {"status_code": 200}
 
     mock_get_user_room.return_value = fake_core_room_data
-    mock_update.return_value = update_response
+    mock_dataStorage_update.return_value = update_response
     mock_centrifugo.return_value = centrifugo_response
 
     response = client.put(url=join_room_test_url, json=test_join_room_payload)
