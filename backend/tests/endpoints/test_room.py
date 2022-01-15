@@ -47,12 +47,12 @@ success_response = {
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_join_room_success(
-    mock_get_user_room, mock_dataStorage_update, mock_centrifugo
+    mock_dataStorage_read, mock_dataStorage_update, mock_centrifugo
 ):
     """Tests when a member successfully joins a room
 
     Args:
-        mock_get_user_room (AsyncMock): Asynchronous external api call
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
         mock_dataStorage_update (AsyncMock): Asynchronous external api call
         mock_centrifugo (AsyncMock): Asynchronous external api call
     """
@@ -67,7 +67,7 @@ async def test_join_room_success(
 
     centrifugo_response = {"status_code": 200}
 
-    mock_get_user_room.return_value = fake_core_room_data
+    mock_dataStorage_read.return_value = fake_core_room_data
     mock_dataStorage_update.return_value = update_response
     mock_centrifugo.return_value = centrifugo_response
 
@@ -79,12 +79,12 @@ async def test_join_room_success(
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_join_private_room(
-    mock_get_user_room, mock_dataStorage_update, mock_centrifugo
+    mock_dataStorage_read, mock_dataStorage_update, mock_centrifugo
 ):
     """Tests when a member is successfully added to a private room
 
     Args:
-        mock_get_user_room (AsyncMock): Asynchronous external api call
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
         mock_dataStorage_update (AsyncMock): Asynchronous external api call
         mock_centrifugo (AsyncMock): Asynchronous external api call
     """
@@ -100,7 +100,7 @@ async def test_join_private_room(
     centrifugo_response = {"status_code": 200}
 
     fake_core_room_data["is_private"] = True
-    mock_get_user_room.return_value = fake_core_room_data
+    mock_dataStorage_read.return_value = fake_core_room_data
     mock_dataStorage_update.return_value = update_response
     mock_centrifugo.return_value = centrifugo_response
 
@@ -111,17 +111,17 @@ async def test_join_private_room(
 
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
-async def test_cannot_join_DMroom(mock_get_user_room):
+async def test_cannot_join_DMroom(mock_dataStorage_read):
     """Tests when a member is successfully stopped from joining a DM room
 
     Args:
-        mock_get_user_room (AsyncMock): Asynchronous external api call
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
     """
     db = DataStorage("619org")
     db.plugin_id = "34453"
 
     fake_core_room_data["room_type"] = "DM"
-    mock_get_user_room.return_value = fake_core_room_data
+    mock_dataStorage_read.return_value = fake_core_room_data
 
     response = client.put(url=join_room_test_url, json=test_join_room_payload)
     assert response.status_code == 403
@@ -130,17 +130,17 @@ async def test_cannot_join_DMroom(mock_get_user_room):
 
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
-async def test_max_number_for_groupDM(mock_get_user_room):
+async def test_max_number_for_groupDM(mock_dataStorage_read):
     """Tests maximum member entries for a group DM
 
     Args:
-        mock_get_user_room (AsyncMock): Asynchronous external api call
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
     """
     db = DataStorage("619org")
     db.plugin_id = "34453"
 
     fake_core_room_data["room_type"] = "GROUP_DM"
-    mock_get_user_room.return_value = fake_core_room_data
+    mock_dataStorage_read.return_value = fake_core_room_data
 
     payload = {
         "619mem3": {"role": "member", "starred": False, "closed": False},
