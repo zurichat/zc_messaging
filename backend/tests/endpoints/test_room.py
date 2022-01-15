@@ -1,13 +1,18 @@
+from unittest import mock
+
 import pytest
 from fastapi.testclient import TestClient
 from main import app
+from utils.db import DataStorage
 
 client = TestClient(app)
 
 join_room_test_url = "api/v1/org/619org/rooms/619Chrm1/members/619mem1"
+
 test_join_room_payload = {
     "619mem3": {"role": "member", "starred": False, "closed": False}
 }
+
 fake_core_room_data = {
     "_id": "619Chrm1",
     "created_at": "2021-11-24 11:23:11.361210",
@@ -26,8 +31,21 @@ fake_core_room_data = {
     "topic": "Information",
 }
 
+success_response = {
+    "status": "success",
+    "message": "member(s) successfully added",
+    "data": {
+        "room_members": {
+            "619mem1": {"closed": False, "role": "admin", "starred": False},
+            "619mem2": {"closed": False, "role": "member", "starred": False},
+            "619mem3": {"closed": False, "role": "member", "starred": False},
+        }
+    },
+}
+
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_join_room_success(
     mock_get_user_room, mock_dataStorage_update, mock_centrifugo
 ):
@@ -38,13 +56,8 @@ async def test_join_room_success(
         mock_dataStorage_update (AsyncMock): Asynchronous external api call
         mock_centrifugo (AsyncMock): Asynchronous external api call
     """
-    success_response = {
-        "room_members": {
-            "619mem1": {"closed": False, "role": "admin", "starred": False},
-            "619mem2": {"closed": False, "role": "member", "starred": False},
-            "619mem3": {"closed": False, "role": "member", "starred": False},
-        }
-    }
+    db = DataStorage("619org")
+    db.plugin_id = "34453"
 
     update_response = {
         "status": 200,
@@ -64,6 +77,7 @@ async def test_join_room_success(
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_join_private_room(
     mock_get_user_room, mock_dataStorage_update, mock_centrifugo
 ):
@@ -74,14 +88,8 @@ async def test_join_private_room(
         mock_dataStorage_update (AsyncMock): Asynchronous external api call
         mock_centrifugo (AsyncMock): Asynchronous external api call
     """
-    fake_core_room_data["is_private"] = True
-    success_response = {
-        "room_members": {
-            "619mem1": {"closed": False, "role": "admin", "starred": False},
-            "619mem2": {"closed": False, "role": "member", "starred": False},
-            "619mem3": {"closed": False, "role": "member", "starred": False},
-        }
-    }
+    db = DataStorage("619org")
+    db.plugin_id = "34453"
 
     update_response = {
         "status": 200,
@@ -91,6 +99,7 @@ async def test_join_private_room(
 
     centrifugo_response = {"status_code": 200}
 
+    fake_core_room_data["is_private"] = True
     mock_get_user_room.return_value = fake_core_room_data
     mock_dataStorage_update.return_value = update_response
     mock_centrifugo.return_value = centrifugo_response
@@ -101,12 +110,16 @@ async def test_join_private_room(
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_cannot_join_DMroom(mock_get_user_room):
     """Tests when a member is successfully stopped from joining a DM room
 
     Args:
         mock_get_user_room (AsyncMock): Asynchronous external api call
     """
+    db = DataStorage("619org")
+    db.plugin_id = "34453"
+
     fake_core_room_data["room_type"] = "DM"
     mock_get_user_room.return_value = fake_core_room_data
 
@@ -116,14 +129,19 @@ async def test_cannot_join_DMroom(mock_get_user_room):
 
 
 @pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_max_number_for_groupDM(mock_get_user_room):
     """Tests maximum member entries for a group DM
 
     Args:
         mock_get_user_room (AsyncMock): Asynchronous external api call
     """
+    db = DataStorage("619org")
+    db.plugin_id = "34453"
+
     fake_core_room_data["room_type"] = "GROUP_DM"
     mock_get_user_room.return_value = fake_core_room_data
+
     payload = {
         "619mem3": {"role": "member", "starred": False, "closed": False},
         "619mem4": {"role": "member", "starred": False, "closed": False},
@@ -136,6 +154,7 @@ async def test_max_number_for_groupDM(mock_get_user_room):
         "619mem11": {"role": "member", "starred": False, "closed": False},
     }
     test_join_room_payload.update(payload)
+
     response = client.put(url=join_room_test_url, json=test_join_room_payload)
     assert response.status_code == 400
     assert response.json() == {"detail": "the max number for a Group_DM is 9"}

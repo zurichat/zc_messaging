@@ -196,12 +196,14 @@ async def join_room(
 
     Returns:
         HTTP_200_OK: {
-                "status": 200,
-                "message": "success",
-                "room_members": {
-                    "619123member1": {"closed": False, "role": "admin", "starred": False},
-                    "619123member2": {"closed": False, "role": "admin", "starred": False},
-                    "619123member3": {"closed": False, "role": "admin", "starred": False}
+                "status": "success",
+                "message": "member(s) successfully added",
+                "data": {
+                    "room_members": {
+                        "619123member1": {"closed": False, "role": "admin", "starred": False},
+                        "619123member2": {"closed": False, "role": "member", "starred": False},
+                        "619123member3": {"closed": False, "role": "member", "starred": False},
+                    }
                 }
             }
     Raises:
