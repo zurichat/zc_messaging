@@ -170,6 +170,7 @@ async def remove_member(
 @router.put(
     "/org/{org_id}/rooms/{room_id}/members/{member_id}",
     status_code=status.HTTP_200_OK,
+    response_model=ResponseModel,
     responses={
         400: {"detail": "the max number for a Group_DM is 9"},
         401: {"detail": "member not an admin"},
@@ -195,17 +196,18 @@ async def join_room(
 
     Returns:
         HTTP_200_OK: {
-                        "status": 200,
-                        "message": "success",
-                        "data": {
-                            "matched_documents": 1,
-                            "modified_documents": 1
-                        }
-                    }
+                "status": 200,
+                "message": "success",
+                "room_members": {
+                    "619123member1": {"closed": False, "role": "admin", "starred": False},
+                    "619123member2": {"closed": False, "role": "admin", "starred": False},
+                    "619123member3": {"closed": False, "role": "admin", "starred": False}
+                }
+            }
     Raises:
         HTTP_400_BAD_REQUEST: the max number for a Group_DM is 9
         HTTP_401_UNAUTHORIZED: member not in room or not an admin
-        HTTP_403_FORBIDDEN: DM room or not found
+        HTTP_403_FORBIDDEN: room not found || DM room cannot be joined
         HTTP_424_FAILED_DEPENDENCY: failed to add new members to room
     """
     DB = DataStorage(org_id)  # initializes the datastorage class with the org id
@@ -219,17 +221,19 @@ async def join_room(
     if not room or room["room_type"].upper() == RoomType.DM:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="DM room cannot be joined or not found",
+            detail="room not found" if not room else "DM room cannot be joined",
         )
 
     member = room.get("room_members").get(str(member_id))
-    if member is None or member["role"].lower() != Role.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="member not in room or not an admin",
-        )
 
     if room["room_type"].upper() == RoomType.CHANNEL:
+        if room["is_private"] is True and (
+            member is None or member["role"].lower() != Role.ADMIN
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="only admins can add new members",
+            )
         room["room_members"].update(members)
 
     if room["room_type"].upper() == RoomType.GROUP_DM:
@@ -255,7 +259,9 @@ async def join_room(
     if update_response and update_response.get("status_code", None) is None:
         return JSONResponse(
             status_code=status.HTTP_200_OK,
-            content=update_members,
+            content=ResponseModel.success(
+                data=update_members, message="member(s) successfully added"
+            ),
         )
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
@@ -352,4 +358,68 @@ async def close_conversation(
     raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail="unable to close conversation",
+    )
+
+
+@router.get(
+    "/org/{org_id}/rooms/{room_id}/members",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"detail": "Room not found"},
+        424: {"detail": "Failure to retrieve room members"},
+    },
+)
+async def get_members(org_id: str, room_id: str):
+
+    """Get room members.
+    Returns all members in a room if the room is found in the database
+    Raises HTTP_404_NOT_FOUND if the room is not found
+    Raises HTTP_424_FAILED_DEPENDENCY if there is an error retrieving the room members
+    Args:
+        org_id (str): A unique identifier of an organisation
+        room_id (str): A unique identifier of the room
+    Returns:
+        HTTP_200_OK (Room members retrieved successfully):
+
+        {
+            "status": "success",
+            "message": "Room members retrieved",
+            "data": {
+                "61696f5ac4133ddaa309dcfe": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+                },
+                "6169704bc4133ddaa309dd07": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+                }
+            }
+        }
+
+    Raises:
+        HTTPException [404]: Room not found
+        HTTPException [424]: Failure to retrieve room members
+    """
+    room = await get_room(org_id, room_id)
+
+    if not room:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
+        )
+
+    members = room["room_members"]
+    if members and members.get("status_code") is not None:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Failure to retrieve room members",
+        )
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ResponseModel.success(
+            data=members,
+            message="Room members retrieved successfully",
+        ),
     )

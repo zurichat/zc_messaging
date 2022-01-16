@@ -10,7 +10,6 @@ from utils.message_utils import (MESSAGE_COLLECTION, get_message,
 router = APIRouter()
 
 
-
 @router.post(
     "/org/{org_id}/rooms/{room_id}/messages",
     response_model=ResponseModel,
@@ -187,10 +186,10 @@ async def update_message(
             detail="You are not authorized to edit this message",
         )
 
-    message["richUiData"] = payload["richUiData"]
-    payload["edited"] = True
+    message.update(payload)
+    message["edited"] = True
     edited_message = await DB.update(
-        MESSAGE_COLLECTION, document_id=message_id, data=payload
+        MESSAGE_COLLECTION, document_id=message_id, data=message
     )
 
     if edited_message and edited_message.get("status_code") is None:
