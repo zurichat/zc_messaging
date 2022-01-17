@@ -30,7 +30,7 @@ class DataStorage:
             self.plugin_id = plugin["id"] if plugin else None
         except requests.exceptions.RequestException as exception:
             print(exception)
-            raise HTTPException from exception(
+            raise HTTPException(
                 status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Request Timeout"
             )
 
