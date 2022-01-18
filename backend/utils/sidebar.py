@@ -35,7 +35,9 @@ class Sidebar:
         """
         room_members = room.get("room_members")
 
-        if len(list(room_members.keys())) > 1 and room.get("room_type") != RoomType.DM:
+        if (
+            "".join(room.get("room_members")) != member_id
+        ):  # checks if it's not a with only the member_id
             room_members.pop(member_id, "not-found")  # remove self from room members
         for room_member_id in room_members.keys():
             member_data = await DB.get_member(room_member_id, org_members)
