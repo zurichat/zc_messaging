@@ -66,7 +66,8 @@ module.exports = (webpackConfigEnv, argv) => {
                   localIdentName: "[local]--[hash:base64:5]__[name]"
                 }
               }
-            }
+            },
+            "postcss-loader"
           ]
         }
       ]

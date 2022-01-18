@@ -38,7 +38,7 @@ class Sidebar:
         for room_member_id in room_members.keys():
             member_data = await DB.get_member(room_member_id, org_members)
             username = member_data.get("user_name", "no user name")
-            image_url = member_data.get("image_url", DEFAULT_DM_IMG)
+            image_url = member_data.get("image_url") or DEFAULT_DM_IMG
             room_members[room_member_id].update(username=username, image_url=image_url)
         return room_members
 
@@ -117,11 +117,12 @@ class Sidebar:
         starred_rooms = []
         user_rooms = user_rooms or []
         for room in user_rooms:
-            room_profile = await self.__get_room_profile(
-                member_id, room, org_members, DB
-            )
-            rooms.append(room_profile)
-            if room.get("room_members").get(member_id, {}).get("starred", None):
+            if room.get("room_members").get(member_id).get("closed") is False:
+                room_profile = await self.__get_room_profile(
+                    member_id, room, org_members, DB
+                )
+                rooms.append(room_profile)
+            if room.get("room_members").get(member_id, {}).get("starred"):
                 starred_rooms.append(room_profile)
         return {"rooms": rooms, "starred_rooms": starred_rooms}
 
