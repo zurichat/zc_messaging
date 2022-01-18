@@ -115,7 +115,7 @@ async def test_join_room_success(
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_join_room_unsuccessful(mock_dataStorage_read, mock_dataStorage_update):
-    """Tests when a member successfully joins a room
+    """Tests for correct error checking when the join room request fails
 
     Args:
         mock_dataStorage_read (AsyncMock): Asynchronous external api call
@@ -173,12 +173,10 @@ async def test_add_to_private_room_by_admin(
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_add_to_private_room_by_non_admin(mock_dataStorage_read):
-    """Tests when a member is successfully added to a private room
+    """Tests for correct error checking when a non-admin tries to add a member to a private room
 
     Args:
         mock_dataStorage_read (AsyncMock): Asynchronous external api call
-        mock_dataStorage_update (AsyncMock): Asynchronous external api call
-        mock_centrifugo (AsyncMock): Asynchronous external api call
     """
     db = DataStorage("3467sd4671a5f5478df56u911")
     db.plugin_id = "34453"
