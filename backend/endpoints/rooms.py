@@ -174,7 +174,7 @@ async def remove_member(
     responses={
         400: {"detail": "the max number for a Group_DM is 9"},
         401: {"detail": "member not an admin"},
-        403: {"detail": "DM room or not found"},
+        403: {"detail": "room not found || DM room cannot be joined"},
         424: {"detail": "failed to add new members to room"},
     },
 )

@@ -134,6 +134,26 @@ async def test_join_room_unsuccessful(mock_dataStorage_read, mock_dataStorage_up
 
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
+async def test_room_not_found(mock_dataStorage_read, mock_dataStorage_update):
+    """Tests for correct error checking when room is not found
+
+    Args:
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
+        mock_dataStorage_update (AsyncMock): Asynchronous external api call
+    """
+    db = DataStorage("3467sd4671a5f5478df56u911")
+    db.plugin_id = "34453"
+
+    mock_dataStorage_read.return_value = {}
+    mock_dataStorage_update.return_value = None
+    response = client.put(url=join_room_test_url, json=join_room_test_payload)
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "room not found"}
+
+
+@pytest.mark.asyncio
+@mock.patch.object(DataStorage, "__init__", lambda x, y: None)
 async def test_add_to_private_room_by_admin(
     mock_dataStorage_read, mock_dataStorage_update, mock_centrifugo
 ):
