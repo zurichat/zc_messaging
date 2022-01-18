@@ -37,7 +37,7 @@ class Sidebar:
 
         if (
             "".join(room.get("room_members")) != member_id
-        ):  # checks if it's not a with only the member_id
+        ):  # checks if it's not a room with only the member_id
             room_members.pop(member_id, "not-found")  # remove self from room members
         for room_member_id in room_members.keys():
             member_data = await DB.get_member(room_member_id, org_members)
