@@ -11,8 +11,8 @@ get_room_members_url = (
 )
 
 fake_room_data = {
-    "room_name": "test group dm",
-    "room_type": "GROUP_DM",
+    "room_name": "General",
+    "room_type": "CHANNEL",
     "room_members": {
         "61696f5ac4133ddaa309dcfe": {
             "closed": False,
@@ -32,8 +32,8 @@ fake_room_data = {
     },
     "created_at": "2022-01-11 03:18:02.364291",
     "description": None,
-    "topic": None,
-    "is_private": True,
+    "topic": "General Information",
+    "is_private": False,
     "is_archived": False,
     "id": "23dg67l0eba8adb50ca13a24",
     "org_id": "3467sd4671a5f5478df56u911",
