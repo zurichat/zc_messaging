@@ -69,7 +69,7 @@ async def test_get_room_members_successful(mock_dataStorage_read):
         },
     }
 
-    read_response = {
+    success_response = {
         "status": "success",
         "message": "Room members retrieved successfully",
         "data": members,
@@ -79,7 +79,7 @@ async def test_get_room_members_successful(mock_dataStorage_read):
 
     response = client.get(url=get_room_members_url)
     assert response.status_code == 200
-    assert response.json() == read_response
+    assert response.json() == success_response
 
 
 @pytest.mark.asyncio
@@ -87,7 +87,7 @@ async def test_get_room_members_successful(mock_dataStorage_read):
 async def test_get_members_room_not_found(mock_dataStorage_read):
     """Tests when room is not found
     Args:
-        mock_get_user_room (AsyncMock): Asynchronous external api call
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
     """
     db = DataStorage("3467sd4671a5f5478df56u911")
     db.plugin_id = "34453"
