@@ -50,7 +50,7 @@ fake_room_data = {
     "created_by": "619ba4671a5f54782939d385",
 }
 
-success_response = {
+join_room_success_response = {
     "status": "success",
     "message": "member(s) successfully added",
     "data": {
@@ -109,7 +109,7 @@ async def test_join_room_success(
 
     response = client.put(url=join_room_test_url, json=join_room_test_payload)
     assert response.status_code == 200
-    assert response.json() == success_response
+    assert response.json() == join_room_success_response
 
 
 @pytest.mark.asyncio
@@ -187,7 +187,7 @@ async def test_add_to_private_room_by_admin(
         json=join_room_test_payload,
     )
     assert response.status_code == 200
-    assert response.json() == success_response
+    assert response.json() == join_room_success_response
 
 
 @pytest.mark.asyncio
