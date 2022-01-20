@@ -96,7 +96,7 @@ async def test_get_members_room_not_found(mock_dataStorage_read):
     response = client.get(url=get_room_members_url)
     assert response.status_code == 404
     assert response.json() == {
-        "detail": "Room not found",
+        "detail": "Room not found"
     }
 
 
@@ -116,4 +116,6 @@ async def test_get_members_unsuccessful(mock_dataStorage_read):
 
     response = client.get(url=get_room_members_url)
     assert response.status_code == 424
-    assert response.json() == {"detail": "Failure to retrieve room members"}
+    assert response.json() == {
+        "detail": "Failure to retrieve room members"
+    }
