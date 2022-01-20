@@ -23,7 +23,6 @@ join_room_test_payload = {
 get_room_members_url = (
     "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/members"
 )
-
 fake_room_data = {
     "room_name": "General",
     "room_type": "CHANNEL",
@@ -324,14 +323,12 @@ async def test_get_members_room_not_found(mock_dataStorage_read):
     db = DataStorage("3467sd4671a5f5478df56u911")
     db.plugin_id = "34453"
 
-    mock_dataStorage_read.return_value = None
-    read_response = {
-        "detail": "Room not found",
-    }
+    read_response = None
+    mock_dataStorage_read.return_value = read_response
 
     response = client.get(url=get_room_members_url)
     assert response.status_code == 404
-    assert response.json() == read_response
+    assert response.json() == {"detail": "Room not found"}
 
 
 @pytest.mark.asyncio
@@ -345,9 +342,8 @@ async def test_get_members_unsuccessful(mock_dataStorage_read):
     db = DataStorage("3467sd4671a5f5478df56u911")
     db.plugin_id = "34453"
 
-    fake_room_data["room_members"] = {}
-
-    mock_dataStorage_read.return_value = fake_room_data
+    read_response = {"members": {}}
+    mock_dataStorage_read.return_value = read_response
 
     response = client.get(url=get_room_members_url)
     assert response.status_code == 424
