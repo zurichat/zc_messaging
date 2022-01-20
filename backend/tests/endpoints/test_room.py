@@ -39,12 +39,6 @@ fake_room_data = {
     "created_by": "619ba4671a5f54782939d385",
 }
 
-fake_org_members = {
-    "61696f5ac4133ddaa309dcfe": {"closed": False, "role": "admin", "starred": False},
-    "6169704bc4133ddaa309dd07": {"closed": False, "role": "admin", "starred": False},
-    "619baa5c1a5f54782939d386": {"closed": False, "role": "member", "starred": False},
-}
-
 
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
@@ -73,8 +67,7 @@ async def test_get_room_members_successful(mock_dataStorage_read):
             "starred": False,
         },
     }
-
-    read_response = {
+    success_response = {
         "status": "success",
         "message": "Room members retrieved successfully",
         "data": members,
@@ -84,7 +77,7 @@ async def test_get_room_members_successful(mock_dataStorage_read):
 
     response = client.get(url=get_room_members_url)
     assert response.status_code == 200
-    assert response.json() == read_response
+    assert response.json() == success_response
 
 
 @pytest.mark.asyncio
@@ -92,19 +85,19 @@ async def test_get_room_members_successful(mock_dataStorage_read):
 async def test_get_members_room_not_found(mock_dataStorage_read):
     """Tests when room is not found
     Args:
-        mock_get_user_room (AsyncMock): Asynchronous external api call
+        mock_dataStorage_read (AsyncMock): Asynchronous external api call
     """
     db = DataStorage("3467sd4671a5f5478df56u911")
     db.plugin_id = "34453"
 
-    read_response = {
-        "detail": "Room not found",
-    }
-    mock_dataStorage_read.return_value = None
+    read_response = None
+    mock_dataStorage_read.return_value = read_response
 
     response = client.get(url=get_room_members_url)
     assert response.status_code == 404
-    assert response.json() == read_response
+    assert response.json() == {
+        "detail": "Room not found",
+    }
 
 
 @pytest.mark.asyncio
