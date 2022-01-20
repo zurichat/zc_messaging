@@ -404,14 +404,13 @@ async def get_members(org_id: str, room_id: str):
         HTTPException [424]: Failure to retrieve room members
     """
     room = await get_room(org_id, room_id)
-
     if not room:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
         )
 
-    members = room["room_members"]
-    if members and members.get("status_code") is not None:
+    members = room.get("room_members", {})
+    if not members:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Failure to retrieve room members",
