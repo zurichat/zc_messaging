@@ -174,7 +174,7 @@ async def remove_member(
     responses={
         400: {"detail": "the max number for a Group_DM is 9"},
         401: {"detail": "member not an admin"},
-        403: {"detail": "DM room or not found"},
+        403: {"detail": "room not found || DM room cannot be joined"},
         424: {"detail": "failed to add new members to room"},
     },
 )
@@ -196,12 +196,14 @@ async def join_room(
 
     Returns:
         HTTP_200_OK: {
-                "status": 200,
-                "message": "success",
-                "room_members": {
-                    "619123member1": {"closed": False, "role": "admin", "starred": False},
-                    "619123member2": {"closed": False, "role": "admin", "starred": False},
-                    "619123member3": {"closed": False, "role": "admin", "starred": False}
+                "status": "success",
+                "message": "member(s) successfully added",
+                "data": {
+                    "room_members": {
+                        "619123member1": {"closed": False, "role": "admin", "starred": False},
+                        "619123member2": {"closed": False, "role": "member", "starred": False},
+                        "619123member3": {"closed": False, "role": "member", "starred": False},
+                    }
                 }
             }
     Raises:
