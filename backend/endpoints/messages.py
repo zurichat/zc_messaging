@@ -186,11 +186,12 @@ async def update_message(
             detail="You are not authorized to edit this message",
         )
 
-    message.update(payload)
-    message["edited"] = True
+    payload["edited"] = True
     edited_message = await DB.update(
-        MESSAGE_COLLECTION, document_id=message_id, data=message
+        MESSAGE_COLLECTION, document_id=message_id, data=payload
     )
+
+    message.update(payload)
 
     if edited_message and edited_message.get("status_code") is None:
         # Publish to centrifugo in the background.
