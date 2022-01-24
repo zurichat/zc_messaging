@@ -32,7 +32,7 @@ class DataStorage:
             HTTPException: {"detail": "Request Timeout"}
         """
         self.write_api = f"{settings.BASE_URL}/data/write"
-        self.read_query_api = f"{settings.BASE_URL}/data/read"
+        self.read_api = f"{settings.BASE_URL}/data/read"
         self.delete_api = f"{settings.BASE_URL}/data/delete"
         self.get_members_api = (
             f"{settings.BASE_URL}/organizations/{organization_id}/members/"
@@ -139,7 +139,7 @@ class DataStorage:
         }
 
         try:
-            response = requests.post(url=self.read_query_api, json=body)
+            response = requests.post(url=self.read_api, json=body)
         except requests.exceptions.RequestException as exception:
             print(exception)
             return None
