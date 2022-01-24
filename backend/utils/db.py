@@ -5,10 +5,18 @@ from fastapi.exceptions import HTTPException
 
 
 class DataStorage:
-    """Serves as a layer for communication for plugin data and server
+    """Serves as a layer of abstraction for communication between zc_messaging
+    data and the database on zc_core.
 
-    Provides a layer of abstraction for communication between plugin
-    data and the database on zc_core
+    It uses API endpoints from zc_core to perform CRUD operations on zc_messaging
+    collection data.
+
+    Attributes:
+        write_api: Zc_core API endpoint for writing (POST) and updating (PUT) data.
+        read_api: Zc_core API endpoint for reading data.
+        delete_api: Zc_core API endpoint for deleting data.
+        get_members_api: Zc_core API endpoint for getting members of an organization.
+        organization_id: The organization id where the operations are to be performed.
 
     """
 
