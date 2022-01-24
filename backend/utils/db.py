@@ -12,11 +12,13 @@ class DataStorage:
     collection data.
 
     Attributes:
-        write_api: Zc_core API endpoint for writing (POST) and updating (PUT) data.
-        read_api: Zc_core API endpoint for reading data.
-        delete_api: Zc_core API endpoint for deleting data.
-        get_members_api: Zc_core API endpoint for getting members of an organization.
-        organization_id: The organization id where the operations are to be performed.
+        write_api str): Zc_core API endpoint for writing (POST) and updating (PUT) data.
+        read_api (str): Zc_core API endpoint for reading data.
+        delete_api (str): Zc_core API endpoint for deleting data.
+        get_members_api (str): Zc_core API endpoint for getting members of an organization.
+        organization_id (str): The organization id where the operations are to be performed.
+        plugin_id (str): The zc_messaging plugin id in the plugins marketplace.
+
     """
 
     def __init__(self, organization_id: str) -> None:
@@ -45,7 +47,7 @@ class DataStorage:
             plugin = next(
                 item for item in plugins if settings.PLUGIN_KEY in item["template_url"]
             )
-            self.plugin_id = plugin["id"] if plugin else None
+            self.plugin_id = plugin.get("id")
         except requests.exceptions.RequestException as exception:
             print(exception)
             raise HTTPException(
