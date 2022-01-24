@@ -1,9 +1,7 @@
 import requests
+from config.settings import settings
 from fastapi import status
 from fastapi.exceptions import HTTPException
-
-PLUGIN_KEY = "chat.zuri.chat"
-BASE_URL = "https://staging.api.zuri.chat"
 
 
 class DataStorage:
@@ -15,24 +13,26 @@ class DataStorage:
     """
 
     def __init__(self, organization_id: str) -> None:
-        self.write_api = f"{BASE_URL}/data/write"
-        self.delete_api = f"{BASE_URL}/data/delete"
-        self.read_query_api = f"{BASE_URL}/data/read"
-        self.get_member_api = f"{BASE_URL}/organizations/{organization_id}/members/"
+        self.write_api = f"{settings.BASE_URL}/data/write"
+        self.delete_api = f"{settings.BASE_URL}/data/delete"
+        self.read_query_api = f"{settings.BASE_URL}/data/read"
+        self.get_member_api = (
+            f"{settings.BASE_URL}/organizations/{organization_id}/members/"
+        )
         self.organization_id = organization_id
 
         try:
-            response = requests.get(url=f"{BASE_URL}/marketplace/plugins")
+            response = requests.get(url=f"{settings.BASE_URL}/marketplace/plugins")
             plugins = response.json().get("data").get("plugins")
             plugin = next(
-                item for item in plugins if PLUGIN_KEY in item["template_url"]
+                item for item in plugins if settings.PLUGIN_KEY in item["template_url"]
             )
             self.plugin_id = plugin["id"] if plugin else None
         except requests.exceptions.RequestException as exception:
             print(exception)
             raise HTTPException(
                 status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Request Timeout"
-            )
+            ) from exception
 
     async def write(self, collection_name, data):
         """Function to write into db
@@ -187,27 +187,3 @@ class DataStorage:
                 if member["_id"] == member_id:
                     return member
         return {}
-
-
-class FileStorage:
-    """Serves as a layer for communication of plugin files and server
-
-    Provides a layer of abstraction for communication between plugin
-    files and the database on zc_core
-    """
-
-    def __init__(self, organization_id: str) -> None:
-        try:
-            response = requests.get(url=f"{BASE_URL}/marketplace/plugins")
-            plugins = response.json().get("data").get("plugins")
-            plugin = next(
-                item for item in plugins if PLUGIN_KEY in item["template_url"]
-            )
-            self.plugin_id = plugin["id"] if plugin else None
-            self.upload_api = f"{BASE_URL}/upload/file/" + "{self.plugin_id}"
-            self.upload_multiple_api = f"{BASE_URL}/upload/files/" + "{self.plugin_id}"
-            self.delete_file_api = f"{BASE_URL}/delete/file/" + "{self.plugin_id}"
-            self.organization_id = organization_id
-
-        except requests.exceptions.RequestException as exception:
-            print(exception)
