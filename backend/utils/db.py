@@ -22,9 +22,9 @@ class DataStorage:
 
     def __init__(self, organization_id: str) -> None:
         self.write_api = f"{settings.BASE_URL}/data/write"
-        self.delete_api = f"{settings.BASE_URL}/data/delete"
         self.read_query_api = f"{settings.BASE_URL}/data/read"
-        self.get_member_api = (
+        self.delete_api = f"{settings.BASE_URL}/data/delete"
+        self.get_members_api = (
             f"{settings.BASE_URL}/organizations/{organization_id}/members/"
         )
         self.organization_id = organization_id
@@ -173,7 +173,7 @@ class DataStorage:
         Returns:
             [List]: [list of objects]
         """
-        url = self.get_member_api.format(org_id=self.organization_id)
+        url = self.get_members_api.format(org_id=self.organization_id)
         try:
             response = requests.get(url=url)
         except requests.exceptions.RequestException as exception:
