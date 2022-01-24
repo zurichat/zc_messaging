@@ -17,10 +17,20 @@ class DataStorage:
         delete_api: Zc_core API endpoint for deleting data.
         get_members_api: Zc_core API endpoint for getting members of an organization.
         organization_id: The organization id where the operations are to be performed.
-
     """
 
     def __init__(self, organization_id: str) -> None:
+        """Initializes the data storage instance with zc_messaging plugin id.
+
+        A request is sent to the plugins marketplace API endpoint on zc_core to get
+        the plugin id.
+
+        Args:
+            organization_id: The organization id where the operations are to be performed.
+
+        Raises:
+            HTTPException: {"detail": "Request Timeout"}
+        """
         self.write_api = f"{settings.BASE_URL}/data/write"
         self.read_query_api = f"{settings.BASE_URL}/data/read"
         self.delete_api = f"{settings.BASE_URL}/data/delete"
