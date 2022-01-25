@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 import requests
 from config.settings import settings
 from fastapi import status
@@ -49,23 +51,47 @@ class DataStorage:
             )
             self.plugin_id = plugin.get("id")
         except requests.exceptions.RequestException as exception:
-            print(exception)
             raise HTTPException(
                 status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Request Timeout"
             ) from exception
 
-    async def write(self, collection_name, data):
-        """Function to write into db
+    async def write(self, collection_name: str, data: Dict[str, Any]) -> Any:
+        """Writes data to zc_messaging collections.
+
+        Calls the zc_core write endpoint (POST) and writes `data` to `collection_name`.
 
         Args:
-            collection_name (str): Name of Collection
-            data (dict): payload
+            collection_name (str): The name of the collection where to write `data`.
+            data (dict): The actual data the plugin wants to store.
 
         Returns:
-            None; cannot connect to db
-            data: list; on success
-            data: dict; on api call fails or errors
+            On success, a dict containing the success status and
+            how many documents were successfully written.
+
+            {
+                    "status": 200,
+                    "message": "success",
+                    "data": {
+                            "insert_count": 1,
+                            "object_id": "61efec7365934b58b8e5d26b"
+                    }
+            }
+
+            In case of error:
+
+            {
+                "status_code": 4xx|5xx,
+                "message":
+                    {
+                        "status": 4xx|5xx,
+                        "message": 'error occurred'
+                    }
+            }
+
+        Raises:
+            RequestException: Unable to connect to zc_core
         """
+
         body = {
             "plugin_id": self.plugin_id,
             "organization_id": self.organization_id,
