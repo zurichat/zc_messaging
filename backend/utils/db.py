@@ -108,17 +108,45 @@ class DataStorage:
             return response.json()
         return {"status_code": response.status_code, "message": response.json()}
 
-    async def update(self, collection_name, document_id, data):
-        """Function to update data from db.
+    async def update(
+        self, collection_name: str, document_id: str, data: Dict[str, Any]
+    ) -> Any:
+        """Updates data to zc_messaging collections.
+
+        Calls the zc_core write endpoint (PUT) and updates a specific `document_id` with `data`.
 
         Args:
-            collection_name (str): Name of collection
-            Document_ID (str): Resource ID
-            data (dict): payload
+            collection_name (str): The name of the collection where to update `document_id`
+            document_id (str): The document id that will be updated.
+            data (dict): The new data the plugin wants to store.
+
         Returns:
-            None; cannot connect to db
-            data: json object; on success
-            data: dict; on api call fails or errors
+            On success, a dict containing the success status and
+            how many documents were successfully updated.
+
+            {
+                    "status": 200,
+                    "message": "success",
+                "data": {
+                    "matched_documents": 1,
+                    "modified_documents": 1
+                }
+            }
+
+            In case of error:
+
+            {
+                    "status": 200,
+                    "message": "success",
+                "data": {
+                    "matched_documents": 0,
+                    "modified_documents": 0
+                }
+            }
+
+        Raises:
+            RequestException: Unable to connect to zc_core
+
         """
         body = {
             "plugin_id": self.plugin_id,
