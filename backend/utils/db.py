@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import requests
 from config.settings import settings
@@ -165,32 +165,57 @@ class DataStorage:
             return response.json()
         return {"status_code": response.status_code, "message": response.json()}
 
-    # NB: refactoring read_query into read, DB.read now has functionality of read and read_query
     async def read(
         self,
         collection_name: str,
-        query: dict,
-        options: dict = None,
-        resource_id: str = None,
-    ):
-        """
-        Function to read data flexibly from db, with the option to query, filter and more
+        resource_id: Optional[str] = None,
+        query: Optional[Dict[str, Any]] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+        """Reads data from zc_messaging collections.
+
+        Calls the zc_core read endpoint (POST) and reads data with the option
+        to filter and add mofifiers.
+
         Args:
-            Collection_name (str): Name of COllection,
-            Resource_id (str): Document ID,
-            query (dict): Filter query
-            options (dict):
+            collection_name (str): The name of the collection where to read `data`.
+            resource_id (str): The specific document id to be read.
+            query (dict): An object that contains fields and their values
+            to match documents.
+            options (dict): An object that contains query results modifiers
+            (limit, sort, skip, projection).
+
         Returns:
-            None: cannot connect to db
-            data: list; on success
-            data: dict; on api call fails or errors
+            On success, a dict containing the success status and
+            the data as a list if no document id has been specified,
+            otherwise a single object is returned.
+
+            {
+                "status": 200,
+                "message": "success",
+                "data": [
+                    {...},
+                    {...},
+                    {...},
+                    ...
+                ]
+            }
+
+            In case of error:
+
+            {
+                "status": 200,
+                "message": "success",
+                "data": null
+            }
         """
+
         body = {
-            "collection_name": collection_name,
-            "filter": query,
-            "object_id": resource_id,
-            "organization_id": self.organization_id,
             "plugin_id": self.plugin_id,
+            "organization_id": self.organization_id,
+            "collection_name": collection_name,
+            "object_id": resource_id,
+            "filter": query,
             "options": options,
         }
 
