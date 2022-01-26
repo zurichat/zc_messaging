@@ -174,7 +174,7 @@ async def remove_member(
     responses={
         400: {"detail": "the max number for a Group_DM is 9"},
         401: {"detail": "member not an admin"},
-        403: {"detail": "DM room or not found"},
+        403: {"detail": "room not found || DM room cannot be joined"},
         424: {"detail": "failed to add new members to room"},
     },
 )
@@ -196,12 +196,14 @@ async def join_room(
 
     Returns:
         HTTP_200_OK: {
-                "status": 200,
-                "message": "success",
-                "room_members": {
-                    "619123member1": {"closed": False, "role": "admin", "starred": False},
-                    "619123member2": {"closed": False, "role": "admin", "starred": False},
-                    "619123member3": {"closed": False, "role": "admin", "starred": False}
+                "status": "success",
+                "message": "member(s) successfully added",
+                "data": {
+                    "room_members": {
+                        "619123member1": {"closed": False, "role": "admin", "starred": False},
+                        "619123member2": {"closed": False, "role": "member", "starred": False},
+                        "619123member3": {"closed": False, "role": "member", "starred": False},
+                    }
                 }
             }
     Raises:
@@ -404,14 +406,13 @@ async def get_members(org_id: str, room_id: str):
         HTTPException [424]: Failure to retrieve room members
     """
     room = await get_room(org_id, room_id)
-
     if not room:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
         )
 
-    members = room["room_members"]
-    if members and members.get("status_code") is not None:
+    members = room.get("room_members", {})
+    if not members:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Failure to retrieve room members",
