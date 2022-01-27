@@ -146,8 +146,8 @@ class DataStorage:
 
         Raises:
             RequestException: Unable to connect to zc_core
-
         """
+
         body = {
             "plugin_id": self.plugin_id,
             "organization_id": self.organization_id,
@@ -208,6 +208,9 @@ class DataStorage:
                 "message": "success",
                 "data": null
             }
+
+        Raises:
+            RequestException: Unable to connect to zc_core
         """
 
         body = {
@@ -228,19 +231,41 @@ class DataStorage:
             return response.json().get("data")
         return {"status_code": response.status_code, "message": response.reason}
 
-    async def delete(self, collection_name, document_id):
-        """
-        Function to del data resource from db.
+    async def delete(self, collection_name: str, document_id: str):
+        """Delete data from zc_messaging collections.
+
+        Calls the zc_core delete endpoint (POST) and deletes the data matching `document_id`.
 
         Args:
-            collection_name (str): Name of collection
-            Document_ID (str): Resource ID
+            collection_name (str): The name of the collection where to delete the document.
+            document_id (str):  The specific document id to be deleted.
 
         Returns:
-            None: cannot connect to db
-            data: Json object; on success
-            data: dict; on api call fails or errors
+            On success, a dict containing the success status and
+            and how many documents were successfully deleted.
+
+            {
+                "status": 200,
+                "message": "success",
+                "data": {
+                    "deleted_count": 1
+                }
+            }
+
+            In case of error:
+
+            {
+                "status": 200,
+                "message": "success",
+                "data": {
+                    "deleted_count": 0
+                }
+            }
+
+        Raises:
+            RequestException: Unable to connect to zc_core
         """
+
         body = {
             "plugin_id": self.plugin_id,
             "organization_id": self.organization_id,
