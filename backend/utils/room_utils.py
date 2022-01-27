@@ -147,7 +147,7 @@ async def remove_room_member(org_id: str, room_data: dict, member_id: str) -> di
     if remove_member == "not_found":
         raise ValueError("user not a member of the room")
 
-    room_id = room_data["id"]
+    room_id = room_data["_id"]
     room_members = {"room_members": room_data["room_members"]}
 
     update_room = await DB.update(ROOM_COLLECTION, room_id, room_members)
@@ -157,5 +157,5 @@ async def remove_room_member(org_id: str, room_data: dict, member_id: str) -> di
 
     response = update_room["data"]
     response["member_id"] = member_id
-    response["room_id"] = room_data["id"]
+    response["room_id"] = room_id
     return response
