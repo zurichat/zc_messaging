@@ -231,7 +231,7 @@ class DataStorage:
             return response.json().get("data")
         return {"status_code": response.status_code, "message": response.reason}
 
-    async def delete(self, collection_name: str, document_id: str):
+    async def delete(self, collection_name: str, document_id: str) -> Any:
         """Delete data from zc_messaging collections.
 
         Calls the zc_core delete endpoint (POST) and deletes the data matching `document_id`.
