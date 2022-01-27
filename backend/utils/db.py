@@ -302,7 +302,7 @@ class DataStorage:
                         "deleted": false,
                         "deleted_at": "0001-01-01T00:53:28+00:53",
                         "display_name": "",
-                        "email": "markessien@gmail.com",
+                        "email": "member@gmail.com",
                         "files": null,
                         "first_name": "",
                         "id": "",
@@ -332,16 +332,32 @@ class DataStorage:
         if response.status_code == 200:
             return response.json().get("data")
 
-    async def get_member(self, member_id: str, members: list):
-        """Get info of a single registered member in an organisation
+    async def get_member(
+        self, members: List[Dict[str, Any]], member_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Get the information of a single registered member in an organisation.
+
         Args:
-            org_id (str): The organization's id,
-            member_id (str): The member's id
+            members (list[dict]): The list of all members registered in an organization.
+            member_id (str): The member's id.
+
         Returns:
-            {dict}: {dict containing user info}
+            A dict containg the member's information.
+
+            {
+                "_id": "619ba4671a5f54782939d385",
+                "bio": "",
+                "deleted": false,
+                "deleted_at": "0001-01-01T00:53:28+00:53",
+                "display_name": "",
+                "email": "member@gmail.com",
+                "files": null,
+                "first_name": "",
+                "id": "",
+                ...
+            }
         """
+
         if members:
             for member in members:
-                if member["_id"] == member_id:
-                    return member
-        return {}
+                return member if member["_id"] == member_id else {}
