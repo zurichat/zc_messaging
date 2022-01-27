@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
 from config.settings import settings
@@ -282,13 +282,47 @@ class DataStorage:
             return response.json()
         return {"status_code": response.status_code, "message": response.reason}
 
-    async def get_all_members(self):
-        """Gets a list of all members registered in an organisation
-        Args:
-            org_id (str): The organization's id
+    async def get_all_members(self) -> Optional[List[Dict[str, Any]]]:
+        """Gets a list of all members registered in an organisation.
+        Calls the zc_core endpoint(GET) and retrieves the list of all members
+        for a specific organization id.
+        The organization id is passed in `get_members_api`.
+
         Returns:
-            [List]: [list of objects]
+            On success, a list containing the success status and
+            and the organization's members.
+
+            {
+                "status": 200,
+                "message": "Members retrieved successfully",
+                "data": [
+                    {
+                        "_id": "619ba4671a5f54782939d385",
+                        "bio": "",
+                        "deleted": false,
+                        "deleted_at": "0001-01-01T00:53:28+00:53",
+                        "display_name": "",
+                        "email": "markessien@gmail.com",
+                        "files": null,
+                        "first_name": "",
+                        "id": "",
+                        "image_url": "https://api.zuri.chat/files/profile_image/"
+                        "619ba4671a5f54782939d384/619ba4671a5f54782939d385/20211213192712_0.png",
+                        "joined_at": "2021-11-22T15:08:39.876+01:00",
+                        "language": "",
+                        "last_name": "",
+                        "org_id": "619ba4671a5f54782939d384",
+                        "phone": "",
+                        "presence": "true",
+                        ...
+                    }
+                ]
+            }
+
+        Raises:
+            RequestException: Unable to connect to zc_core
         """
+
         url = self.get_members_api.format(org_id=self.organization_id)
         try:
             response = requests.get(url=url)
@@ -296,7 +330,7 @@ class DataStorage:
             print(exception)
             return []
         if response.status_code == 200:
-            return response.json()["data"]
+            return response.json().get("data")
 
     async def get_member(self, member_id: str, members: list):
         """Get info of a single registered member in an organisation
