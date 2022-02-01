@@ -172,7 +172,7 @@ async def test_send_message_sender_not_in_room(mock_dataStorage_read):
     send_message_test_payload["sender_id"] = "yur859"
     response = client.post(send_message_test_url, json=send_message_test_payload)
     assert response.status_code == 404
-    assert response.json() == {"detail": "sender not a member of this room"}
+    assert response.json() == {"detail": "Sender not a member of this room"}
 
 
 @pytest.mark.asyncio
@@ -189,7 +189,7 @@ async def test_send_message_empty_room(mock_dataStorage_read):
     mock_dataStorage_read.return_value = {}
     response = client.post(send_message_test_url, json=send_message_test_payload)
     assert response.status_code == 404
-    assert response.json() == {"detail": "Room not available"}
+    assert response.json() == {"detail": "Room does not exist"}
 
 
 @pytest.mark.asyncio
