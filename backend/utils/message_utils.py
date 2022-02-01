@@ -14,8 +14,7 @@ async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
         list[dict]: A list of key value pairs of messages info mapped according to message schema.
 
         {
-            "status": 200,
-            "message": "success",
+
             "data": [
                 {
                     "_id": "61e6878165934b58b8e5d1e0",
@@ -74,7 +73,13 @@ async def get_room_messages(
     DB = DataStorage(org_id)
     response = await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id})
 
-    return response or []
+    if response is None:
+        return []
+
+    if "status_code" in response:
+        return None
+
+    return response
 
 
 async def get_message(org_id: str, room_id: str, message_id: str) -> dict:
