@@ -13,27 +13,26 @@ async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
     Returns:
         list[dict]: A list of key value pairs of messages info mapped according to message schema.
 
-        {
-
-            "data": [
-                {
-                    "_id": "61e6878165934b58b8e5d1e0",
-                    "created_at": "2022-01-18 09:05:32.479911",
-                    "edited": false,
-                    ...
-                },
-                {
-                    "_id": "61e6878165934b58b8e5d1e1",
-                    "created_at": "2022-01-18 09:05:32.479911",
-                    "edited": true,
-                    ...
-                },
+        [
+            {
+                "_id": "61e6878165934b58b8e5d1e0",
+                "created_at": "2022-01-18 09:05:32.479911",
+                "edited": false,
                 ...
-        }
+            },
+            {
+                "_id": "61e6878165934b58b8e5d1e1",
+                "created_at": "2022-01-18 09:05:32.479911",
+                "edited": true,
+                ...
+            },
+            ...
+        ]
     """
 
     DB = DataStorage(org_id)
     response = await DB.read(settings.MESSAGE_COLLECTION)
+
     if not response or "status_code" in response:
         return None
 
