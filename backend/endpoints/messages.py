@@ -5,7 +5,7 @@ from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.message_utils import get_message, get_room_messages
+from utils.message_utils import create_message, get_message, get_room_messages
 
 router = APIRouter()
 
@@ -77,13 +77,9 @@ async def send_message(
         HTTPException [424]: Message not sent
     """
 
-    DB = DataStorage(org_id)
-
     message = Message(**request.dict(), org_id=org_id, room_id=room_id)
 
-    response = await DB.write(
-        settings.MESSAGE_COLLECTION, message.dict(exclude={"message_id"})
-    )
+    response = await create_message(org_id=org_id, message=message)
 
     if not response or response.get("status_code"):
         raise HTTPException(

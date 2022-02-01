@@ -1,6 +1,7 @@
 from typing import Any, Optional
 
 from config.settings import settings
+from schema.message import Message
 from utils.db import DataStorage
 
 
@@ -116,3 +117,19 @@ async def get_message(
         return {}
 
     return response
+
+
+async def create_message(org_id: str, message: Message) -> dict[str, Any]:
+    """Creates a message document in the database.
+
+    Args:
+        org_id (str): The organization id where the message is created.
+        message (Message): The message object to be saved.
+
+    Returns:
+        dict[str, Any]: The response returned by DataStorage's write method.
+    """
+
+    db = DataStorage(org_id)
+
+    return await db.write(settings.MESSAGE_COLLECTION, message.dict())
