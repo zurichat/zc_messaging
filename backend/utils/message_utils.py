@@ -41,15 +41,35 @@ async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
     return response
 
 
-async def get_room_messages(org_id: str, room_id: str) -> list:
-    """Get all messages in a room
+async def get_room_messages(
+    org_id: str, room_id: str
+) -> Optional[list[dict[str, Any]]]:
+    """Gets all messages sent inside  a room.
     Args:
         org_id (str): The organization id
         room_id (str): The room id
 
     Returns:
-        dict: key value pair of message info mapped according to message schema
-    """
+        list[dict]: A list of key value pairs of messages info mapped according to message schema.
+
+        {
+            "status": 200,
+            "message": "success",
+            "data": [
+                {
+                    "_id": "61e6878165934b58b8e5d1e0",
+                    "created_at": "2022-01-18 09:05:32.479911",
+                    "edited": false,
+                    ...
+                },
+                {
+                    "_id": "61e6878165934b58b8e5d1e1",
+                    "created_at": "2022-01-18 09:05:32.479911",
+                    "edited": true,
+                    ...
+                },
+                ...
+        }"""
 
     DB = DataStorage(org_id)
     response = await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id})
