@@ -20,33 +20,37 @@ router = APIRouter()
     },
 )
 async def send_message(
-    org_id,
-    room_id,
+    org_id: str,
+    room_id: str,
     request: MessageRequest,
     background_tasks: BackgroundTasks,
 ):
-    """Creates and sends a message from one user to another.
-    Registers a new document to the chats database collection.
-    Returns the message info and document id if message is successfully created
-    while publishing to all members of the room in the background
-    Args:
-        org_id (str): A unique identifier of an organisation
-        request: A pydantic schema that defines the message request parameters
-        room_id: A unique identifier of the room where the message is being sent to.
-        sender_id: A unique identifier of the user sending the message
-        background_tasks: A daemon thread for publishing centrifugo
-    Returns:
-        HTTP_201_CREATED {new message sent}:
-        A dict containing data about the message that was created (response_output).
+    """Creates and sends a message from a user inside a room.
 
-            {
-                "sender_id": "619ba4671a5f54782939d385",
+    Registers a new document to the messages database collection while
+    publishing to all members of the room in the background.
+
+    Args:
+        org_id (str): A unique identifier of an organisation.
+        request (MessageRequest): A pydantic schema that defines the message request parameters.
+        room_id (str): A unique identifier of the room where the message is being sent to.
+        background_tasks (BackgroundTasks): A background task for publishing to all
+                                            members of the room.
+
+    Returns:
+        A dict containing data about the message that was created.
+
+        {
+            "status": "success",
+            "message": "new message sent",
+            "data": {
+                "sender_id": "619bab3b1a5f54782939d400",
                 "emojis": [],
                 "richUiData": {
                 "blocks": [
                     {
                     "key": "eljik",
-                    "text": "HI, I'm mark.. new here",
+                    "text": "Larry Gaaga",
                     "type": "unstyled",
                     "depth": 0,
                     "inlineStyleRanges": [],
@@ -58,19 +62,21 @@ async def send_message(
                 },
                 "files": [],
                 "saved_by": [],
-                "created_at": "2021-12-22 22:38:33.075643",
-                "room_id": "619e28c31a5f54782939d59a",
+                "timestamp": 0,
+                "created_at": "2022-02-01 19:20:55.891264",
+                "room_id": "61e6855e65934b58b8e5d1df",
                 "org_id": "619ba4671a5f54782939d384",
-                "message_id": "61c3aa9478fb01b18fac1465",
+                "message_id": "61f98d0665934b58b8e5d286",
                 "edited": false,
                 "threads": []
             }
+        }
 
     Raises:
-        HTTPException [404]: Sender not in room
-        HTTPException [404]: Room does not exist
-        HTTPException [424]: "message not sent"
+        HTTPException [404]: Room does not exist || Sender not a member of this room
+        HTTPException [424]: Message not sent
     """
+
     DB = DataStorage(org_id)
 
     message_obj = Message(**request.dict(), org_id=org_id, room_id=room_id)
