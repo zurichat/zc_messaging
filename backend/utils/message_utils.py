@@ -94,24 +94,26 @@ async def get_message(
         dict: key value pair of the message info mapped according to message schema.
 
         {
-                        "_id": "61eff23565934b58b8e5d26f",
-                        "created_at": "2022-01-24 18:05:01.129393",
-                        "edited": false,
-                        "emojis": [],
-                        "files": [],
-                        "org_id": "619ba4671a5f54782939d384",
+            "_id": "61eff23565934b58b8e5d26f",
+            "created_at": "2022-01-24 18:05:01.129393",
+            "edited": false,
+            "emojis": [],
+            "files": [],
+            "org_id": "619ba4671a5f54782939d384",
             ...,
-                        "room_id": "61e72d1265934b58b8e5d220",
-                        "saved_by": [],
-                        "sender_id": "61e59f1b65934b58b8e5d1cb",
-                        "threads": [],
-                        "timestamp": 0
-                },
+            "room_id": "61e72d1265934b58b8e5d220",
+            "saved_by": [],
+            "sender_id": "61e59f1b65934b58b8e5d1cb",
+            "threads": [],
+            "timestamp": 0
+        }
     """
 
     DB = DataStorage(org_id)
     query = {"room_id": room_id, "_id": message_id}
     response = await DB.read(settings.MESSAGE_COLLECTION, query=query)
-    if response and "status_code" not in response:
-        return response
-    return {}
+
+    if not response or "status_code" in response:
+        return {}
+
+    return response
