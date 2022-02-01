@@ -35,9 +35,10 @@ async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
 
     DB = DataStorage(org_id)
     response = await DB.read(settings.MESSAGE_COLLECTION)
-    if response and "status_code" not in response:
-        return response
-    return None
+    if not response or "status_code" in response:
+        return None
+
+    return response
 
 
 async def get_room_messages(org_id: str, room_id: str) -> list:
