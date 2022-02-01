@@ -79,31 +79,31 @@ async def send_message(
 
     DB = DataStorage(org_id)
 
-    message_obj = Message(**request.dict(), org_id=org_id, room_id=room_id)
+    message = Message(**request.dict(), org_id=org_id, room_id=room_id)
 
     response = await DB.write(
-        settings.MESSAGE_COLLECTION, message_obj.dict(exclude={"message_id"})
+        settings.MESSAGE_COLLECTION, message.dict(exclude={"message_id"})
     )
 
-    if response and response.get("status_code") is None:
-        message_obj.message_id = response["data"]["object_id"]
-        # Publish to centrifugo in the background.
-        background_tasks.add_task(
-            centrifugo_client.publish,
-            room_id,
-            Events.MESSAGE_CREATE,
-            message_obj.dict(),
-        )
-        return JSONResponse(
-            content=ResponseModel.success(
-                data=message_obj.dict(), message="new message sent"
-            ),
-            status_code=status.HTTP_201_CREATED,
+    if not response or response.get("status_code"):
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"Message not sent": response},
         )
 
-    raise HTTPException(
-        status_code=status.HTTP_424_FAILED_DEPENDENCY,
-        detail={"Message not sent": response},
+    message.message_id = response["data"]["object_id"]
+
+    # Publish to centrifugo in the background.
+    background_tasks.add_task(
+        centrifugo_client.publish,
+        room_id,
+        Events.MESSAGE_CREATE,
+        message.dict(),
+    )
+
+    return JSONResponse(
+        content=ResponseModel.success(data=message.dict(), message="new message sent"),
+        status_code=status.HTTP_201_CREATED,
     )
 
 
