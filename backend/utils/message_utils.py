@@ -50,3 +50,22 @@ async def get_message(org_id: str, room_id: str, message_id: str) -> dict:
     if response and "status_code" not in response:
         return response
     return {}
+
+
+async def update_reaction(org_id: str, message_id: str, message: dict) -> dict:
+    """Update message reactions
+    Args:
+        org_id (str): The organization id
+        message_id (str): The message id
+        message (dict): The data to update
+    Returns:
+        dict: key value pair of message info mapped according to message schema
+    """
+    DB = DataStorage(org_id)
+
+    message_id = message["_id"]
+    data = {"emojis": message["emojis"]}
+    response = await DB.update(MESSAGE_COLLECTION, message_id, data)
+    if response and "status_code" not in response:
+        return response
+    return {}
