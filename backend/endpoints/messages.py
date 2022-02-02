@@ -15,8 +15,8 @@ router = APIRouter()
     response_model=ResponseModel,
     status_code=status.HTTP_201_CREATED,
     responses={
-        404: {"detail": "room or sender not found"},
-        424: {"detail": "ZC Core Failed"},
+        404: {"description": "Room or sender not found"},
+        424: {"description": "ZC Core failed"},
     },
 )
 async def send_message(
