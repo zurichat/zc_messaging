@@ -79,18 +79,3 @@ def fixture_mock_dataStorage_delete(mocker):
     zc_core_update_data = AsyncMock()
     mocker.patch("utils.db.DataStorage.delete", side_effect=zc_core_update_data)
     return zc_core_update_data
-
-
-@pytest.fixture(name="mock_get_room")
-def fixture_mock_get_room(mocker):
-    """Patch for getting room members.
-
-    Args:
-       mocker (Mock): For patching a third-party api call
-
-    Returns:
-       AsyncMock: An instance of the asyncmock class
-    """
-    mock_get_room = AsyncMock()
-    mocker.patch("utils.room_utils.DataStorage.read", side_effect=mock_get_room)
-    return mock_get_room

@@ -8,7 +8,6 @@ from utils.db import DataStorage
 client = TestClient(app)
 send_message_test_url = "api/v1/org/619ba4/rooms/123456/messages"
 update_message_test_url = "api/v1/org/1234/rooms/343235/messages/346556"
-
 send_message_test_payload = {
     "sender_id": "e21e10",
     "emojis": [],
