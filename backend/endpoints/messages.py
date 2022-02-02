@@ -73,8 +73,8 @@ async def send_message(
         }
 
     Raises:
-        HTTPException [404]: Room does not exist || Sender not a member of this room
-        HTTPException [424]: Message not sent
+        HTTPException [404]: Room does not exist || Sender not a member of this room.
+        HTTPException [424]: Message not sent.
     """
 
     message = Message(**request.dict(), org_id=org_id, room_id=room_id)
@@ -108,28 +108,32 @@ async def send_message(
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        401: {"description": "you are not authorized to edit this message"},
-        404: {"description": "message not found"},
-        424: {"description": "message not edited"},
+        401: {"description": "You are not authorized to edit this message"},
+        404: {"description": "Message not found"},
+        424: {"description": "Message not edited"},
     },
 )
 async def update_message(
-    request: MessageRequest,
     org_id: str,
     room_id: str,
     message_id: str,
+    request: MessageRequest,
     background_tasks: BackgroundTasks,
 ):
-    """
-    Update a message
+    """Updates a message sent in a room.
+
+    Edits an existing message document in the messages database collection while
+    publishing to all members of the room in the background.
+
     Args:
-        request: Request object
         org_id: A unique identifier of the organization.
         room_id: A unique identifier of the room.
         message_id: A unique identifier of the message that is being edited.
-        background_tasks: A daemon thread for publishing to centrifugo
+        request: A pydantic schema that defines the message request parameters.
+        background_tasks: A background task for publishing to all
+                          members of the room.
+
     Returns:
-        HTTP_200_OK {Message edited}:
         A dict containing data about the message that was edited.
 
             {
@@ -170,10 +174,11 @@ async def update_message(
             }
 
     Raises:
-        HTTPException [401]: You are not authorized to edit this message
-        HTTPException [404]: Message not found
-        HTTPException [424]: Message not edited
+        HTTPException [401]: You are not authorized to edit this message.
+        HTTPException [404]: Message not found.
+        HTTPException [424]: Message not edited.
     """
+
     DB = DataStorage(org_id)
     message = await get_message(org_id, room_id, message_id)
     if not message:
