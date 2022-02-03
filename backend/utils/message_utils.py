@@ -133,3 +133,22 @@ async def create_message(org_id: str, message: Message) -> dict[str, Any]:
     db = DataStorage(org_id)
 
     return await db.write(settings.MESSAGE_COLLECTION, message.dict())
+
+
+async def update_message(
+    org_id: str, message_id: str, message: dict[str, Any]
+) -> dict[str, Any]:
+    """Updates a message document in the database.
+
+    Args:
+        org_id (str): The organization id where the message is being updated.
+        message_id (str): The id of the message to be edited.
+        message (dict[str, Any]): The new data.
+
+    Returns:
+        dict[str, Any]: The response returned by DataStorage's update method.
+    """
+
+    db = DataStorage(org_id)
+
+    return await db.update(settings.MESSAGE_COLLECTION, message_id, message)
