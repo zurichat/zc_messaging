@@ -1,11 +1,10 @@
-from config.settings import settings
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
-from utils.db import DataStorage
 from utils.message_utils import create_message, get_message, get_room_messages
+from utils.message_utils import update_message as edit_message
 
 router = APIRouter()
 
@@ -178,9 +177,8 @@ async def update_message(
         HTTPException [404]: Message not found.
         HTTPException [424]: Message not edited.
     """
-
-    DB = DataStorage(org_id)
     message = await get_message(org_id, room_id, message_id)
+
     if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
@@ -194,24 +192,24 @@ async def update_message(
         )
 
     payload["edited"] = True
-    edited_message = await DB.update(
-        settings.MESSAGE_COLLECTION, document_id=message_id, data=payload
-    )
+    edited_message = await edit_message(org_id, message_id, payload)
+
+    if not edited_message or edited_message.get("status_code"):
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"message not edited": edited_message},
+        )
 
     message.update(payload)
 
-    if edited_message and edited_message.get("status_code") is None:
-        # Publish to centrifugo in the background.
-        background_tasks.add_task(
-            centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, message
-        )
-        return JSONResponse(
-            content=ResponseModel.success(data=message, message="Message edited"),
-            status_code=status.HTTP_200_OK,
-        )
-    raise HTTPException(
-        status_code=status.HTTP_424_FAILED_DEPENDENCY,
-        detail={"message not edited": edited_message},
+    # Publish to centrifugo in the background.
+    background_tasks.add_task(
+        centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, message
+    )
+
+    return JSONResponse(
+        content=ResponseModel.success(data=message, message="Message edited"),
+        status_code=status.HTTP_200_OK,
     )
 
 
