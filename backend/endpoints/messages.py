@@ -219,25 +219,57 @@ async def update_message(
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
-async def get_messages(org_id, room_id):
+async def get_messages(org_id: str, room_id: str):
     """Fetches all messages sent in a particular room.
 
     Args:
-        org_id (str): A unique identifier of an organization
-        room_id (str): A unique identifier of the room where messages are fetched from
+        org_id (str): A unique identifier of an organization.
+        room_id (str): A unique identifier of the room where messages are fetched from.
 
     Returns:
-        A list of message objects
+        A dict containing a list of message objects.
+        {
+            "status": "success",
+            "message": "Messages retrieved",
+            "data": [
+                {
+                "_id": "61e75bc065934b58b8e5d223",
+                "created_at": "2022-02-02 17:57:02.630439",
+                "edited": true,
+                "emojis": [
+                    {
+                    "count": 1,
+                    "emoji": "👹",
+                    "name": "frown",
+                    "reactedUsersId": [
+                        "619ba4671a5f54782939d385"
+                    ]
+                    }
+                ],
+                ...
+                },
+                {...},
+                ...
+            ]
+        }
 
     Raises:
         HTTPException [424]: Zc Core failed
     """
+
     response = await get_room_messages(org_id, room_id)
-    if response is None or "status_code" in response:
+    if response == []:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Room does not exist or no message found",
+        )
+
+    if response is None:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Zc Core failed",
         )
+
     return JSONResponse(
         content=ResponseModel.success(data=response, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
