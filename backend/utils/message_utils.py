@@ -150,5 +150,6 @@ async def update_message(
     """
 
     db = DataStorage(org_id)
+    message["edited"] = True
 
     return await db.update(settings.MESSAGE_COLLECTION, message_id, message)
