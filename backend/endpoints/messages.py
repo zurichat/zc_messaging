@@ -275,18 +275,18 @@ async def message_reaction(
         A dict containing data about the reaction that was added.
 
         {
-            "room_id": "61e75a0a65934b58b8e5d222",
-            "message_id": "61e9b65665934b58b8e5d25e",
-            "emojis": [{
-                "name": "lol",
+            "status": "success",
+            "message": "Reaction updated successfully",
+            "data": {
                 "count": 3,
                 "emoji": "lol",
+                "name": "lol",
                 "reactedUsersId": [
                     "6169704bc4133ddaa309dd07",
                     "619bab3b1a5f54782939d400",
                     "61696f5ac4133ddaa309dcfe"
                 ]
-            }]
+            }
         }
 
     Raises:

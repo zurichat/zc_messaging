@@ -56,10 +56,9 @@ async def update_reaction(org_id: str, message: dict) -> dict:
     """Update message reactions
     Args:
         org_id (str): The organization id
-        message_id (str): The message id
-        message (dict): The data to update
+        message (dict): The message data for which reactions are to be updated
     Returns:
-        dict: key value pair of message info mapped according to message schema
+        Updates the message emojis with the new reactions
     """
     DB = DataStorage(org_id)
 
@@ -72,13 +71,13 @@ async def update_reaction(org_id: str, message: dict) -> dict:
 
 
 def toggle_reaction(emoji: dict, payload: dict, reactions: list) -> dict:
-    """[summary]
+    """Function to toggle reaction
     Args:
-        emoji (dict): [description]
-        payload (dict): [description]
-        reactions (List[dict]): [description]
+        emoji (dict): The emoji that's being toggled
+        payload (dict): The payload
+        reactions (list): The list of reactions
     Returns:
-       emoji (dict): [description]
+       dict: Key value pair of the emoji mapped according to Emoji schema
     """
     if payload.reactedUsersId[0] not in emoji["reactedUsersId"]:
         emoji["reactedUsersId"].append(payload.reactedUsersId[0])
@@ -91,17 +90,17 @@ def toggle_reaction(emoji: dict, payload: dict, reactions: list) -> dict:
     return emoji
 
 
-def get_member_emoji(emoji_name: str, emojis: list):
-    """[summary]
+def get_member_emoji(emoji_name: str, reaction: list):
+    """Function to get member emoji
     Args:
-        emoji_name (str): [description]
-        emojis (List[dict]): [description]
+        emoji_name (str): The emoji name
+        reaction (list): The list of reactions
     Returns:
-        [type]: [description]
+        dict: Key value pair of the emoji mapped according to Emoji schema
     """
-    if not emojis:
+    if not reaction:
         return None
-    for emoji in emojis:
+    for emoji in reaction:
         if emoji_name == emoji["name"]:
             return emoji
     return None
