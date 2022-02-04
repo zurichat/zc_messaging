@@ -52,7 +52,7 @@ async def get_message(org_id: str, room_id: str, message_id: str) -> dict:
     return {}
 
 
-async def update_reaction(org_id: str, message_id: str, message: dict) -> dict:
+async def update_reaction(org_id: str, message: dict) -> dict:
     """Update message reactions
     Args:
         org_id (str): The organization id
@@ -69,3 +69,39 @@ async def update_reaction(org_id: str, message_id: str, message: dict) -> dict:
     if response and "status_code" not in response:
         return response
     return {}
+
+
+def toggle_reaction(emoji: dict, payload: dict, reactions: list) -> dict:
+    """[summary]
+    Args:
+        emoji (dict): [description]
+        payload (dict): [description]
+        reactions (List[dict]): [description]
+    Returns:
+       emoji (dict): [description]
+    """
+    if payload.reactedUsersId[0] not in emoji["reactedUsersId"]:
+        emoji["reactedUsersId"].append(payload.reactedUsersId[0])
+        emoji["count"] += 1
+    else:
+        emoji["reactedUsersId"].remove(payload.reactedUsersId[0])
+        emoji["count"] -= 1
+        if emoji["count"] == 0:
+            reactions.remove(emoji)
+    return emoji
+
+
+def get_member_emoji(emoji_name: str, emojis: list):
+    """[summary]
+    Args:
+        emoji_name (str): [description]
+        emojis (List[dict]): [description]
+    Returns:
+        [type]: [description]
+    """
+    if not emojis:
+        return None
+    for emoji in emojis:
+        if emoji_name == emoji["name"]:
+            return emoji
+    return None
