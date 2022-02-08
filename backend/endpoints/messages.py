@@ -353,7 +353,8 @@ async def message_reaction(
     )
     return JSONResponse(
         content=ResponseModel.success(
-            data=reaction_payload, message="Reaction added successfully"
+            status_code=status.HTTP_200_OK,
+            data=reaction_payload,
+            message="Reaction added successfully",
         ),
-        status_code=status.HTTP_200_OK,
     )
