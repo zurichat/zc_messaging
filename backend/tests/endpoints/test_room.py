@@ -107,6 +107,21 @@ non_admin_remove_room_member_url = (
     + "members/61696f5ac4133ddaa309dcfe?admin_id=619baa5c1a5f54782939d386"
 )
 
+room_owner_leaving_room_url = (
+    "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
+    + "members/619ba4671a5f54782939d385"
+)
+
+remove_room_owner_url = (
+    "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
+    + "members/619ba4671a5f54782939d385?admin_id=6169704bc4133ddaa309dd07"
+)
+
+remove_self_url = (
+    "api/v1/org/3467sd4671a5f5478df56u911/rooms/23dg67l0eba8adb50ca13a24/"
+    + "members/6169704bc4133ddaa309dd07?admin_id=6169704bc4133ddaa309dd07"
+)
+
 
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
@@ -385,8 +400,6 @@ async def test_get_members_unsuccessful(mock_dataStorage_read):
                 "status": "success",
                 "message": "user removed from room successfully",
                 "data": {
-                    "matched_documents": 1,
-                    "modified_documents": 1,
                     "member_id": "619baa5c1a5f54782939d386",
                     "room_id": "23dg67l0eba8adb50ca13a24",
                 },
@@ -399,8 +412,6 @@ async def test_get_members_unsuccessful(mock_dataStorage_read):
                 "status": "success",
                 "message": "user removed from room successfully",
                 "data": {
-                    "matched_documents": 1,
-                    "modified_documents": 1,
                     "member_id": "61696f5ac4133ddaa309dcfe",
                     "room_id": "23dg67l0eba8adb50ca13a24",
                 },
@@ -426,23 +437,42 @@ async def test_get_members_unsuccessful(mock_dataStorage_read):
             403,
             {"detail": "must be an admin to remove member"},
         ),
+        (
+            f"{room_owner_leaving_room_url}",
+            403,
+            {
+                "detail": "channel owner cannot leave channel, archive channel"
+                + "or make another member owner"
+            },
+        ),
+        (
+            f"{remove_room_owner_url}",
+            403,
+            {
+                "detail": "channel owner cannot leave channel, archive channel"
+                + "or make another member owner"
+            },
+        ),
+        (
+            f"{remove_self_url}",
+            403,
+            {"detail": "cannot remove yourself"},
+        ),
     ],
 )
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
-async def test_remove_room_member(
-    init_fake_room,
-    mock_dataStorage_read,
-    mock_dataStorage_update,
-    url,
-    status_code,
-    json_response,
-):
+async def test_remove_room_member(init_mocks, url, status_code, json_response):
     """
     Leave room successfully
     Args:
-        mock_datastorage_read (AyncMock): Asynchronous external api call
+        init_mocks (Tuple): Tuple containing Fake room data and Asynchronous external api calls
+        url (str): test url
+        status_code (int): expected response code
+        json_response (Dict): expected json response
     """
+
+    init_fake_room, mock_dataStorage_read, mock_dataStorage_update = init_mocks
 
     db = DataStorage("3467sd4671a5f5478df56u911")
     db.plugin_id = "34453"
@@ -464,9 +494,7 @@ async def test_remove_room_member(
 
 @pytest.mark.asyncio
 @mock.patch.object(DataStorage, "__init__", lambda x, y: None)
-async def test_remove_room_member_wrong_room_id(
-    mock_dataStorage_read, mock_dataStorage_update
-):
+async def test_remove_room_member_wrong_room_id(mock_dataStorage_read):
     """
     Leave room successfully
     Args:
@@ -476,14 +504,7 @@ async def test_remove_room_member_wrong_room_id(
     db = DataStorage("3467sd4671a5f5478df56u911")
     db.plugin_id = "34453"
 
-    update_response = {
-        "status": 200,
-        "message": "success",
-        "data": {"matched_documents": 1, "modified_documents": 1},
-    }
-
     mock_dataStorage_read.return_value = {}
-    mock_dataStorage_update.return_value = update_response
 
     response = client.patch(url=remove_room_member_url)
 

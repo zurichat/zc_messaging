@@ -88,7 +88,7 @@ def fixture_initialize_fake_room_data():
     Returns:
         Dict: An room dictionary
     """
-    room_data = {
+    return {
         "room_name": "General",
         "room_type": "CHANNEL",
         "room_members": {
@@ -107,7 +107,12 @@ def fixture_initialize_fake_room_data():
                 "role": "member",
                 "starred": False,
             },
-            "619baa5c1a5f54782930d386": {
+            "619ba4671a5f54782939d385": {
+                "closed": False,
+                "role": "admin",
+                "starred": True,
+            },
+            "619ba4671a5f54785939d385": {
                 "closed": False,
                 "role": "member",
                 "starred": True,
@@ -118,8 +123,22 @@ def fixture_initialize_fake_room_data():
         "topic": "General Information",
         "is_private": False,
         "is_archived": False,
-        "id": "23dg67l0eba8adb50ca13a24",
+        "_id": "23dg67l0eba8adb50ca13a24",
         "org_id": "3467sd4671a5f5478df56u911",
         "created_by": "619ba4671a5f54782939d385",
     }
-    return room_data
+
+
+@pytest.fixture(name="init_mocks")
+def fixture_initialize_mocks(
+    init_fake_room,
+    mock_dataStorage_read,
+    mock_dataStorage_update,
+):
+    """A fixture that initialises a necessary mocks;
+       fake_room data, dataStorage_read and dataStorage_update
+
+    Returns:
+        Tuple: An tuple of dict, AsyncMock, AsyncMock
+    """
+    return (init_fake_room, mock_dataStorage_read, mock_dataStorage_update)
