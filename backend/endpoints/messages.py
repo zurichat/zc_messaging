@@ -305,7 +305,8 @@ async def message_reaction(
     room = await get_room(org_id, room_id)
     if not room:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Room not found",
         )
     members = room.get("room_members", {})
 
@@ -336,7 +337,8 @@ async def message_reaction(
             return JSONResponse(
                 status_code=status.HTTP_200_OK,
                 content=ResponseModel.success(
-                    data=emoji, message="Reaction updated successfully"
+                    data=emoji,
+                    message="Reaction updated successfully",
                 ),
             )
 
@@ -349,7 +351,10 @@ async def message_reaction(
         )
     # publish to centrifugo in the background
     background_tasks.add_task(
-        centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, reaction_payload
+        centrifugo_client.publish,
+        room_id,
+        Events.MESSAGE_UPDATE,
+        reaction_payload,
     )
     return JSONResponse(
         content=ResponseModel.success(
