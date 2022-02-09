@@ -37,7 +37,7 @@ def fixture_mock_data_storage_write(mocker):
     return async_mock_write
 
 
-@pytest.fixture(name="mock_centrifugo_publish")
+@pytest.fixture(name="mock_centrifugo")
 def fixture_mock_centrifugo_publish(mocker):
     """Patches centrifugo external call.
 
