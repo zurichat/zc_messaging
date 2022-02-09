@@ -79,3 +79,20 @@ def fixture_mock_dataStorage_delete(mocker):
     zc_core_update_data = AsyncMock()
     mocker.patch("utils.db.DataStorage.delete", side_effect=zc_core_update_data)
     return zc_core_update_data
+
+
+@pytest.fixture(name="mock_create_message")
+def fixture_mock_create_message(mocker):
+    """Patch for creating a message to zc core.
+
+    Args:
+       mocker (Mock): For patching a third-party api call
+
+    Returns:
+        AsyncMock: An instance of the asyncmock class
+    """
+    async_mock_create_message = AsyncMock()
+    mocker.patch(
+        "utils.message_utils.create_message", side_effect=async_mock_create_message
+    )
+    return async_mock_create_message
