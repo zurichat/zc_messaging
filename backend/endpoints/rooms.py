@@ -1,4 +1,3 @@
-import json
 from typing import Dict, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
@@ -132,11 +131,10 @@ async def remove_member(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="admin id specified not a member of the room",
         )
-    
+
     if admin_id is not None and member_id == admin_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="cannot remove yourself"
+            status_code=status.HTTP_403_FORBIDDEN, detail="cannot remove yourself"
         )
 
     admin_data = room_data["room_members"].get(
@@ -152,7 +150,8 @@ async def remove_member(
     if member_id == room_data["created_by"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="channel owner cannot leave channel, archive channel or make another member owner",
+            detail="channel owner cannot leave channel, archive channel"
+            + " or make another member owner",
         )
 
     try:
@@ -162,12 +161,12 @@ async def remove_member(
 
     except ValueError as value_error:
         raise HTTPException(
-            detail=value_error, status_code=status.HTTP_404_NOT_FOUND
+            detail=str(value_error), status_code=status.HTTP_404_NOT_FOUND
         ) from value_error
 
     except ConnectionError as connect_error:
         raise HTTPException(
-            detail=json.dumps(str(connect_error)),
+            detail=str(connect_error),
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
         ) from connect_error
     else:
