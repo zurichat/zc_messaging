@@ -101,8 +101,7 @@ class DataStorage:
 
         try:
             response = requests.post(url=self.write_api, json=body)
-        except requests.exceptions.RequestException as exception:
-            print(exception)
+        except requests.exceptions.RequestException:
             return None
         if response.status_code == 201:
             return response.json()
@@ -158,8 +157,7 @@ class DataStorage:
 
         try:
             response = requests.put(url=self.write_api, json=body)
-        except requests.exceptions.RequestException as exception:
-            print(exception)
+        except requests.exceptions.RequestException:
             return None
         if response.status_code == 200:
             return response.json()
@@ -224,8 +222,7 @@ class DataStorage:
 
         try:
             response = requests.post(url=self.read_api, json=body)
-        except requests.exceptions.RequestException as exception:
-            print(exception)
+        except requests.exceptions.RequestException:
             return None
         if response.status_code == 200:
             return response.json().get("data")
@@ -275,8 +272,7 @@ class DataStorage:
 
         try:
             response = requests.post(url=self.delete_api, json=body)
-        except requests.exceptions.RequestException as exception:
-            print(exception)
+        except requests.exceptions.RequestException:
             return None
         if response.status_code == 200:
             return response.json()
@@ -326,8 +322,7 @@ class DataStorage:
         url = self.get_members_api.format(org_id=self.organization_id)
         try:
             response = requests.get(url=url)
-        except requests.exceptions.RequestException as exception:
-            print(exception)
+        except requests.exceptions.RequestException:
             return []
         if response.status_code == 200:
             return response.json().get("data")
