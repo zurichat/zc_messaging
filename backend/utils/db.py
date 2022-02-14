@@ -345,13 +345,13 @@ class DataStorage:
             return response.json().get("data")
 
     async def get_member(
-        self, members: List[Dict[str, Any]], member_id: str
+        self, member_id: str, members: List[Dict[str, Any]]
     ) -> Optional[Dict[str, Any]]:
         """Get the information of a single registered member in an organisation.
 
         Args:
-            members (list[dict]): The list of all members registered in an organization.
             member_id (str): The member's id.
+            members (list[dict]): The list of all members registered in an organization.
 
         Returns:
             A dict containg the member's information.
