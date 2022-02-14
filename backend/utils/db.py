@@ -45,15 +45,32 @@ class DataStorage:
 
         try:
             response = requests.get(url=f"{settings.BASE_URL}/marketplace/plugins")
+            response.raise_for_status()
+        except requests.Timeout as timed_out_error:
+            raise HTTPException(
+                status_code=status.HTTP_408_REQUEST_TIMEOUT,
+                detail=timed_out_error.response,
+            ) from timed_out_error
+        except requests.HTTPError as http_error:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=http_error.response
+            ) from http_error
+        except requests.ConnectionError as connection_error:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=connection_error.response,
+            ) from connection_error
+        except requests.RequestException as exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=exception.response,
+            ) from exception
+        else:
             plugins = response.json().get("data").get("plugins")
             plugin = next(
                 item for item in plugins if settings.PLUGIN_KEY in item["template_url"]
             )
             self.plugin_id = plugin.get("id")
-        except requests.exceptions.RequestException as exception:
-            raise HTTPException(
-                status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Request Timeout"
-            ) from exception
 
     async def write(self, collection_name: str, data: Dict[str, Any]) -> Any:
         """Writes data to zc_messaging collections.
