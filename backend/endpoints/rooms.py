@@ -127,10 +127,16 @@ async def remove_member(
             detail="user not a member of the room",
         )
 
-    if admin_id not in room_data["room_members"]:
+    if admin_id is not None and admin_id not in room_data["room_members"]:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="admin id specified not a member of the room",
+        )
+    
+    if admin_id is not None and member_id == admin_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="cannot remove yourself"
         )
 
     admin_data = room_data["room_members"].get(
@@ -141,6 +147,12 @@ async def remove_member(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="must be an admin to remove member",
+        )
+
+    if member_id == room_data["created_by"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="channel owner cannot leave channel, archive channel or make another member owner",
         )
 
     try:
