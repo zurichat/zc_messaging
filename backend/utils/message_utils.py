@@ -86,7 +86,7 @@ async def get_message(
 
     Args:
         org_id (str): The organization id
-        room_id (str): The id of the room where to the message is to be retrieved.
+        room_id (str): The id of the room where the message is to be retrieved.
         message_id (str): The id of the message to be retrieved.
 
     Returns:
