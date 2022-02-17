@@ -1,11 +1,11 @@
+from config.settings import settings
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
-from utils.message_utils import (MESSAGE_COLLECTION, get_message,
-                                 get_room_messages)
+from utils.message_utils import get_message, get_room_messages
 
 router = APIRouter()
 
@@ -76,7 +76,7 @@ async def send_message(
     message_obj = Message(**request.dict(), org_id=org_id, room_id=room_id)
 
     response = await DB.write(
-        MESSAGE_COLLECTION, message_obj.dict(exclude={"message_id"})
+        settings.MESSAGE_COLLECTION, message_obj.dict(exclude={"message_id"})
     )
 
     if response and response.get("status_code") is None:
@@ -188,7 +188,7 @@ async def update_message(
 
     payload["edited"] = True
     edited_message = await DB.update(
-        MESSAGE_COLLECTION, document_id=message_id, data=payload
+        settings.MESSAGE_COLLECTION, document_id=message_id, data=payload
     )
 
     message.update(payload)
