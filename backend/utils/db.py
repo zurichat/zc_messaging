@@ -45,15 +45,32 @@ class DataStorage:
 
         try:
             response = requests.get(url=f"{settings.BASE_URL}/marketplace/plugins")
+            response.raise_for_status()
+        except requests.Timeout as timed_out_error:
+            raise HTTPException(
+                status_code=status.HTTP_408_REQUEST_TIMEOUT,
+                detail=timed_out_error.response,
+            ) from timed_out_error
+        except requests.HTTPError as http_error:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=http_error.response
+            ) from http_error
+        except requests.ConnectionError as connection_error:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=connection_error.response,
+            ) from connection_error
+        except requests.RequestException as exception:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=exception.response,
+            ) from exception
+        else:
             plugins = response.json().get("data").get("plugins")
             plugin = next(
                 item for item in plugins if settings.PLUGIN_KEY in item["template_url"]
             )
             self.plugin_id = plugin.get("id")
-        except requests.exceptions.RequestException as exception:
-            raise HTTPException(
-                status_code=status.HTTP_408_REQUEST_TIMEOUT, detail="Request Timeout"
-            ) from exception
 
     async def write(self, collection_name: str, data: Dict[str, Any]) -> Any:
         """Writes data to zc_messaging collections.
@@ -101,8 +118,7 @@ class DataStorage:
 
         try:
             response = requests.post(url=self.write_api, json=body)
-        except requests.exceptions.RequestException as exception:
-            print(exception)
+        except requests.exceptions.RequestException:
             return None
         if response.status_code == 201:
             return response.json()
@@ -158,8 +174,7 @@ class DataStorage:
 
         try:
             response = requests.put(url=self.write_api, json=body)
-        except requests.exceptions.RequestException as exception:
-            print(exception)
+        except requests.exceptions.RequestException:
             return None
         if response.status_code == 200:
             return response.json()
@@ -224,8 +239,7 @@ class DataStorage:
 
         try:
             response = requests.post(url=self.read_api, json=body)
-        except requests.exceptions.RequestException as exception:
-            print(exception)
+        except requests.exceptions.RequestException:
             return None
         if response.status_code == 200:
             return response.json().get("data")
@@ -275,8 +289,7 @@ class DataStorage:
 
         try:
             response = requests.post(url=self.delete_api, json=body)
-        except requests.exceptions.RequestException as exception:
-            print(exception)
+        except requests.exceptions.RequestException:
             return None
         if response.status_code == 200:
             return response.json()
@@ -326,20 +339,19 @@ class DataStorage:
         url = self.get_members_api.format(org_id=self.organization_id)
         try:
             response = requests.get(url=url)
-        except requests.exceptions.RequestException as exception:
-            print(exception)
+        except requests.exceptions.RequestException:
             return []
         if response.status_code == 200:
             return response.json().get("data")
 
     async def get_member(
-        self, members: List[Dict[str, Any]], member_id: str
+        self, member_id: str, members: List[Dict[str, Any]]
     ) -> Optional[Dict[str, Any]]:
         """Get the information of a single registered member in an organisation.
 
         Args:
-            members (list[dict]): The list of all members registered in an organization.
             member_id (str): The member's id.
+            members (list[dict]): The list of all members registered in an organization.
 
         Returns:
             A dict containg the member's information.
