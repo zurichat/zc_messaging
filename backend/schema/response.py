@@ -20,7 +20,7 @@ class ResponseModel(BaseModel):
     data: Any
 
     @staticmethod
-    def success(data, message="success") -> dict:
+    def success(data: Any, message: str = "success") -> dict[str, Any]:
         """Provides a success response data
 
         Args:
@@ -33,7 +33,7 @@ class ResponseModel(BaseModel):
         return ResponseModel(status="success", message=message, data=data).dict()
 
     @staticmethod
-    def error(message) -> dict:
+    def error(message: str) -> dict[str, Any]:
         """Provides an error response data
 
         Args:
