@@ -150,8 +150,7 @@ async def remove_member(
     if member_id == room_data["created_by"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="channel owner cannot leave channel, archive channel"
-            + " or make another member owner",
+            detail="channel owner cannot leave channel, archive channel or make another member owner",
         )
 
     try:

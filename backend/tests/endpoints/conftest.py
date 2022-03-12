@@ -91,6 +91,68 @@ def fixture_mock_data_storage_delete(mocker):
     return zc_core_update_data
 
 
+@pytest.fixture(name="init_fake_room")
+def fixture_initialize_fake_room_data():
+    """A fixture that initialises a new fake room data for each test
+
+    Returns:
+        Dict: An room dictionary
+    """
+    return {
+        "room_name": "General",
+        "room_type": "CHANNEL",
+        "room_members": {
+            "61696f5ac4133ddaa309dcfe": {
+                "closed": False,
+                "role": "admin",
+                "starred": False,
+            },
+            "6169704bc4133ddaa309dd07": {
+                "closed": False,
+                "role": "admin",
+                "starred": False,
+            },
+            "619baa5c1a5f54782939d386": {
+                "closed": False,
+                "role": "member",
+                "starred": False,
+            },
+            "619ba4671a5f54782939d385": {
+                "closed": False,
+                "role": "admin",
+                "starred": True,
+            },
+            "619ba4671a5f54785939d385": {
+                "closed": False,
+                "role": "member",
+                "starred": True,
+            },
+        },
+        "created_at": "2022-01-11 03:18:02.364291",
+        "description": None,
+        "topic": "General Information",
+        "is_private": False,
+        "is_archived": False,
+        "_id": "23dg67l0eba8adb50ca13a24",
+        "org_id": "3467sd4671a5f5478df56u911",
+        "created_by": "619ba4671a5f54782939d385",
+    }
+
+
+@pytest.fixture(name="init_mocks")
+def fixture_initialize_mocks(
+    init_fake_room,
+    mock_data_storage_read,
+    mock_data_storage_update,
+):
+    """A fixture that initialises a necessary mocks;
+       fake_room data, dataStorage_read and dataStorage_update
+
+    Returns:
+        Tuple: An tuple of dict, AsyncMock, AsyncMock
+    """
+    return (init_fake_room, mock_data_storage_read, mock_data_storage_update)
+
 @pytest.fixture(name="mock_create_message")
 def fixture_mock_create_message(mocker):
     """Patche create_message helper function.
