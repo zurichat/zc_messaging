@@ -119,23 +119,36 @@ async def get_room(org_id: str, room_id: str) -> dict[str, Any]:
     return response
 
 
-async def get_room_members(org_id: str, room_id: str) -> dict:
-    """Get the members of a room
+async def get_room_members(org_id: str, room_id: str) -> dict[str, dict[str, Any]]:
+    """Get the members of a specific room.
 
     Args:
-        org_id (str): The organization's id
-        room_id (str): The room id
+        org_id (str): The organization's id.
+        room_id (str): The room id.
 
     Returns:
-        [Dict]: key value
+        dict[str, dict[str, Any]]: A key value pair of room's members info mapped according to RoomMember schema.
+
+        {
+            "619ba4671a5f54782939d385": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+            },
+            ...
+        },
     """
-    DB = DataStorage(org_id)
+
+    db = DataStorage(org_id)
     query = {"_id": room_id}
     options = {"sort": {"created_at": -1}, "projection": {"room_members": 1, "_id": 0}}
-    response = await DB.read(settings.ROOM_COLLECTION, query=query, options=options)
-    if response and "status_code" not in response:
-        return response.get("room_members", {})
-    return {}
+
+    response = await db.read(settings.ROOM_COLLECTION, query=query, options=options)
+
+    if not response or "status_code" in response:
+        return {}
+
+    return response.get("room_members")
 
 
 async def get_member_starred_rooms(org_id: str, member_id: str) -> list:
