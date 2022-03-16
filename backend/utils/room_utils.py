@@ -151,23 +151,55 @@ async def get_room_members(org_id: str, room_id: str) -> dict[str, dict[str, Any
     return response.get("room_members")
 
 
-async def get_member_starred_rooms(org_id: str, member_id: str) -> list:
-    """Get all starred rooms of a user
+async def get_member_starred_rooms(org_id: str, member_id: str) -> list[dict[str, Any]]:
+    """Get all starred rooms of an organization's member.
 
     Args:
-        org_id (str): The organization id
-        member_id (str): The user id
+        org_id (str): The organization id.
+        member_id (str): The member's id.
 
     Returns:
-        [List]: list of rooms that are starred by the user
+        list[dict]: A list of rooms starred by the member.
+
+        [
+            {
+                "_id": "61e59de865934b58b8e5d1c8",
+                "room_members": {
+                    "619ba4671a5f54782939d385": {
+                        "closed": false,
+                        "role": "admin",
+                        "starred": true
+                    }
+                },
+                "room_name": "619ba4671a5f54782939d385",
+                "room_type": "DM",
+            },
+            {
+                "_id": "61f483d965934b58b8e5d283",
+                "org_id": "619ba4671a5f54782939d384",
+                "room_members": {
+                    "619ba4671a5f54782939d385": {
+                        "closed": false,
+                        "role": "admin",
+                        "starred": true
+                    }
+                },
+                "room_name": "619ba4671a5f54782939d385",
+            },
+            ...
+            ]
     """
-    DB = DataStorage(org_id)
+
+    db = DataStorage(org_id)
     query = {f"room_members.{member_id}.starred": True}
     options = {"sort": {"created_at": -1}}
-    response = await DB.read(settings.ROOM_COLLECTION, query=query, options=options)
-    if response and "status_code" not in response:
-        return response
-    return []
+
+    response = await db.read(settings.ROOM_COLLECTION, query=query, options=options)
+
+    if not response or "status_code" in response:
+        return []
+
+    return response
 
 
 async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> bool:
