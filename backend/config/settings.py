@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     PLUGIN_KEY: str = "chat.zuri.chat"
     BASE_URL: str = "https://staging.api.zuri.chat"
     MESSAGE_COLLECTION = "messages"
+    ROOM_COLLECTION = "rooms"
 
 
 settings = Settings()
