@@ -202,13 +202,31 @@ async def get_member_starred_rooms(org_id: str, member_id: str) -> list[dict[str
     return response
 
 
-async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> bool:
-    DB = DataStorage(org_id)
+async def is_starred_room(org_id: str, room_id: str, member_id: str) -> bool:
+    """Checks if the room is starred by the specified member.
+
+    Args:
+        org_id (str): The organization id.
+        room_id (str): The room's id.
+        member_id (str): The member's id.
+
+    Returns:
+        bool: Returns True if room is starred by member else returns False.
+
+    Raise:
+        ValueError: Room not found.
+    """
+
+    db = DataStorage(org_id)
     query = {"_id": room_id}
-    response = await DB.read(settings.ROOM_COLLECTION, query=query)
-    if response and "status_code" not in response:
-        return response["room_members"][member_id]["starred"]
-    raise Exception("Room not found")
+
+    response = await db.read(settings.ROOM_COLLECTION, query=query)
+
+    if not response or "status_code" in response:
+        raise Exception("Room not found")
+
+    return response["room_members"][member_id]["starred"]
+
 
 
 async def remove_room_member(org_id: str, room_data: dict, member_id: str) -> dict:
