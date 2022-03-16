@@ -154,8 +154,4 @@ async def remove_room_member(org_id: str, room_data: dict, member_id: str) -> di
     if update_room is None or update_room.get("status_code") is not None:
         raise ConnectionError("unable to remove room member")
 
-    response ={
-        "member_id": member_id,
-        "room_id": room_id
-    }
-    return response
+    return {"member_id": member_id, "room_id": room_id}
