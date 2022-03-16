@@ -203,18 +203,6 @@ async def get_member_starred_rooms(org_id: str, member_id: str) -> list[dict[str
 
 
 async def is_user_starred_room(org_id: str, room_id: str, member_id: str) -> bool:
-    """Checks if room is starred by user
-
-    Args:
-        org_id (str): The organization id
-        member_id (str): The user id
-
-    Returns:
-        bool: returns True if room is starred by user else returns False
-
-    Raise:
-        ValueError: Room not found
-    """
     DB = DataStorage(org_id)
     query = {"_id": room_id}
     response = await DB.read(settings.ROOM_COLLECTION, query=query)
