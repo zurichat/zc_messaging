@@ -213,7 +213,7 @@ async def is_starred_room(org_id: str, room_id: str, member_id: str) -> bool:
     Returns:
         bool: Returns True if room is starred by member else returns False.
 
-    Raise:
+    Raises:
         ValueError: Room not found.
     """
 
@@ -228,38 +228,41 @@ async def is_starred_room(org_id: str, room_id: str, member_id: str) -> bool:
     return response["room_members"][member_id]["starred"]
 
 
-
-async def remove_room_member(org_id: str, room_data: dict, member_id: str) -> dict:
-    """Removes a member from a room
+async def remove_room_member(
+    org_id: str, room_data: dict[str, Any], member_id: str
+) -> dict[str, Any]:
+    """Removes a member from a room.
 
     Args:
         org_id (str): The organization id
-        room_data (dict): The room data
-        member_id (str): The member id to be removed
-
-    Raises:
-        ValueError: user not found in room
-        RequestException: zc core fails to remove user from room
+        room_data (dict): The room data.
+        member_id (str): The member id to be removed.
 
     Returns:
-        [dict]: sample response includes
-            {
-                "member_id":"1234567yrtrt"
-                "room_id":"2312244dsdsd"
-            },
+        dict: A key value pair of member_id and room_id.
+
+        {
+            "member_id":"619ba4671a5f54782939d385"
+            "room_id":"61e59de865934b58b8e5d1c8"
+        },
+
+    Raises:
+        ValueError: Member not found in room.
+        RequestException: ZC Core fails to remove user from room.
     """
-    DB = DataStorage(org_id)
+
+    db = DataStorage(org_id)
     remove_member = room_data["room_members"].pop(member_id, "not_found")
 
     if remove_member == "not_found":
-        raise ValueError("user not a member of the room")
+        raise ValueError("Not a member of this room")
 
     room_id = room_data["_id"]
     room_members = {"room_members": room_data["room_members"]}
 
-    update_room = await DB.update(settings.ROOM_COLLECTION, room_id, room_members)
+    update_room = await db.update(settings.ROOM_COLLECTION, room_id, room_members)
 
     if update_room is None or update_room.get("status_code") is not None:
-        raise ConnectionError("unable to remove room member")
+        raise ConnectionError("Unable to remove room member")
 
     return {"member_id": member_id, "room_id": room_id}
