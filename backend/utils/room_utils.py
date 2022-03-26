@@ -1,4 +1,5 @@
 from typing import Any, Optional
+from schema.room import Room
 from utils.db import DataStorage
 from config.settings import settings
 
@@ -266,3 +267,19 @@ async def remove_room_member(
         raise ConnectionError("Unable to remove room member")
 
     return {"member_id": member_id, "room_id": room_id}
+
+
+async def add_room(org_id: str, room: Room) -> dict[str, Any]:
+    """Creates a room document in the database.
+
+    Args:
+        org_id (str): The organization id where the room is created.
+        room (Room): The room object to be saved.
+
+    Returns:
+        dict[str, Any]: The response returned by DataStorage's write method.
+    """
+
+    db = DataStorage(org_id)
+
+    return await db.write(settings.ROOM_COLLECTION, room.dict())
