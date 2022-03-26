@@ -25,7 +25,7 @@ class ResponseModel(BaseModel):
 
         Args:
             data (dict): data to be returned
-            message (str, optional): Descriptive messaged. Defaults to "success".
+            message (str, optional): Descriptive message. Defaults to "success".
 
         Returns:
             dict: key-value pair of status, message and data
