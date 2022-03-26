@@ -6,8 +6,8 @@ from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
 from schema.room import Role, RoomType
 from utils.db import DataStorage
-from utils.room_utils import ROOM_COLLECTION
 from utils.sidebar import sidebar
+from config.settings import settings
 
 router = APIRouter()
 
@@ -81,7 +81,7 @@ async def dm_install(organisation_id: str = Body(...), user_id: str = Body(...))
         "created_by": user_id,
     }
 
-    channel_res = await DB.write(ROOM_COLLECTION, data=channel)
+    channel_res = await DB.write(settings.ROOM_COLLECTION, data=channel)
 
     if channel_res is None:
         raise HTTPException(
@@ -89,7 +89,7 @@ async def dm_install(organisation_id: str = Body(...), user_id: str = Body(...))
             detail="Unable to create default channel",
         )
 
-    dm_res = await DB.write(ROOM_COLLECTION, data=dm)
+    dm_res = await DB.write(settings.ROOM_COLLECTION, data=dm)
 
     if dm_res is None:
         raise HTTPException(
