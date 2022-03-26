@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -194,7 +194,7 @@ async def join_room(
     room_id: str,
     member_id: str,
     background_tasks: BackgroundTasks,
-    new_members: Dict[str, RoomMember] = Body(...),
+    new_members: dict[str, RoomMember] = Body(...),
 ):
     """Adds a new member(s) to a room
     Args:
