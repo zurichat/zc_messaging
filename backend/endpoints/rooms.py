@@ -2,6 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
 from fastapi.responses import JSONResponse
+from crud.room import add_room, update_room
 from schema.response import ResponseModel
 from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
 from utils.centrifugo import Events, centrifugo_client
@@ -18,8 +19,7 @@ router = APIRouter()
     response_model=ResponseModel,
     status_code=status.HTTP_201_CREATED,
     responses={
-        200: {"detail": {"room_id": "room_id"}},
-        424: {"detail": "ZC Core Failed"},
+        424: {"description": "ZC Core Failed"},
     },
 )
 async def create_room(
@@ -27,53 +27,78 @@ async def create_room(
 ):
     """Creates a room between users.
 
-    Registers a new document to the database collection.
-    Returns the document id if the room is successfully created or already exist
-    while publishing to the user sidebar in the background
+    Registers a new document to the rooms database collection while
+    publishing to the member's sidebar in the background.
 
     Args:
-        org_id (str): A unique identifier of an organisation
-        request: A pydantic schema that defines the room request parameters
-        member_id: A unique identifier of the member creating the room
+        org_id (str): A unique identifier of an organisation.
+        member_id (str): A unique identifier of the member creating the room.
+        request (RoomRequest): A pydantic schema that defines the room request parameters.
+        background_tasks (BackgroundTasks): A background task for publishing to the user sidebar.
 
     Returns:
-        HTTP_200_OK (room already exist): {room_id}
-        HTTP_201_CREATED (new room created): {room_id}
+        A dict containing data about the room that was created.
+
+        {
+            "status": "success",
+            "message": "Room successfully created",
+            "data": {
+            "room_name": "block",
+            "room_type": "CHANNEL",
+            "room_members": {
+            "619baa5f1a5f54782939d388": {
+                "role": "admin",
+                "starred": false,
+                "closed": false
+                },
+                ...
+            },
+            "created_at": "2021-12-27 20:53:20.541933",
+            "description": "kpk",
+            "topic": "kpk",
+            "is_private": false,
+            "is_archived": false,
+            "id": "61ca29c478fb01b18fac1477",
+            "org_id": "619ba4671a5f54782939d384",
+            "created_by": "619baa5f1a5f54782939d388"
+            }
+        }
+
     Raises
-        HTTP_424_FAILED_DEPENDENCY: room creation unsuccessful
+        HTTP_424_FAILED_DEPENDENCY: Unable to create room
     """
 
-    DB = DataStorage(org_id)
-    room_obj = Room(**request.dict(), org_id=org_id, created_by=member_id)
+    room = Room(**request.dict(), org_id=org_id, created_by=member_id)
 
     # check if creator is in room members
-    if member_id not in room_obj.room_members.keys():
-        room_obj.room_members[member_id] = {
+    if member_id not in room.room_members.keys():
+        room.room_members[member_id] = {
             "role": Role.ADMIN,
             "starred": False,
             "closed": False,
         }
 
-    response = await DB.write(settings.ROOM_COLLECTION, data=room_obj.dict())
-    if response and response.get("status_code", None) is None:
-        room_id = {"room_id": response.get("data").get("object_id")}
-
-        background_tasks.add_task(
-            sidebar.publish,
-            org_id,
-            member_id,
-            room_obj.room_type,
-        )  # publish to centrifugo in the background
-
-        room_obj.id = room_id["room_id"]  # adding the room id to the data
-        return JSONResponse(
-            content=ResponseModel.success(data=room_obj.dict(), message="room created"),
-            status_code=status.HTTP_201_CREATED,
+    response = await add_room(org_id=org_id, room=room)
+    if not response or response.get("status_code"):
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Unable to create room",
         )
 
-    raise HTTPException(
-        status_code=status.HTTP_424_FAILED_DEPENDENCY,
-        detail="unable to create room",
+    background_tasks.add_task(
+        sidebar.publish,
+        org_id,
+        member_id,
+        room.room_type,
+    )  # publish to centrifugo in the background
+
+    room.id = response.get("data").get("object_id")
+
+    return JSONResponse(
+        content=ResponseModel.success(
+            data=room.dict(), message="Room successfully created"
+        ),
+        status_code=status.HTTP_201_CREATED,
     )
 
 
@@ -303,11 +328,13 @@ async def close_conversation(
     Closes a DM or Group_DM room on the sidebar
     By toggling the closed boolean field of the room document from False to True
     The function when called on a closed room, changes the closed field back to False
+
     Args:
-        org_id (str): A unique identifier of an organisation
-        room_id: A unique identifier of the room to be updated
-        member_id: A unique identifier of the member initiating the request
-        background_tasks: A parameter that allows tasks to be performed outside of the main function
+        org_id (str): A unique identifier of an organisation.
+        room_id (str): A unique identifier of the room to be updated.
+        member_id (str): A unique identifier of the member initiating the request.
+        background_tasks (str): A background task for publishing to the user sidebar.
+
     Returns:
         HTTP_200_OK: {
                         "status": "success",
@@ -324,7 +351,7 @@ async def close_conversation(
         HTTP_404_NOT_FOUND: room not found
         HTTP_424_FAILED_DEPENDENCY: unable to close conversation
     """
-    DB = DataStorage(org_id)
+
     room = await get_room(org_id=org_id, room_id=room_id)
 
     if not room:
@@ -346,9 +373,7 @@ async def close_conversation(
     member_room_data["closed"] = member_room_data["closed"] is False
     data = {"room_members": room["room_members"]}
 
-    update_response = await DB.update(
-        settings.ROOM_COLLECTION, document_id=room_id, data=data
-    )  # updates the room data in the db collection
+    update_response = await update_room(org_id=org_id, room_id=room_id, data=data)
 
     background_tasks.add_task(
         sidebar.publish,
@@ -357,9 +382,8 @@ async def close_conversation(
         room["room_type"],
     )  # publish to centrifugo in the background
 
-    if update_response and update_response.get("status_code") is None:
+    if not update_response or update_response.get("status_code"):
         return JSONResponse(
-            status_code=status.HTTP_200_OK,
             content=ResponseModel.success(
                 data=member_room_data,
                 message="conversation closed"
