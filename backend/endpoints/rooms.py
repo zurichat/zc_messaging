@@ -312,10 +312,10 @@ async def join_room(
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        401: {"detail": "member not in room"},
-        403: {"detail": "cannot close a channel room"},
-        404: {"detail": "room not found"},
-        424: {"detail": "unable to close conversation"},
+        401: {"description": "Member not in room"},
+        403: {"description": "Cannot close a channel room"},
+        404: {"description": "Room not found"},
+        424: {"description": "Unable to close conversation"},
     },
 )
 async def close_conversation(
@@ -324,10 +324,10 @@ async def close_conversation(
     member_id: str,
     background_tasks: BackgroundTasks,
 ):
-    """
-    Closes a DM or Group_DM room on the sidebar
-    By toggling the closed boolean field of the room document from False to True
-    The function when called on a closed room, changes the closed field back to False
+    """Closes a DM or Group_DM room on the sidebar.
+
+    Toggles the closed boolean field of the room document from False to True.
+    When called on a closed room, changes the closed field back to False.
 
     Args:
         org_id (str): A unique identifier of an organisation.
@@ -336,37 +336,40 @@ async def close_conversation(
         background_tasks (str): A background task for publishing to the user sidebar.
 
     Returns:
-        HTTP_200_OK: {
-                        "status": "success",
-                        "message": "conversation closed || conversation opened",
-                        "data": {
-                            "closed": true || false,
-                            "role": "admin",
-                            "starred": false
-                        }
-                    }
+        A dict containing data about the closed room.
+
+        {
+            "status": "success",
+            "message": "Conversation closed || Conversation opened",
+            "data": {
+                "closed": true || false,
+                "role": "admin",
+                "starred": false
+            }
+        }
+
     Raises:
-        HTTP_401_UNAUTHORIZED: member not in room
-        HTTP_403_FORBIDDEN: cannot close a channel room
-        HTTP_404_NOT_FOUND: room not found
-        HTTP_424_FAILED_DEPENDENCY: unable to close conversation
+        HTTP_401_UNAUTHORIZED: Member not in room
+        HTTP_403_FORBIDDEN: Cannot close a channel room
+        HTTP_404_NOT_FOUND: Room not found
+        HTTP_424_FAILED_DEPENDENCY: Unable to close conversation
     """
 
     room = await get_room(org_id=org_id, room_id=room_id)
 
     if not room:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="room not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
         )
 
     if room["room_type"].upper() == RoomType.CHANNEL:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="cannot close a channel room"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Cannot close a channel room"
         )
 
     if member_id not in room["room_members"].keys():
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="member not in room"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Member not in room"
         )
 
     member_room_data = room["room_members"].get(member_id)
@@ -383,18 +386,18 @@ async def close_conversation(
     )  # publish to centrifugo in the background
 
     if not update_response or update_response.get("status_code"):
-        return JSONResponse(
-            content=ResponseModel.success(
-                data=member_room_data,
-                message="conversation closed"
-                if member_room_data["closed"]
-                else "conversation opened",
-            ),
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Unable to close conversation",
         )
 
-    raise HTTPException(
-        status_code=status.HTTP_424_FAILED_DEPENDENCY,
-        detail="unable to close conversation",
+    return JSONResponse(
+        content=ResponseModel.success(
+            data=member_room_data,
+            message="Conversation closed"
+            if member_room_data["closed"]
+            else "Conversation opened",
+        ),
     )
 
 
