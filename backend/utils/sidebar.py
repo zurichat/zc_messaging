@@ -1,3 +1,4 @@
+from typing import Any
 from schema.room import RoomType
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
@@ -206,7 +207,7 @@ class Sidebar:
             "joined_rooms": joined_rooms["rooms"],
         }
 
-    async def publish(self, org_id: str, member_id: str, room_type: str) -> dict:
+    async def publish(self, org_id: str, member_id: str, room_type: str) -> dict[str, Any]:
         """Get sidebar info of rooms a registered member belongs to.
 
         Args:
