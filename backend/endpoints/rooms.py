@@ -406,35 +406,33 @@ async def close_conversation(
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
-        404: {"detail": "Room not found"},
-        424: {"detail": "Failure to retrieve room members"},
+        404: {"description": "Room not found"},
+        424: {"description": "Failure to retrieve room members"},
     },
 )
 async def get_members(org_id: str, room_id: str):
+    """Get all members in a room.
 
-    """Get room members.
-    Returns all members in a room if the room is found in the database
-    Raises HTTP_404_NOT_FOUND if the room is not found
-    Raises HTTP_424_FAILED_DEPENDENCY if there is an error retrieving the room members
     Args:
-        org_id (str): A unique identifier of an organisation
-        room_id (str): A unique identifier of the room
+        org_id (str): A unique identifier of an organisation.
+        room_id (str): A unique identifier of the room.
+
     Returns:
-        HTTP_200_OK (Room members retrieved successfully):
+        A dict containing data about the retrieved members.
 
         {
             "status": "success",
             "message": "Room members retrieved",
             "data": {
                 "61696f5ac4133ddaa309dcfe": {
-                "closed": false,
-                "role": "admin",
-                "starred": false
+                    "closed": false,
+                    "role": "admin",
+                    "starred": false
                 },
                 "6169704bc4133ddaa309dd07": {
-                "closed": false,
-                "role": "admin",
-                "starred": false
+                    "closed": false,
+                    "role": "admin",
+                    "starred": false
                 }
             }
         }
@@ -443,20 +441,21 @@ async def get_members(org_id: str, room_id: str):
         HTTPException [404]: Room not found
         HTTPException [424]: Failure to retrieve room members
     """
+
     room = await get_room(org_id, room_id)
     if not room:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
         )
 
-    members = room.get("room_members", {})
+    members = room.get("room_members")
     if not members:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Failure to retrieve room members",
         )
+
     return JSONResponse(
-        status_code=status.HTTP_200_OK,
         content=ResponseModel.success(
             data=members,
             message="Room members retrieved successfully",
