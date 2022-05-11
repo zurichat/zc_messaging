@@ -14,7 +14,7 @@ class DataStorage:
     collection data.
 
     Attributes:
-        write_api str): Zc_core API endpoint for writing (POST) and updating (PUT) data.
+        write_api (str): Zc_core API endpoint for writing (POST) and updating (PUT) data.
         read_api (str): Zc_core API endpoint for reading data.
         delete_api (str): Zc_core API endpoint for deleting data.
         get_members_api (str): Zc_core API endpoint for getting members of an organization.
