@@ -14,7 +14,7 @@ export const roomsApi = createApi({
           `/sidebar?org=${orgId}&user=${userId}`
         )
         const roomsAvailable = {}
-        if (Array.isArray(getUserSidebarData.data.data)) {
+        if (Array.isArray(getUserSidebarData?.data?.data)) {
           let roomsAvailableToUser = []
           getUserSidebarData.data.data.forEach(category => {
             if (
