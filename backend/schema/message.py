@@ -125,13 +125,13 @@ class Thread(MessageRequest):
             room = future.result()
         if not room:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Room not available"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Room does not exist"
             )
 
         if sender_id not in set(room["room_members"]):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="sender not a member of this room",
+                detail="Sender not a member of this room",
             )
         return values
 
