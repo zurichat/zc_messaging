@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { Helmet } from "react-helmet"
-import { MessageBoard, PluginHeader } from "@zuri/zuri-ui"
+import { MessageBoard, MessageRoomViewHeader } from "@zuri/ui"
 import { SubscribeToChannel } from "@zuri/utilities"
 import { Container, MessagingArea, TypingNotice } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
@@ -181,7 +181,7 @@ const MessagingBoard = () => {
       <Helmet>
         <title>{pageTitle}</title>
       </Helmet>
-      <PluginHeader name={`#${roomName}`} />
+      <MessageRoomViewHeader name={`#${roomName}`} />
       <Container>
         <MessagingArea>
           <div style={{ height: "calc(100% - 29px)" }}>
