@@ -1,6 +1,6 @@
 // Need to use the React-specific entry point to import createApi
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import { GetWorkspaceUsers } from "@zuri/utilities"
+import { getWorkspaceUsers } from "@zuri/utilities"
 import { BASE_URL } from "../../utils/constants"
 
 // Define a service using a base URL and expected endpoints
@@ -18,7 +18,7 @@ export const messagesApi = createApi({
           `/org/${orgId}/rooms/${roomId}/messages`
         )
         if (Array.isArray(getMessagesInRoomResponse?.data?.data)) {
-          const workspaceUsers = await GetWorkspaceUsers()
+          const workspaceUsers = await getWorkspaceUsers()
           const roomMessages = getMessagesInRoomResponse.data.data
           return {
             data: roomMessages

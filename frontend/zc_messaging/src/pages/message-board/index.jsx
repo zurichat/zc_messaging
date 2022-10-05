@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { Helmet } from "react-helmet"
 import { MessageBoard, MessageRoomViewHeader } from "@zuri/ui"
-import { SubscribeToChannel } from "@zuri/utilities"
+import { subscribeToChannel } from "@zuri/utilities"
 import { Container, MessagingArea, TypingNotice } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
 import { useSelector, useDispatch } from "react-redux"
@@ -58,7 +58,7 @@ const MessagingBoard = () => {
       setPageTitle(generatePageTitle(room?.room_name))
     }
     if (roomId && authUser.user_id) {
-      SubscribeToChannel(roomId, data => {
+      subscribeToChannel(roomId, data => {
         if (data.data.data.sender_id !== authUser.user_id) {
           getMessageSender(data.data.data.sender_id).then(sender => {
             dispatch(
