@@ -90,7 +90,7 @@ const MessagingBoard = () => {
       setRoomName(room?.room_name)
       setPageTitle(generatePageTitle(room?.room_name))
     }
-  }, [roomsAvailable])
+  }, [roomId, roomsAvailable])
 
   const sendMessageHandler = async message => {
     const currentDate = new Date()
