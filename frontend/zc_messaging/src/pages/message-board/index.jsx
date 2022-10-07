@@ -41,21 +41,18 @@ const MessagingBoard = () => {
         roomId
       },
       {
+        skip: Boolean(!roomId),
         refetchOnMountOrArgChange: true
       }
     )
   const [sendNewMessage, { isLoading: isSending }] =
     useSendMessageInRoomMutation()
+
   useEffect(() => {
     if (!roomId) {
       fetchDefaultRoom(currentWorkspaceId, authUser?.user_id).then(result => {
         navigateTo(`/${result.room_id}`, { replace: true })
       })
-    }
-    if (roomsAvailable) {
-      const room = roomsAvailable[roomId]
-      setRoomName(room?.room_name)
-      setPageTitle(generatePageTitle(room?.room_name))
     }
     if (roomId && authUser.user_id) {
       subscribeToChannel(roomId, data => {
@@ -85,7 +82,15 @@ const MessagingBoard = () => {
         }
       })
     }
-  }, [roomId, authUser, roomsAvailable])
+  }, [roomId, authUser])
+
+  useEffect(() => {
+    if (roomsAvailable) {
+      const room = roomsAvailable[roomId]
+      setRoomName(room?.room_name)
+      setPageTitle(generatePageTitle(room?.room_name))
+    }
+  }, [roomsAvailable])
 
   const sendMessageHandler = async message => {
     const currentDate = new Date()
