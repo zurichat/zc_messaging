@@ -1,6 +1,6 @@
 // Need to use the React-specific entry point to import createApi
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import { getWorkspaceUsers } from "@zuri/utilities"
+import { getCurrentWorkspaceUsers } from "@zuri/utilities"
 import { BASE_URL } from "../../utils/constants"
 
 // Define a service using a base URL and expected endpoints
@@ -18,13 +18,13 @@ export const messagesApi = createApi({
           `/org/${orgId}/rooms/${roomId}/messages`
         )
         if (Array.isArray(getMessagesInRoomResponse?.data?.data)) {
-          const workspaceUsers = await getWorkspaceUsers()
+          const workspaceUsers = await getCurrentWorkspaceUsers()
           const roomMessages = getMessagesInRoomResponse.data.data
           return {
             data: roomMessages
               .filter(message => message.richUiData && message.timestamp)
               .map(message => {
-                const sender = workspaceUsers.users.find(
+                const sender = workspaceUsers.find(
                   user => user._id === message.sender_id
                 )
                 return {
