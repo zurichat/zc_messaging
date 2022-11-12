@@ -10,7 +10,8 @@ import getMessageSender from "../../utils/getMessageSender.js"
 import {
   messagesApi,
   useGetMessagesInRoomQuery,
-  useSendMessageInRoomMutation
+  useSendMessageInRoomMutation,
+  useUpdateMessageInRoomMutation
 } from "../../redux/services/messages.js"
 import { useGetRoomsAvailableToUserQuery } from "../../redux/services/rooms"
 import generatePageTitle from "../../utils/generatePageTitle"
@@ -47,6 +48,8 @@ const MessagingBoard = () => {
     )
   const [sendNewMessage, { isLoading: isSending }] =
     useSendMessageInRoomMutation()
+
+  const [updateMessage] = useUpdateMessageInRoomMutation()
 
   useEffect(() => {
     if (!roomId) {
@@ -170,11 +173,28 @@ const MessagingBoard = () => {
         emoji: emoji,
         reactedUsersId: [currentUserId]
       }
-      message.emojis.push(newEmojiObject)
+      let emojisArray = [...message.emojis, newEmojiObject]
+      // message.emojis = emojisArray
+      let updatedMessage = { ...message, emojis: emojisArray }
+
+      updateMessage({
+        orgId: currentWorkspaceId,
+        roomId,
+        sender: {
+          sender_id: authUser?.user_id,
+          sender_name: authUser?.user_name,
+          sender_image_url: authUser?.user_image_url
+        },
+        messageData: { ...updatedMessage },
+        messageId: updatedMessage._id
+      })
+
+      // emojisArray.push(newEmojiObject)
+      // message.emojis.push(newEmojiObject)
     }
 
     newMessages[messageIndex] = message
-    return false
+    return true
   }
 
   const SendAttachedFileHandler = file => {
