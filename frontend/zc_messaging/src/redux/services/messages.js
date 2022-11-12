@@ -97,10 +97,6 @@ export const messagesApi = createApi({
               )
 
               draft[foundDraft] = { sender, ...messageData }
-              // draft.push({
-              //   sender,
-              //   ...messageData
-              // })
             }
           )
         )

@@ -155,9 +155,6 @@ const MessagingBoard = () => {
         }
       } else {
         // the user has not reacted and will now be added to the list and count incremented
-        // console.log("reacted-user-id-index", message.emojis[emojiIndex])
-        // console.log("id", currentUserId)
-        // console.log("type", isArray(message.emojis[emojiIndex].reactedUsersId))
         message.emojis[emojiIndex].reactedUsersId = [
           ...message.emojis[emojiIndex].reactedUsersId,
           currentUserId
@@ -174,7 +171,6 @@ const MessagingBoard = () => {
         reactedUsersId: [currentUserId]
       }
       let emojisArray = [...message.emojis, newEmojiObject]
-      // message.emojis = emojisArray
       let updatedMessage = { ...message, emojis: emojisArray }
 
       updateMessage({
@@ -188,13 +184,9 @@ const MessagingBoard = () => {
         messageData: { ...updatedMessage },
         messageId: updatedMessage._id
       })
-
-      // emojisArray.push(newEmojiObject)
-      // message.emojis.push(newEmojiObject)
     }
 
-    newMessages[messageIndex] = message
-    return true
+    return false
   }
 
   const SendAttachedFileHandler = file => {
