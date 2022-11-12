@@ -97,6 +97,8 @@ export const messagesApi = createApi({
               )
 
               draft[foundDraft] = { sender, ...messageData }
+              draft = [...new Map(draft.map(v => [v._id, v])).values()]
+              return
             }
           )
         )

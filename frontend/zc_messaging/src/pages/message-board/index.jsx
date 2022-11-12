@@ -122,9 +122,9 @@ const MessagingBoard = () => {
     // if message_id is not undefined then it's coming from already rendered emoji in message container
 
     const emoji = emojiObject.character
-    const newEmojiName = messageId ? emojiObject.name : emojiObject.unicodeName
+    const newEmojiName = emojiObject.unicodeName || emojiObject.name
     const messageIndex = newMessages.findIndex(
-      message => message.message_id === messageId
+      message => message._id === messageId
     )
 
     if (messageIndex < 0) {
@@ -133,7 +133,7 @@ const MessagingBoard = () => {
 
     const message = newMessages[messageIndex]
     const emojiIndex = message.emojis.findIndex(
-      emoji => emoji.name === newEmojiName
+      emoji => emoji.name.toLowerCase() === newEmojiName.toLowerCase()
     )
 
     if (emojiIndex >= 0) {
@@ -147,7 +147,27 @@ const MessagingBoard = () => {
         // now, if the user is the only person that has reacted, then the emoji
         // should be removed entirely.
         if (message.emojis[emojiIndex].count <= 1) {
-          message.emojis.splice(emojiIndex, 1)
+          let emojisArray = message.emojis.filter(
+            emoji => emoji.name.toLowerCase() !== newEmojiName.toLowerCase()
+          )
+          let updatedMessage = {
+            ...message,
+            emojis: emojisArray,
+            edited: true,
+            message_id: messageId
+          }
+          updateMessage({
+            orgId: currentWorkspaceId,
+            roomId,
+            sender: {
+              sender_id: authUser?.user_id,
+              sender_name: authUser?.user_name,
+              sender_image_url: authUser?.user_image_url
+            },
+            messageData: { ...updatedMessage },
+            messageId: updatedMessage._id
+          })
+          // message.emojis.splice(emojiIndex, 1)
         } else {
           message.emojis[emojiIndex].reactedUsersId.splice(reactedUserIdIndex)
           message.emojis[emojiIndex].count =
@@ -155,6 +175,7 @@ const MessagingBoard = () => {
         }
       } else {
         // the user has not reacted and will now be added to the list and count incremented
+
         message.emojis[emojiIndex].reactedUsersId = [
           ...message.emojis[emojiIndex].reactedUsersId,
           currentUserId
@@ -164,6 +185,7 @@ const MessagingBoard = () => {
     } else {
       // the emoji does not exist
       // create the emoji object and push
+
       const newEmojiObject = {
         name: newEmojiName,
         count: 1,
@@ -171,7 +193,12 @@ const MessagingBoard = () => {
         reactedUsersId: [currentUserId]
       }
       let emojisArray = [...message.emojis, newEmojiObject]
-      let updatedMessage = { ...message, emojis: emojisArray }
+      let updatedMessage = {
+        ...message,
+        emojis: emojisArray,
+        edited: true,
+        message_id: messageId
+      }
 
       updateMessage({
         orgId: currentWorkspaceId,
