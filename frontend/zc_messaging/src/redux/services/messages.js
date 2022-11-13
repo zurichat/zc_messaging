@@ -10,6 +10,7 @@ export const messagesApi = createApi({
   // refetchOnFocus: true,
   refetchOnReconnect: true,
   refetchOnMountOrArgChange: true,
+  tagTypes: ["Messages"],
   endpoints: builder => ({
     getMessagesInRoom: builder.query({
       async queryFn(_arg, _queryApi, _extraOptions, fetchWithBQ) {
@@ -83,7 +84,8 @@ export const messagesApi = createApi({
           }
         }
       },
-      onQueryStarted(
+      invalidatesTags: ["Messages"],
+      async onQueryStarted(
         { orgId, roomId, sender, messageData },
         { dispatch, queryFulfilled }
       ) {
@@ -91,18 +93,21 @@ export const messagesApi = createApi({
           messagesApi.util.updateQueryData(
             "getMessagesInRoom",
             { orgId, roomId },
+
             draft => {
               let foundDraft = draft.indexOf(
                 draft.find(each => each._id === messageData._id)
               )
-
               draft[foundDraft] = { sender, ...messageData }
-              draft = [...new Map(draft.map(v => [v._id, v])).values()]
-              return
             }
           )
         )
-        queryFulfilled.catch(patchResult.undo)
+        try {
+          await queryFulfilled
+          return
+        } catch {
+          patchResult.undo
+        }
       }
     })
   })
