@@ -10,6 +10,7 @@ export const messagesApi = createApi({
   // refetchOnFocus: true,
   refetchOnReconnect: true,
   refetchOnMountOrArgChange: true,
+  tagTypes: ["Messages"],
   endpoints: builder => ({
     getMessagesInRoom: builder.query({
       async queryFn(_arg, _queryApi, _extraOptions, fetchWithBQ) {
@@ -70,9 +71,50 @@ export const messagesApi = createApi({
         )
         queryFulfilled.catch(patchResult.undo)
       }
+    }),
+    updateMessageInRoom: builder.mutation({
+      query(data) {
+        const { orgId, roomId, sender, messageData, messageId } = data
+        return {
+          url: `/org/${orgId}/rooms/${roomId}/messages/${messageId}`,
+          method: "PUT",
+          body: {
+            sender_id: sender.sender_id,
+            ...messageData
+          }
+        }
+      },
+      invalidatesTags: ["Messages"],
+      async onQueryStarted(
+        { orgId, roomId, sender, messageData },
+        { dispatch, queryFulfilled }
+      ) {
+        const patchResult = dispatch(
+          messagesApi.util.updateQueryData(
+            "getMessagesInRoom",
+            { orgId, roomId },
+
+            draft => {
+              let foundDraft = draft.indexOf(
+                draft.find(each => each._id === messageData._id)
+              )
+              draft[foundDraft] = { sender, ...messageData }
+            }
+          )
+        )
+        try {
+          await queryFulfilled
+          return
+        } catch {
+          patchResult.undo
+        }
+      }
     })
   })
 })
 
-export const { useGetMessagesInRoomQuery, useSendMessageInRoomMutation } =
-  messagesApi
+export const {
+  useGetMessagesInRoomQuery,
+  useSendMessageInRoomMutation,
+  useUpdateMessageInRoomMutation
+} = messagesApi
