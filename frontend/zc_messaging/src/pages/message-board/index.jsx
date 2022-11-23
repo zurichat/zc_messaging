@@ -18,10 +18,10 @@ import generatePageTitle from "../../utils/generatePageTitle"
 
 const MessagingBoard = () => {
   const { roomId } = useParams()
+  const currentWorkspaceId = localStorage.getItem("currentWorkspace")
   const navigateTo = useNavigate()
   const dispatch = useDispatch()
   const authUser = useSelector(state => state.authUser)
-  const currentWorkspaceId = localStorage.getItem("currentWorkspace")
   const [pageTitle, setPageTitle] = useState("")
   const [roomName, setRoomName] = useState("unknown-channel")
   let currentWorkspace = localStorage.getItem("currentWorkspace")
@@ -42,6 +42,7 @@ const MessagingBoard = () => {
         refetchOnMountOrArgChange: true
       }
     )
+
   const { data: roomMessages, isLoading: isLoadingRoomMessages } =
     useGetMessagesInRoomQuery(
       {
@@ -94,6 +95,7 @@ const MessagingBoard = () => {
     }
   }, [roomId, authUser])
 
+  // To get current Room and PageTitle
   useEffect(() => {
     if (roomsAvailable) {
       const room = roomsAvailable[roomId]
@@ -232,6 +234,7 @@ const MessagingBoard = () => {
       <Helmet>
         <title>{pageTitle}</title>
       </Helmet>
+
       <Container>
         <MessagingArea>
           <div style={{ height: "calc(100% - 29px)" }}>

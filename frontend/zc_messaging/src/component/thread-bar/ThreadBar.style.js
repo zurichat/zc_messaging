@@ -43,15 +43,30 @@ export const ThreadBarHeader = styled.div`
       cursor: pointer;
     }
   }
+
+  .content-wrapper {
+    height: 100%;
+    border: 2px solid gold;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
 `
 
 export const ThreadBarContent = styled.div`
   /* max-height: calc(100vh - 44px); */
   /* height: 400px; */
   /* margin-right: 1rem; */
-  height: calc(100% - 44px);
-  background-color: #fff;
 
+  overflow-y: scroll;
+  height: calc(100vh - 245px);
+
+  background-color: #fff;
+  flex: 1;
   padding: 0 0.8rem;
   padding-top: 1.78rem;
+
+  &::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
 `
