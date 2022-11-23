@@ -3,18 +3,21 @@ import styled from "styled-components"
 export const Container = styled.main`
   display: flex;
   height: 100%;
-  padding-top: 1.93rem;
+  /* padding-top: 1.93rem; */
   gap: 8px;
   background: #f9f9f9;
 `
 
+// Main Area chatting
 export const MessagingArea = styled.div`
   flex: 1;
   background: white;
 `
 
+// Sidebar for trend
 export const RightAsideWrapper = styled.div`
   width: 415px;
+  z-index: 3;
 `
 export const TypingNotice = styled.div`
   height: 29px;

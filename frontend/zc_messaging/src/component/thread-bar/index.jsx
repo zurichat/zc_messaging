@@ -13,7 +13,9 @@ const Thread = () => {
       <ThreadBarHeader>
         <span>
           <h4>Thread</h4>
+          {/*
           <h5>Announcement</h5>
+  */}
         </span>
         <span>
           <Link to={`/${params.roomId || ""}`}>
@@ -21,7 +23,7 @@ const Thread = () => {
           </Link>
         </span>
       </ThreadBarHeader>
-      <ThreadBarContent>{/* <MessageCard /> */}</ThreadBarContent>
+      <ThreadBarContent>{/* <MessageCard /> */} JUst here </ThreadBarContent>
     </ThreadBar>
   )
 }

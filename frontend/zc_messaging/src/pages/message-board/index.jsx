@@ -225,18 +225,20 @@ const MessagingBoard = () => {
       <Helmet>
         <title>{pageTitle}</title>
       </Helmet>
-      <MessageRoomViewHeader name={`#${roomName}`} />
       <Container>
         <MessagingArea>
           <div style={{ height: "calc(100% - 29px)" }}>
-            <MessageBoard
-              isLoadingMessages={isLoadingRoomMessages}
-              messages={roomMessages || []}
-              onSendMessage={sendMessageHandler}
-              onReact={reactHandler}
-              onSendAttachedFile={SendAttachedFileHandler}
-              currentUserId={authUser?.user_id}
-            />
+            <MessageRoomViewHeader name={`#${roomName}`} />
+            <div style={{ height: "calc(100% - 29px)", paddingTop: "2rem" }}>
+              <MessageBoard
+                isLoadingMessages={isLoadingRoomMessages}
+                messages={roomMessages || []}
+                onSendMessage={sendMessageHandler}
+                onReact={reactHandler}
+                onSendAttachedFile={SendAttachedFileHandler}
+                currentUserId={authUser?.user_id}
+              />
+            </div>
           </div>
           {/* <TypingNotice>Omo Jesu is typing</TypingNotice> */}
         </MessagingArea>
@@ -245,6 +247,7 @@ const MessagingBoard = () => {
       Right sidebar like thread, profile and co
       ... All routed in InMessageRoute component
     */}
+
         <Outlet />
       </Container>
     </>
@@ -252,3 +255,5 @@ const MessagingBoard = () => {
 }
 
 export default MessagingBoard
+// <MessageRoomViewHeader name={`#${roomName}`} />
+// <div style={{ height: "calc(100% - 29px)", paddingTop: "2rem" }}>
