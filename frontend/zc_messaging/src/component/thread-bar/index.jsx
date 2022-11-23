@@ -23,7 +23,9 @@ const Thread = () => {
           </Link>
         </span>
       </ThreadBarHeader>
-      <ThreadBarContent>{/* <MessageCard /> */} JUst here </ThreadBarContent>
+      <ThreadBarContent>
+        {/* <MessageCard /> */} Thread id {params.threadId}{" "}
+      </ThreadBarContent>
     </ThreadBar>
   )
 }

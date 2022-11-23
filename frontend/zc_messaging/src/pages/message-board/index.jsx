@@ -24,6 +24,13 @@ const MessagingBoard = () => {
   const currentWorkspaceId = localStorage.getItem("currentWorkspace")
   const [pageTitle, setPageTitle] = useState("")
   const [roomName, setRoomName] = useState("unknown-channel")
+  let currentWorkspace = localStorage.getItem("currentWorkspace")
+
+  // Navigate from Chat to trendSide bar
+  const handleMoveToThread = id => {
+    navigateTo(`thread/${id}`)
+  }
+
   const { data: roomsAvailable, isLoading: IsLoadingRoomsAvailable } =
     useGetRoomsAvailableToUserQuery(
       {
@@ -237,6 +244,7 @@ const MessagingBoard = () => {
                 onReact={reactHandler}
                 onSendAttachedFile={SendAttachedFileHandler}
                 currentUserId={authUser?.user_id}
+                navigateThread={handleMoveToThread}
               />
             </div>
           </div>
