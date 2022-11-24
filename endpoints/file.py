@@ -28,6 +28,12 @@ def download_file(file_name: str):
 # need to verify the dm_install plugin method in sync.py
 # dm_install(org_id, room_name:user_id)
 
+# {
+#     "organization_id" :"6133c5a68006324323416896",
+#     "room_id" : "6133c5a68006324323416896"
+# }
+
+
 @app.get("/get/files/{org_id}/{room_id}")
 def get_files(org_id: str, room_id: str):
     files = []
