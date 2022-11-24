@@ -7,7 +7,7 @@ const Threads = () => {
       <Helmet>
         <title>{generatePageTitle("threads")}</title>
       </Helmet>
-      <h1>Threads</h1>
+      <h1>Threads Nocedldfdsfsdf one</h1>
     </>
   )
 }
