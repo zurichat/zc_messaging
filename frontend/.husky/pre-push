@@ -3,4 +3,3 @@
 
 echo '🏗️👷 Pulling latest changes from remote upstream'
 
-git pull upstream dev
