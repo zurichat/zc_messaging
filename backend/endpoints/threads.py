@@ -129,3 +129,72 @@ async def update_threads_message(
 				content=ResponseModel.success(data=loadedMessage, message="Thread Added"),
 				status_code=status.HTTP_200_OK,
 		)
+
+@router.get(
+		"/org/{org_id}/member/{member_id}/threads",
+		response_model=ResponseModel,
+		status_code=status.HTTP_200_OK,
+		responses={424: {"detail": "ZC Core failed"}},
+)
+async def get_threads(org_id: str, member_id: str):
+		"""Fetches all messages sent in a particular room.
+
+		Args:
+				org_id (str): A unique identifier of an organization.
+				room_id (str): A unique identifier of the room where messages are fetched from.
+
+		Returns:
+				A dict containing a list of message objects.
+				{
+
+				}
+
+		Raises:
+				HTTPException [424]: Zc Core failed
+		"""
+
+		room_response = await get_org_rooms(org_id=org_id, member_id=member_id)
+
+		if room_response == []:
+			raise HTTPException(
+				status_code=status.HTTP_404_NOT_FOUND,
+				detail="Member does not exist or Org not found"
+			)
+
+		if room_response is None:
+			raise HTTPException(
+				status_code=status.HTTP_424_FAILED_DEPENDENCY,
+				detail="Zc Core failed"
+			)
+
+		room_ids = []
+
+		for room in room_response:
+			room_ids.append(room['_id'])
+
+		# print(room_ids)
+		
+		for room_id in room_ids:
+			print(room_id)
+			single_room_resp = await get_room_messages(org_id, room_id)
+			if single_room_resp == []:
+					print("Room not found")
+
+			if single_room_resp is None:
+					print("Zc Core failed")
+
+			print("Gotten Single Room")
+			print(single_room_resp)
+
+
+		messages_w_thread = []
+
+		for messages in single_room_resp:
+			if messages['threads'] != []:
+				messages_w_thread.append(messages)
+				print(json.dumps(messages))
+
+		return JSONResponse(
+				content=ResponseModel.success(data=messages_w_thread, message="Rooms retrieved"),
+				status_code=status.HTTP_200_OK,
+		)
