@@ -62,4 +62,3 @@ virtualenv==20.9.0
 watchgod==0.7
 websockets==10.0
 wrapt==1.13.2
-pip install python-multipart
