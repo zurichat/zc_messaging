@@ -31,6 +31,15 @@ def download_file(file_name: str):
 # {
 #     "organization_id" :"6133c5a68006324323416896",
 #     "room_id" : "6133c5a68006324323416896"
+
+        #         org_id:
+        # 6373eb474746182adae97314
+        # room_id:
+        # 6373eb4f4746182adae97316
+
+        #  Use:
+        # org_id: 619ba4
+        # room_id: 123456
 # }
 
 
