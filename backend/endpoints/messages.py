@@ -1,5 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Message, MessageRequest
+from schema.message import Media, Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
@@ -272,5 +272,43 @@ async def get_messages(org_id: str, room_id: str):
 
     return JSONResponse(
         content=ResponseModel.success(data=response, message="Messages retrieved"),
+        status_code=status.HTTP_200_OK,
+    )
+
+
+@router.get(
+    "/org/{org_id}/members/{member_id}/media_files",
+    response_model=Media,
+    status_code=status.HTTP_200_OK,
+    responses={424: {"detail": "ZC Core failed"}},
+)
+async def get_media(org_id: str, member_id: str):
+    """Fetches all media uploaded by the particular member.
+
+    Args:
+        org_id (str): A unique identifier of an organization.
+        member_id (str): A unique identifier of the member.
+
+    Returns:
+        A dict containing a list of media objects.
+
+    Raises:
+        HTTPException [424]: Zc Core failed
+    """
+    response = await get_media(org_id, member_id)
+    if response == []:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Member does not exist or no media found",
+        )
+
+    if response is None:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Zc Core failed",
+        )
+
+    return JSONResponse(
+        content=ResponseModel.success(data=response, message="Media retrieved"),
         status_code=status.HTTP_200_OK,
     )

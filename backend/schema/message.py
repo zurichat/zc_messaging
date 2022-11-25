@@ -144,3 +144,12 @@ class Message(Thread):
     """
 
     threads: List[Thread] = []
+
+
+class Media(BaseModel):
+    """
+    Provides a base model for media
+    """
+
+    files: List[str] = []
+    file_type: str
