@@ -11,16 +11,17 @@ from config.settings import settings
 # List  all messages in a thread
 
 async def get_messages_in_thread(org_id, room_id, message_id):
+    """Retrieves all the messages in a particular thread"""
 
     # fetch message parent of the thread
     DB = DataStorage(org_id)
     messages = await get_message(org_id, room_id, message_id)
-    threads = messages["threads"]
+    return messages["threads"]
 
-    return threads
 
 
 async def add_message_to_thread(org_id, room_id, message_id, request):
+    """Adds a message to a thread and returns an update response """
 
     # add message to a parent thread
     message = await get_message(org_id, room_id, message_id)
@@ -37,7 +38,7 @@ async def add_message_to_thread(org_id, room_id, message_id, request):
     thread= message["threads"]
     thread.append(payload)
    
-    res = await update_message(org_id, message_id, message)
-    print(res)
-    return res
+    response = await update_message(org_id, message_id, message)
+    
+    return response
 
