@@ -1,14 +1,14 @@
 from typing import Dict, Optional
 
+from config.settings import settings
 from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
-from schema.room import Role, Room, RoomMember, RoomRequest, RoomType
+from schema.room import Role, Room, RoomMember, RoomRequest, RoomType, UpdateRoomRequest
 from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.room_utils import get_room, remove_room_member
 from utils.sidebar import sidebar
-from config.settings import settings
 
 router = APIRouter()
 
@@ -238,11 +238,14 @@ async def join_room(
         )
 
     member = room.get("room_members").get(str(member_id))
+    if member == None:
+        raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="only existing members can add new members",
+            )
 
     if room["room_type"].upper() == RoomType.CHANNEL:
-        if room["is_private"] is True and (
-            member is None or member["role"].lower() != Role.ADMIN
-        ):
+        if room["is_private"] is True and (member["role"].lower() != Role.ADMIN):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="only admins can add new members",
@@ -435,3 +438,75 @@ async def get_members(org_id: str, room_id: str):
             message="Room members retrieved successfully",
         ),
     )
+
+
+@router.put(
+    "/org/{org_id}/members/{member_id}/rooms/{room_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        200: {"detail": {"room_id": "room_id"}},
+        424: {"detail": "ZC Core Failed"},
+    },
+ )
+async def update_room(
+    org_id: str, member_id: str, room_id: str, request: UpdateRoomRequest, background_tasks: BackgroundTasks
+ ):
+    """Updates a room between users.
+    Updates a room document to the database collection.
+    Returns the document id and updated info if the room is successfully updated
+    while publishing to the user sidebar in the background
+    Args:
+        org_id (str): A unique identifier of an organisation
+        request: A pydantic schema that defines the room request parameters
+        member_id: A unique identifier of the member updating the room
+    Returns:
+        HTTP_200_OK (room updated): {room_id}
+    Raises
+        HTTP_401_UNAUTHORIZED: not a member of room
+        HTTP_401_UNAUTHORIZED: must be an admin to update room
+        HTTP_424_FAILED_DEPENDENCY: room update unsuccessful
+    """
+    # Initialize Database
+    DB = DataStorage(org_id)
+
+    # Get room from database
+    room = await get_room(org_id=org_id, room_id=room_id)
+    data = request.dict()
+
+    # Get the members of the room, if None assign to empty dictionary
+    members = room.get("room_members") or {}
+    updater = members.get(str(member_id))
+
+    if updater == None:
+        raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="not a member of room",
+    )
+
+    if updater.get("role") != Role.ADMIN:
+        raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="must be an admin to update room.",
+    )
+
+    # Insert members into data request to avoid deletion of all members
+    data['members'] = members
+
+    # updates the room data in the db collection
+    update_response = await DB.update(
+        settings.ROOM_COLLECTION, document_id=room_id, data=data
+    )
+
+    if update_response is None:
+        raise HTTPException(
+        status_code=status.HTTP_424_FAILED_DEPENDENCY,
+        detail="unable to update room",
+    )
+
+    return JSONResponse(
+            content=ResponseModel.success(data=room.dict(), message="room updated"),
+            status_code=status.HTTP_200_OK,
+        )
+
+    
