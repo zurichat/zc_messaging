@@ -78,34 +78,36 @@ class MessageRequest(BaseModel):
         "saved_by": []
         "created_at": "2021-12-22 22:38:33.075643"
     }
-
     """
+    sender_id: str = Form(str)
+    emojis: List[Emoji] = []
+    richUiData: Any = {}
+    files: List[AnyHttpUrl] = []
+    saved_by: List[str] = []
+    timestamp: int = 1640204440922
+    created_at: str = str(datetime.utcnow())
 
-    # sender_id: str = '619ba4671a5f54782939d385'
-    # emojis: List[Emoji] = []
-    # richUiData: Any = {}
-    # files: List[AnyHttpUrl] = []
-    # saved_by: List[str] = []
-    # timestamp: int = 1640204440922
-    # created_at: str = str(datetime.utcnow())
-    sender_id: str = Form()
-    emojis: List[Emoji] = Form()
-    richUiData: Any = Form()
-    files: List[AnyHttpUrl] = Form()
-    # files: List[FileUrl] = []
-    # files = 
-    saved_by: List[str] = Form()
-    timestamp: int = Form()
-    # created_at: str = str(datetime.utcnow())
-    created_at: str = Form()
-    # file: UploadFile = None
-
-    # @root_validator(pre=True)
-    # def prepend_http(cls, v):
-    #     if isinstance(v, str) and not v.startswith('http'):
-    #         return f'http://{v}'
-    #     return v
-
+    @classmethod
+    def as_form(
+        cls,
+        sender_id: str = Form('619ba4671a5f54782939d385'),
+        emojis: List[Emoji] = Form([]),
+        richUiData: Any = Form({}),
+        files: List[AnyHttpUrl] = Form([]),
+        # files: List[FileUrl] = [],
+        saved_by: List[str] = Form([]),
+        timestamp: int = Form(1640204440922),
+        created_at: str = Form(str(datetime.utcnow())),
+    ): 
+        return cls(
+            sender_id=sender_id, 
+            emojis=emojis, 
+            richUiData=richUiData, 
+            files=files, 
+            saved_by=saved_by, 
+            timestamp=timestamp, 
+            created_at=created_at
+        )
 
 class Thread(MessageRequest):
     """Provide structure for the thread schema
@@ -114,12 +116,10 @@ class Thread(MessageRequest):
     data for the thread schema
     """
 
-    room_id: str = Form()
-    org_id: str = Form()
-    # message_id: str = Field(None, alias="_id")
-    message_id: str = Form()
+    room_id: str
+    org_id: str 
+    message_id: str = Field(None, alias="_id")
     # message_id: str = '_id'
-    edited: bool = Form()
 
     @root_validator(pre=True)
     @classmethod
@@ -142,20 +142,16 @@ class Thread(MessageRequest):
         with concurrent.futures.ThreadPoolExecutor(1) as executor:
             future = executor.submit(asyncio.run, get_room(org_id, room_id))
             room = future.result()
-            print(room)
         if not room:
-            print('Room does not exist')
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Room does not exist"
             )
 
         if sender_id not in set(room["room_members"]):
-            print("Sender not a member of this room")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Sender not a member of this room",
             )
-        print(values)
         return values
 
 
@@ -166,4 +162,4 @@ class Message(Thread):
     and adds a field for list of threads
     """
 
-    threads: List[Thread] = Form()
+    threads: List[Thread] = []

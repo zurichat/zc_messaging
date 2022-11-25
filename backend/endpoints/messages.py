@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status, UploadFile, File, Depends
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status, UploadFile, File, Depends, Form
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
@@ -7,134 +7,10 @@ from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
 # import shutil
 from pandas import DataFrame
-
+from pydantic import AnyHttpUrl, FileUrl
+from utils.file_storage import FileStorage
 
 router = APIRouter()
-
-
-# # upload file
-# @router.post(
-#     "/org/{org_id}/rooms/{room_id}/messages/upload",
-#     response_model=ResponseModel,
-#     status_code=status.HTTP_200_OK,
-#     responses={424: {"detail": "ZC Core failed"}},
-# )
-# async def upload_file(
-#     org_id: str,
-#     room_id: str,
-#     request: MessageRequest,
-#     file: UploadFile = File(...),
-#     background_tasks: BackgroundTasks = Depends(),
-# ):
-#     """Uploads a file to the cloud.
-#     Args:
-#         org_id (str): A unique identifier of an organization.
-#         room_id (str): A unique identifier of the room where messages are fetched from.
-#         file (UploadFile): A file object to be uploaded.
-#     Returns:
-#         A dict containing a list of message objects.
-#         {
-#             "status": "success",
-#             "message": "File uploaded",
-#             "data": {
-#                 "url": "https://storage.googleapis.com/zuri-chat-files/61e75bc065934b58b8e5d223",
-#                 "name": "file",
-#                 "size": 123,
-#                 "type": "image/png"
-#             }
-#         }
-#     Raises:
-#         HTTPException [424]: Zc Core failed
-#     """
-#     file_name = file.filename
-#     file_type = file.content_type
-#     file_size = file.file.size
-#     # Upload file to cloud
-#     message = Message(**request.dict(), org_id=org_id, room_id=room_id)
-#     # response = await upload_file_to_cloud(file)
-#     if message is None:
-#         raise HTTPException(
-#             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-#             detail="Zc Core failed",
-#         )
-#     # Publish to centrifugo in the background.
-#     background_tasks.add_task(
-#         centrifugo_client.publish,
-#         room_id,
-#         Events.MESSAGE_CREATE
-#         # Events.FILE_UPLOAD,
-#         # {
-#         #     "url": message,
-#         #     "name": file_name,
-#         #     "size": file_size,
-#         #     "type": file_type,
-#         # },
-#     )
-#     return JSONResponse(
-#         content=ResponseModel.success(
-#             data={
-#                 "url": message,
-#                 "name": file_name,
-#                 "size": file_size,
-#                 "type": file_type,
-#             },
-#             message="File uploaded",
-#         ),
-#         status_code=status.HTTP_200_OK,
-#     )
-
-
-# @router.post(
-#     "/org/{org_id}/rooms/{room_id}/messages",
-#     response_model=ResponseModel,
-#     status_code=status.HTTP_201_CREATED,
-#     responses={
-#         404: {"description": "Room or sender not found"},
-#         424: {"description": "ZC Core failed"},
-#     },
-# )
-
-# async def send_message(
-#     org_id: str,
-#     room_id: str,
-#     request: MessageRequest,
-#     file: UploadFile,
-#     # background_tasks: BackgroundTasks,
-# ):
-#     files = request.files
-#     # emojis = request.emojis
-#     # print(emojis)
-#     print(files.filename)
-#     # with open(f'test.{request.files.content_type}', 'wb') as file_store:
-#     #     shutil.copyfileobj(request.files.file, file_store)
-#     print(room_id, '-------', org_id)
-#     print(request.dict())
-#     message = Message(**request.dict().get('message_id'), org_id=org_id, room_id=room_id)
-#     # print(message)
-#     # print({'file_name': emojis.filename})
-#     # response = await create_message(org_id=org_id, message=message)
-#     all_files = []
-#     returned_data = {
-#         "status": "Success",
-#         "message": request.message,
-#         "data": {
-#             "sender_id": "619bab3b1a5f54782939d400",
-#             "emojis": [],
-#             "files": all_files.append(file),
-#             "saved_by": [],
-#             "timestamp": 0,
-#             "created_at": "2022-02-01 19:20:55.891264",
-#             "room_id": "61e6855e65934b58b8e5d1df",
-#             "org_id": "619ba4671a5f54782939d384",
-#             "message_id": "61f98d0665934b58b8e5d286",
-#             "edited": False,
-#             "threads": []
-#         }
-#     }
-#     return JSONResponse(
-#         content=ResponseModel.success(data=returned_data, message="new message sent"),
-#         status_code=status.HTTP_201_CREATED,
-#     )
 
 @router.post(
     "/org/{org_id}/rooms/{room_id}/messages",
@@ -148,15 +24,12 @@ router = APIRouter()
 async def send_message(
     org_id: str,
     room_id: str,
-    request: MessageRequest,
     background_tasks: BackgroundTasks,
-    file: UploadFile = File(), 
-):  
-    # x = DataFrame.to_dict(request)
-    # print(x)
-    
-    
-    # print(request)
+    token: str = Form(str),
+    file: UploadFile = Form(File(...)),
+    request: MessageRequest = Depends(MessageRequest.as_form),
+):   
+
     """Creates and sends a message from a user inside a room.
 
     Registers a new document to the messages database collection while
@@ -208,33 +81,27 @@ async def send_message(
         HTTPException [404]: Room does not exist || Sender not a member of this room.
         HTTPException [424]: Message not sent.
     """
-    # print(room_id)
-    # print(request.sender_id)
-    # print(room_id)
-    # print(org_id)
-    # print('working')
-    # print(request.files)
-    # # print(file.filename)
-    # print('working')
-    # request.dict()['files'] = file
-    # {'file': file}
-    # x = request.dict().get('files')
-    # y = []
-    # for i in x:
-    #     a = i.lstrip(' ')
-    #     b = a.rstrip(' ')
-    #     y.append(b)
-    # print(y)
-    # print(file.filename)
-    message = Message(**request.dict(), org_id=org_id, room_id=room_id)
-    # print(message)
-    
+
+    new_obj = {**request.dict()}
+
+    storage = FileStorage(org_id)
+    file_upload = storage.upload(file, token=token)
+
+    file_urls = []
+    if file_upload["status"] == 200:
+        file_info = file_upload["data"]["files_info"]
+        for data_ in file_info:
+            file_urls.append(data_["file_url"])
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not allowed to send file",
+        )
+    new_obj['files'] = file_urls
+    message = Message(**new_obj, org_id=org_id, room_id=room_id)
 
     response = await create_message(org_id=org_id, message=message)
 
-    # print(request.file.filename,'\n\n\n\n')
-    # return
-    # return {**request.dict()}
     if not response or response.get("status_code"):
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
