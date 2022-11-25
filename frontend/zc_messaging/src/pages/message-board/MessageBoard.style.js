@@ -12,6 +12,8 @@ export const Container = styled.main`
 export const MessagingArea = styled.div`
   flex: 1;
   background: white;
+  height: calc(100vh + 50px);
+  height: 100%;
 `
 
 // Sidebar for trend
