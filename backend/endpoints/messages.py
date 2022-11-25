@@ -1,4 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status, UploadFile, File, Depends, Form
+from fastapi_pagination import Page, add_pagination, paginate
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
@@ -243,7 +244,7 @@ async def update_message(
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=ResponseModel,
+    response_model=Page[Message],
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
@@ -298,7 +299,6 @@ async def get_messages(org_id: str, room_id: str):
             detail="Zc Core failed",
         )
 
-    return JSONResponse(
-        content=ResponseModel.success(data=response, message="Messages retrieved"),
-        status_code=status.HTTP_200_OK,
-    )
+    return paginate(response)
+
+add_pagination(router)

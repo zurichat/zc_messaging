@@ -1,11 +1,11 @@
-from typing import Any, Optional
+from typing import Any, Optional, List, Dict
 
 from config.settings import settings
 from schema.message import Message
 from utils.db import DataStorage
 
 
-async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
+async def get_org_messages(org_id: str) -> Optional[List[Dict[str, Any]]]:
     """Gets all messages sent in  an organization.
 
     Args:
@@ -42,7 +42,7 @@ async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
 
 async def get_room_messages(
     org_id: str, room_id: str
-) -> Optional[list[dict[str, Any]]]:
+) -> Optional[List[Dict[str, Any]]]:
     """Gets all messages sent inside  a room.
     Args:
         org_id (str): The organization id
@@ -82,7 +82,7 @@ async def get_room_messages(
 
 async def get_message(
     org_id: str, room_id: str, message_id: str
-) -> Optional[dict[str, Any]]:
+) -> Optional[Dict[str, Any]]:
     """Get a specific message in a room.
 
     Args:
@@ -119,7 +119,7 @@ async def get_message(
     return response
 
 
-async def create_message(org_id: str, message: Message) -> dict[str, Any]:
+async def create_message(org_id: str, message: Message) -> Dict[str, Any]:
     """Creates a message document in the database.
 
     Args:
@@ -136,8 +136,8 @@ async def create_message(org_id: str, message: Message) -> dict[str, Any]:
 
 
 async def update_message(
-    org_id: str, message_id: str, message: dict[str, Any]
-) -> dict[str, Any]:
+    org_id: str, message_id: str, message: Dict[str, Any]
+) -> Dict[str, Any]:
     """Updates a message document in the database.
 
     Args:
