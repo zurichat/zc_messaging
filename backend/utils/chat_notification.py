@@ -27,23 +27,25 @@ class Notification:
             HTTP_422- when Novu couldn't send notification to tagged users
         """
         tagged_users_list = []
-        user_msg_tag = message_obj.get("entityMap", " ")
+        get_tagged_users = message_obj.get("richUiData", " ")
         if user_msg_tag:
-            for message in range(len(user_msg_tag)):
-                member_id = user_msg_tag[str(message)]['data']['mention']['member_id']
-                tagged_users_list.append(member_id)
-            tagged_users = await event.trigger(
-                'you-have-been-mentioned',
-                {
-                    "to": tagged_users_list,
-                    "payload": payload
-                })
-            if tagged_users['statusCode'] !=201:
-                raise HTTPException(
-                    status_code=422, 
-                    detail="Novu couldn't send notifications to tagged users"
-                    )
-            return tagged_users
+            user_msg_tag = get_tagged_users['entityMap']
+            if user_msg_tag !=[]:
+                for message in range(len(user_msg_tag)):
+                    member_id = user_msg_tag[str(message)]['data']['mention']['name']
+                    tagged_users_list.append(member_id)
+                tagged_users = await event.trigger(
+                    'you-have-been-mentioned',
+                    {
+                        "to": tagged_users_list,
+                        "payload": payload
+                    })
+                if tagged_users['statusCode'] !=201:
+                    raise HTTPException(
+                        status_code=422, 
+                        detail="Novu couldn't send notifications to tagged users"
+                        )
+                return tagged_users
 
 
 
@@ -62,13 +64,6 @@ class Notification:
                 status_code=400, 
                 detail="Room object data is invalid"
                 )
-        room_name = room_obj.get("room_name", " ")
-        if not room_name:
-            raise HTTPException(
-                status_code=400, 
-                detail="Room name is required"
-                )
-
         if room_obj['room_type'] != 'DM':
             raise HTTPException(
                 status_code=400, 
@@ -177,19 +172,25 @@ class Notification:
                 detail="Invalid data input"
                 )
         try:
-            message = message_obj['data']['blocks'][0]['text']
-            sender_id = message_obj.get("sender_id")
+            message = message_obj['data']['richUiData']['blocks'][0]['text']
+            sender_id = message_obj["sender_id"]
         except:
-            pass
-        room = get_room(org_id, room_id)
-        if not room:
+            raise HTTPException(
+                status_code=400, 
+                detail="Invalid message input"
+                )
+        try:
+            room = get_room(org_id, room_id)
+        except:
             raise HTTPException(
                 status_code=404, 
                 detail="room with ID not found"
                 )
         # create a notfication for the DM user 
         if room['room_type'] == 'DM':
-            dm_create = self.dm_message_trigger(org_id,room_id,sender_id, message)
+            dm_create = self.dm_message_trigger(
+                org_id,room_id,sender_id, message
+                )
             if dm_create['statusCode'] !=201:
                 raise HTTPException(
                     status_code=422, 
@@ -224,11 +225,13 @@ class Notification:
                 detail="Message notification failed"
                 )
         # send notification to tagged users if there's any
-        get_tagged_message = message_obj.get("entityMap", '')
-        if get_tagged_message and get_tagged_message ==[]:
-            notify_tagged_users = await self.tagged_user_trigger_create(
-                message_obj, payload
-                )
+        tagged_message = message_obj.get("richUiData", '')
+        if tagged_message:
+            get_tagged_users = tagged_message['entityMap']
+            if get_tagged_users !=[]:
+                notify_tagged_users = self.tagged_user_trigger_create(
+                    message_obj, payload
+                    )
             # raise an http exception if novu fails to send message notification
             # to tagged users
             if notify_tagged_users["acknowledged"] != "true":
