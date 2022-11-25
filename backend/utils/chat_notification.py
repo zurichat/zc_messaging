@@ -13,9 +13,9 @@ class Notification:
     This class is called after the message instance or object has been created
     """  
 
-    async def check_message_tag(
-        self, message_obj, payload, 
-        sender_id
+
+    async def tagged_user_trigger_create(
+        self, message_obj, payload
         ):
         """
         A method that creates a notification trigger for tagged users
@@ -26,27 +26,24 @@ class Notification:
         Raise:
             HTTP_422- when Novu couldn't send notification to tagged users
         """
-        tagged_users = []
-        # user_msg_tag = message_obj["richUiData"]['entityMap']
+        tagged_users_list = []
         user_msg_tag = message_obj.get("entityMap", " ")
         if user_msg_tag:
-            for i in range(len(user_msg_tag)):
-                member_id = user_msg_tag[str(i)]['data']['mention']['member_id']
-                if member_id == sender_id:
-                    del i[member_id]
-                tagged_users.append(member_id)
-            dm_trigger_create = await event.trigger(
+            for message in range(len(user_msg_tag)):
+                member_id = user_msg_tag[str(message)]['data']['mention']['member_id']
+                tagged_users_list.append(member_id)
+            tagged_users = await event.trigger(
                 'you-have-been-mentioned',
                 {
-                    "to": tagged_users,
+                    "to": tagged_users_list,
                     "payload": payload
                 })
-            if dm_trigger_create['statusCode'] !=201:
+            if tagged_users['statusCode'] !=201:
                 raise HTTPException(
                     status_code=422, 
                     detail="Novu couldn't send notifications to tagged users"
                     )
-            return dm_trigger_create
+            return tagged_users
 
 
 
@@ -61,9 +58,18 @@ class Notification:
             HTTP_400- when room object argument passed is invalid
         """
         if not room_obj:
-            return ValueError("Room object data is invalid")
+            raise HTTPException(
+                status_code=400, 
+                detail="Room object data is invalid"
+                )
+        room_name = room_obj.get("room_name", " ")
+        if not room_name:
+            raise HTTPException(
+                status_code=400, 
+                detail="Room name is required"
+                )
+
         if room_obj['room_type'] != 'DM':
-            # i would love to break out of the function if type not a DM
             raise HTTPException(
                 status_code=400, 
                 detail="This function is only for DM"
@@ -152,12 +158,12 @@ class Notification:
         
 
 
-    async def channel_messages_trigger(self, message_obj):
+    async def messages_trigger(self, message_obj):
         """
-        A function that triggers a Novu notification instance 
-        for every user in a room exclding the sender.
+        A function that triggers a Novu notification instance for 
+        users either in DM, channels, or Group DM excluding the sender.
         Args:
-            (i) message object->Dict(The message instance in the room)
+            (i) message object->Dict
         Raise:
             HTTP_422- when novu failed to create DM notification
         """
@@ -177,10 +183,13 @@ class Notification:
             pass
         room = get_room(org_id, room_id)
         if not room:
-            return ValueError("room with ID not found")
+            raise HTTPException(
+                status_code=404, 
+                detail="room with ID not found"
+                )
         # create a notfication for the DM user 
-        if room['roomt_type'] == 'DM':
-            dm_create = self.dm_message_trigger(org_id,room_id,sender_id)
+        if room['room_type'] == 'DM':
+            dm_create = self.dm_message_trigger(org_id,room_id,sender_id, message)
             if dm_create['statusCode'] !=201:
                 raise HTTPException(
                     status_code=422, 
@@ -207,11 +216,26 @@ class Notification:
                 "to": room_member_list,
                 "payload": payload
             })
+        # raise an http exception if novu fails to send message notification
+        # to group DM or channel room members
         if channel_or_group_msg_trigger_crate["acknowledged"] != "true":
             raise HTTPException(
                 status_code=422, 
-                detail="failed to create a DM notification"
+                detail="Message notification failed"
                 )
+        # send notification to tagged users if there's any
+        get_tagged_message = message_obj.get("entityMap", '')
+        if get_tagged_message and get_tagged_message ==[]:
+            notify_tagged_users = await self.tagged_user_trigger_create(
+                message_obj, payload
+                )
+            # raise an http exception if novu fails to send message notification
+            # to tagged users
+            if notify_tagged_users["acknowledged"] != "true":
+                raise HTTPException(
+                    status_code=422, 
+                    detail="failed to create a DM notification"
+                    )
         return channel_or_group_msg_trigger_crate
         
 
