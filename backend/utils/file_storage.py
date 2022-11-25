@@ -17,12 +17,12 @@ class FileStorage:
                 item for item in plugins if settings.PLUGIN_KEY in item["template_url"]
             )
             self.plugin_id = plugin["id"] if plugin else None
-            self.upload_api = f"{settings.BASE_URL}/upload/file/" + f"{self.plugin_id}"
+            self.upload_api = f"{settings.BASE_URL}/upload/file/" + "{self.plugin_id}"
             self.upload_multiple_api = (
                 f"{settings.BASE_URL}/upload/files/" + f"{self.plugin_id}"
             )
             self.delete_file_api = (
-                f"{settings.BASE_URL}/delete/file/" + f"{self.plugin_id}"
+                f"{settings.BASE_URL}/delete/file/" + "{self.plugin_id}"
             )
             self.organization_id = organization_id
 
