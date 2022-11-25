@@ -79,6 +79,7 @@ class MessageRequest(BaseModel):
         "created_at": "2021-12-22 22:38:33.075643"
     }
     """
+    
     sender_id: str = Form(str)
     emojis: List[Emoji] = []
     richUiData: Any = {}
