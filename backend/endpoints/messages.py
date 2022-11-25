@@ -271,4 +271,12 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15
             detail="Zc Core failed",
         )
 
-    return response
+    result = {
+            "status": "success",
+            "message": "Messages retrieved",
+            "data": response,
+            "page": page,
+            "size": limit
+    }
+    return result
+
