@@ -79,7 +79,7 @@ class MessageRequest(BaseModel):
         "created_at": "2021-12-22 22:38:33.075643"
     }
     """
-    
+
     sender_id: str = Form(str)
     emojis: List[Emoji] = []
     richUiData: Any = {}
@@ -120,7 +120,7 @@ class Thread(MessageRequest):
     room_id: str
     org_id: str 
     message_id: str = Field(None, alias="_id")
-    # message_id: str = '_id'
+    edited: bool = False
 
     @root_validator(pre=True)
     @classmethod
