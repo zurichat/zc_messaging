@@ -30,8 +30,8 @@ async def send_message(
     org_id: str,
     room_id: str,
     background_tasks: BackgroundTasks,
-    # token: str = Depends(oauth2_scheme),
-    token: str = Form(str),
+    token: str = Depends(oauth2_scheme), ### NOTE
+    # token: str = Form(str),
     file: UploadFile = Form(File(...)),
     request: MessageRequest = Depends(MessageRequest.as_form),
 ):   
