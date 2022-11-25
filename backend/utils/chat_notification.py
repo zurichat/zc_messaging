@@ -35,7 +35,7 @@ class Notification:
                     member_id = user_msg_tag[str(message)]['data']['mention']['name']
                     tagged_users_list.append(member_id)
                 tagged_users = await event.trigger(
-                    'you-have-been-mentioned',
+                    '<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
                     {
                         "to": tagged_users_list,
                         "payload": payload
