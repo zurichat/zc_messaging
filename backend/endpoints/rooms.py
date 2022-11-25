@@ -437,7 +437,7 @@ async def get_members(org_id: str, room_id: str):
     )
 
 
-@router.patch(
+@router.put(
     "/org/{org_id}/members/{member_id}/rooms/{room_id}",
     response_model=ResponseModel,
     status_code=status.HTTP_201_CREATED,
@@ -500,7 +500,7 @@ async def update_room(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail="unable to update room",
     )
-    
+
     return JSONResponse(
             content=ResponseModel.success(data=room.dict(), message="room updated"),
             status_code=status.HTTP_200_OK,
