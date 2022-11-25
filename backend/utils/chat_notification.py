@@ -125,8 +125,9 @@ class Notification:
         payload = {}
         room = get_room_members(org_id,room_id)
         if not room:
-            return ValueError(
-                "Room not found"
+            return HTTPException(
+                status_code=404,
+                detail="Room with supplied ID not found"
             )
          #populate the payload dictionary    
         payload['sender'] = sender_id
