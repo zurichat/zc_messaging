@@ -3,9 +3,10 @@ from typing import Any, Optional
 from config.settings import settings
 from schema.message import Message
 from utils.db import DataStorage
+from utils.paginator import off_set
 
 
-async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
+async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[list[dict[str, Any]]]:
     """Gets all messages sent in  an organization.
 
     Args:
@@ -32,7 +33,9 @@ async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
     """
 
     DB = DataStorage(org_id)
-    response = await DB.read(settings.MESSAGE_COLLECTION)
+    skip = await off_set(page, limit)
+    options = {"limit":limit, "skip":skip, "sort":{"_id":-1}}
+    response = await DB.read(settings.MESSAGE_COLLECTION, options=options)
 
     if not response or "status_code" in response:
         return None
@@ -41,7 +44,7 @@ async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
 
 
 async def get_room_messages(
-    org_id: str, room_id: str
+    org_id: str, room_id: str, page: int, limit: int
 ) -> Optional[list[dict[str, Any]]]:
     """Gets all messages sent inside  a room.
     Args:
@@ -69,7 +72,9 @@ async def get_room_messages(
     """
 
     DB = DataStorage(org_id)
-    response = await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id})
+    skip = await off_set(page, limit)
+    options = {"limit":limit, "skip":skip, "sort":{"_id":-1}}
+    response = await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id}, options=options)
 
     if response is None:
         return []
@@ -81,7 +86,7 @@ async def get_room_messages(
 
 
 async def get_message(
-    org_id: str, room_id: str, message_id: str
+    org_id: str, room_id: str, message_id: str, page: int, limit: int
 ) -> Optional[dict[str, Any]]:
     """Get a specific message in a room.
 
@@ -110,8 +115,11 @@ async def get_message(
     """
 
     DB = DataStorage(org_id)
+    
+    skip = await off_set(page, limit)
     query = {"room_id": room_id, "_id": message_id}
-    response = await DB.read(settings.MESSAGE_COLLECTION, query=query)
+    options = {"limit":limit, "skip":skip, "sort":{"_id":-1}}
+    response = await DB.read(settings.MESSAGE_COLLECTION, query=query,  options=options)
 
     if not response or "status_code" in response:
         return {}
