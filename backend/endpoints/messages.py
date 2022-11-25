@@ -272,11 +272,12 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15
         )
 
     result = {
-            "status": "success",
-            "message": "Messages retrieved",
             "data": response,
             "page": page,
             "size": limit
     }
-    return result
 
+    return JSONResponse(
+        content=ResponseModel.success(data=result, message="Messages retrieved"),
+        status_code=status.HTTP_200_OK,
+    )
