@@ -2,6 +2,8 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
+from utils.db import DataStorage
+from config.settings import settings
 from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
@@ -273,4 +275,67 @@ async def get_messages(org_id: str, room_id: str):
     return JSONResponse(
         content=ResponseModel.success(data=response, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
+    )
+
+
+# viewing all files in a org
+@router.get(
+    "/org/{org_id}/files",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"detail": "No files found"},
+        424: {"detail": "Failure to retrieve files"},
+        
+    },
+)
+async def get_files(org_id: str):
+    """Get files.
+    Returns all files in a org if the org is found in the database
+    Raises HTTP_404_NOT_FOUND if the org is not found
+    Raises HTTP_424_FAILED_DEPENDENCY if there is an error retrieving the files
+    Args:
+        org_id (str): A unique identifier of an organisation
+    Returns:
+        HTTP_200_OK (Files retrieved successfully):
+
+        {
+            "status": "success",
+            "message": "Files retrieved",
+            "data": {
+                "61696f5ac4133ddaa309dcfe": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+                },
+                "6169704bc4133ddaa309dd07": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+                }
+            }
+        }
+
+    Raises:
+        HTTPException [404]: Files not found
+        HTTPException [424]: Failure to retrieve files
+    """
+    DB = DataStorage(org_id)
+    files = await DB.find(settings.FILES_COLLECTION, {})
+    if not files:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No files found"
+        )
+
+    if not files:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Failure to retrieve files",
+        )
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ResponseModel.success(
+            data=files,
+            message="Files retrieved successfully",
+        ),
     )
