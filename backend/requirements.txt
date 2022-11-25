@@ -62,3 +62,4 @@ virtualenv==20.9.0
 watchgod==0.7
 websockets==10.0
 wrapt==1.13.2
+python-multipart==0.0.5

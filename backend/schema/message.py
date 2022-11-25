@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, List
 
 from fastapi import HTTPException, status
-from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
+from pydantic import AnyHttpUrl, BaseModel, Field, root_validator, FileUrl
 from utils.room_utils import get_room
 
 
@@ -81,13 +81,28 @@ class MessageRequest(BaseModel):
 
     """
 
-    sender_id: str
+    # sender_id: str = '619ba4671a5f54782939d385'
+    # emojis: List[Emoji] = []
+    # richUiData: Any = {}
+    # files: List[AnyHttpUrl] = []
+    # saved_by: List[str] = []
+    # timestamp: int = 1640204440922
+    # created_at: str = str(datetime.utcnow())
+    sender_id: str = '4n4n'
     emojis: List[Emoji] = []
     richUiData: Any = {}
     files: List[AnyHttpUrl] = []
+    # files: List[FileUrl] = []
+    # files = 
     saved_by: List[str] = []
-    timestamp: int
+    timestamp: int = 73738
     created_at: str = str(datetime.utcnow())
+
+    # @root_validator(pre=True)
+    # def prepend_http(cls, v):
+    #     if isinstance(v, str) and not v.startswith('http'):
+    #         return f'http://{v}'
+    #     return v
 
 
 class Thread(MessageRequest):
@@ -100,6 +115,7 @@ class Thread(MessageRequest):
     room_id: str
     org_id: str
     message_id: str = Field(None, alias="_id")
+    # message_id: str = '_id'
     edited: bool = False
 
     @root_validator(pre=True)
@@ -123,16 +139,20 @@ class Thread(MessageRequest):
         with concurrent.futures.ThreadPoolExecutor(1) as executor:
             future = executor.submit(asyncio.run, get_room(org_id, room_id))
             room = future.result()
+            print(room)
         if not room:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Room does not exist"
-            )
+            print('Room does not exist')
+            # raise HTTPException(
+            #     status_code=status.HTTP_404_NOT_FOUND, detail="Room does not exist"
+            # )
 
-        if sender_id not in set(room["room_members"]):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Sender not a member of this room",
-            )
+        # if sender_id not in set(room["room_members"]):
+        #     print("Sender not a member of this room")
+            # raise HTTPException(
+            #     status_code=status.HTTP_404_NOT_FOUND,
+            #     detail="Sender not a member of this room",
+            # )
+        print(values)
         return values
 
 
