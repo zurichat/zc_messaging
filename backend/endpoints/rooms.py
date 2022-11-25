@@ -1,5 +1,6 @@
 from typing import Dict, Optional
 
+from config.settings import settings
 from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, status
 from fastapi.responses import JSONResponse
 from schema.response import ResponseModel
@@ -8,7 +9,6 @@ from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.room_utils import get_room, remove_room_member
 from utils.sidebar import sidebar
-from config.settings import settings
 
 router = APIRouter()
 
@@ -238,11 +238,14 @@ async def join_room(
         )
 
     member = room.get("room_members").get(str(member_id))
+    if member == None:
+        raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="only existing members can add new members",
+            )
 
     if room["room_type"].upper() == RoomType.CHANNEL:
-        if room["is_private"] is True and (
-            member is None or member["role"].lower() != Role.ADMIN
-        ):
+        if room["is_private"] is True and (member["role"].lower() != Role.ADMIN):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="only admins can add new members",
