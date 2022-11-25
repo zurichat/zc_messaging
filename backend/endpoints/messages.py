@@ -9,8 +9,13 @@ from utils.message_utils import update_message as edit_message
 from pandas import DataFrame
 from pydantic import AnyHttpUrl, FileUrl
 from utils.file_storage import FileStorage
+import requests
+from fastapi.security import OAuth2PasswordBearer
 
 router = APIRouter()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 
 @router.post(
     "/org/{org_id}/rooms/{room_id}/messages",
@@ -25,6 +30,7 @@ async def send_message(
     org_id: str,
     room_id: str,
     background_tasks: BackgroundTasks,
+    # token: str = Depends(oauth2_scheme),
     token: str = Form(str),
     file: UploadFile = Form(File(...)),
     request: MessageRequest = Depends(MessageRequest.as_form),
@@ -83,21 +89,21 @@ async def send_message(
     """
 
     new_obj = {**request.dict()}
-
-    storage = FileStorage(org_id)
-    file_upload = storage.upload(file, token=token)
-
     file_urls = []
-    if file_upload["status"] == 200:
-        file_info = file_upload["data"]["files_info"]
-        for data_ in file_info:
-            file_urls.append(data_["file_url"])
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not allowed to send file",
-        )
-    new_obj['files'] = file_urls
+    if file.content_type:
+        storage = FileStorage(org_id)
+        n_file = storage.upload(file.file.read(), f'{token}')
+        if n_file["status"] == 200:
+            file_info = n_file["data"]["files_info"]
+            for data_ in file_info:
+                file_urls.append(data_["file_url"])
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not allowed to send file",
+            )
+        new_obj['files'] = file_urls
+
     message = Message(**new_obj, org_id=org_id, room_id=room_id)
 
     response = await create_message(org_id=org_id, message=message)

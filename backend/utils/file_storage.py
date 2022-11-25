@@ -32,8 +32,7 @@ class FileStorage:
     
     def upload(self, file, token):  # takes in files oh, 1 file
         url = self.upload_multiple_api
-        file_ = file.file.read()
-        files = {"file": file_}
+        files = {"file": file}
         try:
             response = requests.post(
                 url=url, files=files, headers={"Authorization": f"{token}"}
