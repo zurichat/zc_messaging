@@ -4,6 +4,10 @@ from utils.message_utils import get_message
 from starlette.responses import JSONResponse
 router = APIRouter()
 
+# org_id :6373eb474746182adae97314
+# room_id: 6373eb4f4746182adae97316
+# message_id:637fe320601ce3fc5dc739ea
+
 
 @router.get("/org/{org_id}/rooms/{room_id}/messages/{message_id}")
 async def get_detail(org_id: str, room_id: str, message_id: str):
