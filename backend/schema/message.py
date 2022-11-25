@@ -3,7 +3,7 @@ import concurrent.futures
 from datetime import datetime
 from typing import Any, List
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile, Form
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator, FileUrl
 from utils.room_utils import get_room
 
@@ -88,15 +88,17 @@ class MessageRequest(BaseModel):
     # saved_by: List[str] = []
     # timestamp: int = 1640204440922
     # created_at: str = str(datetime.utcnow())
-    sender_id: str = '4n4n'
-    emojis: List[Emoji] = []
-    richUiData: Any = {}
-    files: List[AnyHttpUrl] = []
+    sender_id: str = Form()
+    emojis: List[Emoji] = Form()
+    richUiData: Any = Form()
+    files: List[AnyHttpUrl] = Form()
     # files: List[FileUrl] = []
     # files = 
-    saved_by: List[str] = []
-    timestamp: int = 73738
-    created_at: str = str(datetime.utcnow())
+    saved_by: List[str] = Form()
+    timestamp: int = Form()
+    # created_at: str = str(datetime.utcnow())
+    created_at: str = Form()
+    # file: UploadFile = None
 
     # @root_validator(pre=True)
     # def prepend_http(cls, v):
@@ -112,11 +114,12 @@ class Thread(MessageRequest):
     data for the thread schema
     """
 
-    room_id: str
-    org_id: str
-    message_id: str = Field(None, alias="_id")
+    room_id: str = Form()
+    org_id: str = Form()
+    # message_id: str = Field(None, alias="_id")
+    message_id: str = Form()
     # message_id: str = '_id'
-    edited: bool = False
+    edited: bool = Form()
 
     @root_validator(pre=True)
     @classmethod
@@ -142,16 +145,16 @@ class Thread(MessageRequest):
             print(room)
         if not room:
             print('Room does not exist')
-            # raise HTTPException(
-            #     status_code=status.HTTP_404_NOT_FOUND, detail="Room does not exist"
-            # )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Room does not exist"
+            )
 
-        # if sender_id not in set(room["room_members"]):
-        #     print("Sender not a member of this room")
-            # raise HTTPException(
-            #     status_code=status.HTTP_404_NOT_FOUND,
-            #     detail="Sender not a member of this room",
-            # )
+        if sender_id not in set(room["room_members"]):
+            print("Sender not a member of this room")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Sender not a member of this room",
+            )
         print(values)
         return values
 
@@ -163,4 +166,4 @@ class Message(Thread):
     and adds a field for list of threads
     """
 
-    threads: List[Thread] = []
+    threads: List[Thread] = Form()

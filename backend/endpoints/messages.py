@@ -150,11 +150,12 @@ async def send_message(
     room_id: str,
     request: MessageRequest,
     background_tasks: BackgroundTasks,
-    # file: UploadFile = File(...),
+    file: UploadFile = File(), 
 ):  
     # x = DataFrame.to_dict(request)
     # print(x)
-    print(request.files)
+    
+    
     # print(request)
     """Creates and sends a message from a user inside a room.
 
@@ -207,31 +208,33 @@ async def send_message(
         HTTPException [404]: Room does not exist || Sender not a member of this room.
         HTTPException [424]: Message not sent.
     """
-    print(room_id)
-    print(request.sender_id)
-    print(room_id)
-    print(org_id)
-    print('working')
-    print(request.files)
-    # print(file.filename)
-    print('working')
+    # print(room_id)
+    # print(request.sender_id)
+    # print(room_id)
+    # print(org_id)
+    # print('working')
+    # print(request.files)
+    # # print(file.filename)
+    # print('working')
     # request.dict()['files'] = file
     # {'file': file}
-    x = request.dict().get('files')
-    y = []
-    for i in x:
-        a = i.lstrip(' ')
-        b = a.rstrip(' ')
-        y.append(b)
-    print(y)
+    # x = request.dict().get('files')
+    # y = []
+    # for i in x:
+    #     a = i.lstrip(' ')
+    #     b = a.rstrip(' ')
+    #     y.append(b)
+    # print(y)
+    # print(file.filename)
     message = Message(**request.dict(), org_id=org_id, room_id=room_id)
-    print(message)
+    # print(message)
     
 
     response = await create_message(org_id=org_id, message=message)
 
-    print(response)
-
+    # print(request.file.filename,'\n\n\n\n')
+    # return
+    # return {**request.dict()}
     if not response or response.get("status_code"):
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
@@ -248,10 +251,10 @@ async def send_message(
         message.dict(),
     )
 
-    # return JSONResponse(
-    #     content=ResponseModel.success(data=message.dict(), message="new message sent"),
-    #     status_code=status.HTTP_201_CREATED,
-    # )
+    return JSONResponse(
+        content=ResponseModel.success(data=message.dict(), message="new message sent"),
+        status_code=status.HTTP_201_CREATED,
+    )
 
 
 @router.put(
