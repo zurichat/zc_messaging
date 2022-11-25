@@ -493,18 +493,17 @@ async def update_room(
     # updates the room data in the db collection
     update_response = await DB.update(
         settings.ROOM_COLLECTION, document_id=room_id, data=data
-    )  
+    )
 
-    if update_response and update_response.get("status_code", None) is None:
-        room_id = {"room_id": update_response.get("data").get("object_id")}
-        
-        # Adding the room id to the data
-        room.id = room_id["room_id"]  
-        return JSONResponse(
-             content=ResponseModel.success(data=room.dict(), message="room updated"),
-             status_code=status.HTTP_200_OK,
-         )
-    raise HTTPException(
+    if update_response is None:
+        raise HTTPException(
         status_code=status.HTTP_424_FAILED_DEPENDENCY,
         detail="unable to update room",
     )
+    
+    return JSONResponse(
+            content=ResponseModel.success(data=room.dict(), message="room updated"),
+            status_code=status.HTTP_200_OK,
+        )
+
+    
