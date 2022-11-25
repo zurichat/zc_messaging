@@ -180,7 +180,7 @@ class Notification:
                 detail="Invalid message input"
                 )
         try:
-            room = get_room(org_id, room_id)
+            room = await get_room(org_id, room_id)
         except:
             raise HTTPException(
                 status_code=404, 
@@ -188,7 +188,7 @@ class Notification:
                 )
         # create a notfication for the DM user 
         if room['room_type'] == 'DM':
-            dm_create = self.dm_message_trigger(
+            dm_create = await self.dm_message_trigger(
                 org_id,room_id,sender_id, message
                 )
             if dm_create['statusCode'] !=201:
@@ -206,7 +206,7 @@ class Notification:
         payload['message'] = sender_id
         # send a message notification to every user in a room by 
         # calling the Novu trigger method
-        get_members = get_room_members(org_id, room_id)
+        get_members = await get_room_members(org_id, room_id)
         for member_id, value in get_members.items():
             if member_id == sender_id:
                 del get_members[member_id]
@@ -229,7 +229,7 @@ class Notification:
         if tagged_message:
             get_tagged_users = tagged_message['entityMap']
             if get_tagged_users !=[]:
-                notify_tagged_users = self.tagged_user_trigger_create(
+                notify_tagged_users = await self.tagged_user_trigger_create(
                     message_obj, payload
                     )
             # raise an http exception if novu fails to send message notification
