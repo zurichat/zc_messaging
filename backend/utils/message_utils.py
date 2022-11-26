@@ -1,5 +1,5 @@
-from typing import Any, Optional
-
+from typing import Any, Optional, Dict, List
+from fastapi import HTTPException, status
 from config.settings import settings
 from schema.message import Message
 from utils.db import DataStorage
@@ -153,3 +153,22 @@ async def update_message(
     message["edited"] = True
 
     return await db.update(settings.MESSAGE_COLLECTION, message_id, message)
+
+
+async def upload_file(org_id: str, files: List[Any], token: str) -> Dict[str, Any]:
+    db = DataStorage(org_id)
+    res = await db.upload(files, token)
+
+    if res is None:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"message": "Failed to upload file"},
+        )
+    
+    if isinstance(res, dict):
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"message": "Failed to upload file"},
+        )
+
+    return res

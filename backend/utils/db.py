@@ -373,3 +373,7 @@ class DataStorage:
         if members:
             for member in members:
                 return member if member["_id"] == member_id else {}
+            
+            
+async def upload_file(org_id: str, files: List[Any], token: str) -> Dict[str, Any]:
+    raise NotImplementedError
