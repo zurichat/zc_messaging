@@ -11,7 +11,17 @@ from config.settings import settings
 # List  all messages in a thread
 
 async def get_messages_in_thread(org_id, room_id, message_id):
-    """Retrieves all the messages in a particular thread"""
+    """Retrives all the messages in a thread.
+
+    Args:
+        org_id (str): The organization id where the message is being updated.
+        room_id (str): The id of the room the message was sent in.
+        message_id (str): The id of the message to be edited.
+        
+
+    Returns:
+        [dict]: Returns an array of message objects.
+    """
 
     # fetch message parent of the thread
     DB = DataStorage(org_id)
@@ -21,7 +31,17 @@ async def get_messages_in_thread(org_id, room_id, message_id):
 
 
 async def add_message_to_thread(org_id, room_id, message_id, request):
-    """Adds a message to a thread and returns an update response """
+    """Adds a message to a thread.
+
+    Args:
+        org_id (str): The organization id where the message is being updated.
+        room_id (str): The id of the room the message was sent in.
+        message_id (str): The id of the message to be edited.
+        request (dict[str,any]): A new message object, to be added to the thread.
+
+    Returns:
+        dict[str, Any]: Returns an update success response.
+    """
 
     # add message to a parent thread
     message = await get_message(org_id, room_id, message_id)
