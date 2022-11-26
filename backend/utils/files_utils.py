@@ -11,9 +11,9 @@ def zipfiles(filenames: str):
 	
 	zip_subdir = "dummy_archive_path"
 	zip_filename = "archive.zip"
-	"""
-		filenames = ["dummy_url path1", "dummy_url path12" ]
-	"""
+	
+		# filenames = ["dummy_url path1", "dummy_url path12" ]
+
 	data = io.BytesIO()
 	temp = zipfile.ZipFile(data, "w")
 
