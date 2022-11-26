@@ -32,7 +32,7 @@ class Notification:
         if get_tagged_users:
             message = get_tagged_users['blocks'][0]['text']
             # get the text from the message object
-            text_message = [message]
+            text_message = message
             # from the text in the message text, get the characters without '@'
             get_text_msg = text_message.split(' ')
             message_text = [text for text in get_text_msg if text.isalnum()]
