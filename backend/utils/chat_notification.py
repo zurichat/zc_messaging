@@ -223,7 +223,7 @@ class Notification:
             room_member_list.append(member_id)
          # send a message notification to every user in either in the channel
          #  or Group DM by calling the Novu trigger method
-        channel_or_group_msg_trigger = await event.trigger(
+        channel_or_group_msg_notification = await event.trigger(
             '<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
             {
                 "to": room_member_list,
@@ -231,7 +231,7 @@ class Notification:
             })
         # raise an http exception if novu fails to send message notification
         # to group DM or channel room members
-        if channel_or_group_msg_trigger["acknowledged"] != "true":
+        if channel_or_group_msg_notification["acknowledged"] != "true":
             raise HTTPException(
                 status_code=422, 
                 detail="Message notification failed"
@@ -251,7 +251,7 @@ class Notification:
                     status_code=422, 
                     detail="failed to create a DM notification"
                     )
-        return channel_or_group_msg_trigger
+        return channel_or_group_msg_notification
         
 
 
