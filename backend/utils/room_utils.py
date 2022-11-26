@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, List, Dict
 from utils.db import DataStorage
 from config.settings import settings
 
@@ -14,7 +14,7 @@ async def get_org_rooms(
     room_type: Optional[str] = None,
     is_private: Optional[bool] = None,
     is_default: Optional[bool] = None,
-) -> Optional[list[dict[str, Any]]]:
+) -> Optional[List[Dict[str, Any]]]:
     """Get all rooms in an organization.
 
     The list of the rooms can be filtered based on the values passed to the parameters.
@@ -81,7 +81,7 @@ async def get_org_rooms(
     return response
 
 
-async def get_room(org_id: str, room_id: str) -> dict[str, Any]:
+async def get_room(org_id: str, room_id: str) -> Dict[str, Any]:
     """Get information of a specific room of an organization.
 
     Args:
@@ -119,7 +119,7 @@ async def get_room(org_id: str, room_id: str) -> dict[str, Any]:
     return response
 
 
-async def get_room_members(org_id: str, room_id: str) -> dict[str, dict[str, Any]]:
+async def get_room_members(org_id: str, room_id: str) -> Dict[str, Dict[str, Any]]:
     """Get the members of a specific room.
 
     Args:
@@ -151,7 +151,7 @@ async def get_room_members(org_id: str, room_id: str) -> dict[str, dict[str, Any
     return response.get("room_members")
 
 
-async def get_member_starred_rooms(org_id: str, member_id: str) -> list[dict[str, Any]]:
+async def get_member_starred_rooms(org_id: str, member_id: str) -> List[Dict[str, Any]]:
     """Get all starred rooms of an organization's member.
 
     Args:
@@ -229,8 +229,8 @@ async def is_starred_room(org_id: str, room_id: str, member_id: str) -> bool:
 
 
 async def remove_room_member(
-    org_id: str, room_data: dict[str, Any], member_id: str
-) -> dict[str, Any]:
+    org_id: str, room_data: Dict[str, Any], member_id: str
+) -> Dict[str, Any]:
     """Removes a member from a room.
 
     Args:
