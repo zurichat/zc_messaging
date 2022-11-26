@@ -216,13 +216,13 @@ class Notification:
             return "dm notification trigger successful"
         payload['message'] = message
         payload['message'] = sender_id
-        # send a message notification to every user in a room by 
-        # calling the Novu trigger method
         get_members = await get_room_members(org_id, room_id)
         for member_id, value in get_members.items():
             if member_id == sender_id:
                 del get_members[member_id]
             room_member_list.append(member_id)
+         # send a message notification to every user in either in the channel
+         #  or Group DM by calling the Novu trigger method
         channel_or_group_msg_trigger_crate = await event.trigger(
             '<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
             {
