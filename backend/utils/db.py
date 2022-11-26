@@ -1,9 +1,10 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import requests
 from config.settings import settings
 from fastapi import status
 from fastapi.exceptions import HTTPException
+from pydantic import AnyHttpUrl
 
 
 class DataStorage:
@@ -17,6 +18,7 @@ class DataStorage:
         write_api (str): Zc_core API endpoint for writing (POST) and updating (PUT) data.
         read_api (str): Zc_core API endpoint for reading data.
         delete_api (str): Zc_core API endpoint for deleting data.
+        upload_api (str): Zc_core API endpoint for uploading files.
         get_members_api (str): Zc_core API endpoint for getting members of an organization.
         organization_id (str): The organization id where the operations are to be performed.
         plugin_id (str): The zc_messaging plugin id in the plugins marketplace.
@@ -38,13 +40,15 @@ class DataStorage:
         self.write_api = f"{settings.BASE_URL}/data/write"
         self.read_api = f"{settings.BASE_URL}/data/read"
         self.delete_api = f"{settings.BASE_URL}/data/delete"
+        self.upload_api = f"{settings.BASE_URL}/upload/files"
         self.get_members_api = (
             f"{settings.BASE_URL}/organizations/{organization_id}/members/"
         )
         self.organization_id = organization_id
 
         try:
-            response = requests.get(url=f"{settings.BASE_URL}/marketplace/plugins")
+            response = requests.get(
+                url=f"{settings.BASE_URL}/marketplace/plugins")
             response.raise_for_status()
         except requests.Timeout as timed_out_error:
             raise HTTPException(
@@ -141,8 +145,8 @@ class DataStorage:
             how many documents were successfully updated.
 
             {
-                    "status": 200,
-                    "message": "success",
+                "status": 200,
+                "message": "success",
                 "data": {
                     "matched_documents": 1,
                     "modified_documents": 1
@@ -152,8 +156,8 @@ class DataStorage:
             In case of error:
 
             {
-                    "status": 200,
-                    "message": "success",
+                "status": 200,
+                "message": "success",
                 "data": {
                     "matched_documents": 0,
                     "modified_documents": 0
@@ -373,3 +377,59 @@ class DataStorage:
         if members:
             for member in members:
                 return member if member["_id"] == member_id else {}
+
+    async def upload(
+        self, files: List[Any], token: str
+    ) -> Union[Dict[str, Any], List[AnyHttpUrl], None]:
+        """
+        Uploads files to zc_core.
+
+        Args:
+            files (List[Any]): A list of files to be uploaded.
+            token (str): The user's token.
+
+        Returns:
+            On success, a list containing the file urls of the uploaded files.
+            _type_: Union[Dict[str, Any], List[AnyHttpUrl], None]
+
+            In case of error:
+
+                {
+                    "status": 200,
+                    "message": "success",
+                    "data": null
+                }
+        """
+
+        files = [("files", file) for file in files]
+        url = self.upload_api + f"/{self.plugin_id}"
+
+        headers = {
+            "Authorization": token,
+        }
+
+        try:
+            response = requests.post(url=url, files=files, headers=headers)
+        except requests.exceptions.RequestException:
+            return None
+
+        if response.status_code == 200:
+            """ Expecting this => data
+            {
+                "status": 200,
+                "data": {
+                    "files_info": [
+                        {
+                            "file_url": "https://api.filestackapi.com/test"
+                        }
+                    ]
+                }
+            }
+            """
+            data: Dict[str, Union[int, Dict[str, List[Dict[str, str]]]]
+                       ] = response.json()
+
+            if data.get("status") == 200:
+                return [file["file_url"] for file in data["data"]["files_info"]]
+
+        return {"status_code": response.status_code, "message": response.json()}
