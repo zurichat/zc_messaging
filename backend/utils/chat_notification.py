@@ -200,15 +200,15 @@ class Notification:
                 )
         # create a notfication for the DM user 
         if room['room_type'] == 'DM':
-            dm_create = await self.dm_message_trigger(
+            dm_notification = await self.dm_message_trigger(
                 org_id,room_id,sender_id, message
                 )
-            if dm_create['statusCode'] !=201:
+            if dm_notification['statusCode'] !=201:
                 raise HTTPException(
                     status_code=422, 
                     detail="Failed to process Novu instance"
                     )
-            if dm_create["acknowledged"] != "true":
+            if dm_notification["acknowledged"] != "true":
                 raise HTTPException(
                 status_code=422, 
                 detail="failed to create a DM Novu instance"
