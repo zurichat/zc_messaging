@@ -15,7 +15,7 @@ class Notification:
 
 
     async def tagged_user_trigger_create(
-        self, message_obj, payload
+        self, message_obj
         ):
         """
         A method that creates a notification trigger for tagged users
@@ -27,13 +27,24 @@ class Notification:
             HTTP_422- when Novu couldn't send notification to tagged users
         """
         tagged_users_list = []
+        payload = {}
         get_tagged_users = message_obj.get("richUiData", " ")
-        if user_msg_tag:
+        if get_tagged_users:
+            message = get_tagged_users['blocks'][0]['text']
+            # get the text from the message object
+            text_message = [message]
+            # from the text in the message text, get the characters without '@'
+            get_text_msg = text_message.split(' ')
+            message_text = [text for text in get_text_msg if text.isalnum()]
+            new_message = " ".join(message_text)
+            # check the message object to get the names of the tagged users
             user_msg_tag = get_tagged_users['entityMap']
             if user_msg_tag !=[]:
                 for message in range(len(user_msg_tag)):
                     member_id = user_msg_tag[str(message)]['data']['mention']['name']
                     tagged_users_list.append(member_id)
+                payload['message'] = new_message
+                payload['message'] = message_obj["sender_id"]
                 tagged_users = await event.trigger(
                     '<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
                     {
@@ -173,7 +184,7 @@ class Notification:
                 detail="Invalid data input"
                 )
         try:
-            message = message_obj['data']['richUiData']['blocks'][0]['text']
+            message = message_obj['richUiData']['blocks'][0]['text']
             sender_id = message_obj["sender_id"]
         except:
             raise HTTPException(
@@ -231,7 +242,7 @@ class Notification:
             get_tagged_users = tagged_message['entityMap']
             if get_tagged_users !=[]:
                 notify_tagged_users = await self.tagged_user_trigger_create(
-                    message_obj, payload
+                    message_obj
                     )
             # raise an http exception if novu fails to send message notification
             # to tagged users
