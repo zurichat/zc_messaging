@@ -4,10 +4,11 @@ This plugin handles messaging for both DM and Channels
 
 ## Project Structure
 
-This project is a monolith application. You will find two folders namely:
+This project is a monolith application. You will find three folders namely:
 
 1. backend
 2. frontend
+3. notifications
 
 Depending on your track, you are to work in the folder that concerns you.
 
@@ -69,7 +70,12 @@ Depending on your track, you are to work in the folder that concerns you.
 - `yarn lint` to lint App
 - `yarn prettify` to run prettier
 
+### Notifications
+
+See [setup instructions](/notifications/README.md)
+
 ## Technologies Used
 
 1. Backend: FastApi
 2. Frontend: React
+3. Notifications: Novu
