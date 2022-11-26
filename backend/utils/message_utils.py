@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, List, Dict
 
 from config.settings import settings
 from schema.message import Message
@@ -6,7 +6,7 @@ from utils.db import DataStorage
 from utils.paginator import off_set
 
 
-async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[list[dict[str, Any]]]:
+async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[List[Dict[str, Any]]]:
     """Gets all messages sent in  an organization.
 
     Args:
@@ -45,7 +45,7 @@ async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[list[
 
 async def get_room_messages(
     org_id: str, room_id: str, page: int, limit: int
-) -> Optional[list[dict[str, Any]]]:
+) -> Optional[List[Dict[str, Any]]]:
     """Gets all messages sent inside  a room.
     Args:
         org_id (str): The organization id
@@ -86,8 +86,8 @@ async def get_room_messages(
 
 
 async def get_message(
-    org_id: str, room_id: str, message_id: str, page: int, limit: int
-) -> Optional[dict[str, Any]]:
+    org_id: str, room_id: str, message_id: str
+) -> Optional[Dict[str, Any]]:
     """Get a specific message in a room.
 
     Args:
@@ -116,10 +116,8 @@ async def get_message(
 
     DB = DataStorage(org_id)
     
-    skip = await off_set(page, limit)
     query = {"room_id": room_id, "_id": message_id}
-    options = {"limit":limit, "skip":skip, "sort":{"_id":-1}}
-    response = await DB.read(settings.MESSAGE_COLLECTION, query=query,  options=options)
+    response = await DB.read(settings.MESSAGE_COLLECTION, query=query)
 
     if not response or "status_code" in response:
         return {}
@@ -127,7 +125,7 @@ async def get_message(
     return response
 
 
-async def create_message(org_id: str, message: Message) -> dict[str, Any]:
+async def create_message(org_id: str, message: Message) -> Dict[str, Any]:
     """Creates a message document in the database.
 
     Args:
@@ -144,8 +142,8 @@ async def create_message(org_id: str, message: Message) -> dict[str, Any]:
 
 
 async def update_message(
-    org_id: str, message_id: str, message: dict[str, Any]
-) -> dict[str, Any]:
+    org_id: str, message_id: str, message: Dict[str, Any]
+) -> Dict[str, Any]:
     """Updates a message document in the database.
 
     Args:
