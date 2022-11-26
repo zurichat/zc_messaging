@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, List
 
 from fastapi import HTTPException, status, UploadFile, Form
-from pydantic import AnyHttpUrl, BaseModel, Field, root_validator, FileUrl
+from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 from utils.room_utils import get_room
 
 

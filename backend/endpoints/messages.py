@@ -6,16 +6,12 @@ from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
-# import shutil
-# from pandas import DataFrame
-from pydantic import AnyHttpUrl, FileUrl
 from utils.file_storage import FileStorage
-import requests
-from fastapi.security import OAuth2PasswordBearer
+# from fastapi.security import OAuth2PasswordBearer
 
 router = APIRouter()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @router.post(
@@ -31,10 +27,10 @@ async def send_message(
     org_id: str,
     room_id: str,
     background_tasks: BackgroundTasks,
-    token: str = Depends(oauth2_scheme), ### NOTE
-    # token: str = Form(str),
+    # token: str = Depends(oauth2_scheme), ### NOTE
+    token: str = Form(str),
     file: UploadFile = Form(File(...)),
-    # file: List[UploadFile] = Form(File(...)),
+    # file: List[UploadFile] = Form(File(...)), ### NOTE Here I am try to implement away that a user can upload multiple files It's still in development.
     request: MessageRequest = Depends(MessageRequest.as_form),
 ):   
 
