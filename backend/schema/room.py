@@ -52,6 +52,14 @@ class RoomMember(BaseModel):
     starred: bool = False
     closed: Optional[bool] = False
 
+class UpdateRoomRequest(BaseModel):
+    """Describes the request model for updating rooms."""
+
+    room_name: Optional[str] = None
+    description: Optional[str] = None
+    topic: Optional[str] = None
+    is_private: bool = False
+    is_archived: bool = False
 
 class RoomRequest(BaseModel):
     """Describes the request model for creating new rooms."""
