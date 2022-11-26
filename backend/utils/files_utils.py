@@ -1,9 +1,10 @@
 import os
 import zipfile
 import io
+from typing import List
 
 
-def zipfiles(filenames: str):
+def zipfiles(filenames: List[str]):
 
 	"""
 		An Helper function to help handling of multiple file
