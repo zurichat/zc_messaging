@@ -7,7 +7,7 @@ from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
 # import shutil
-from pandas import DataFrame
+# from pandas import DataFrame
 from pydantic import AnyHttpUrl, FileUrl
 from utils.file_storage import FileStorage
 import requests
@@ -34,6 +34,7 @@ async def send_message(
     token: str = Depends(oauth2_scheme), ### NOTE
     # token: str = Form(str),
     file: UploadFile = Form(File(...)),
+    # file: List[UploadFile] = Form(File(...)),
     request: MessageRequest = Depends(MessageRequest.as_form),
 ):   
 
@@ -91,20 +92,11 @@ async def send_message(
 
     new_obj = {**request.dict()}
     file_urls = []
-    if file.content_type:
-        storage = FileStorage(org_id)
-        n_file = storage.upload(file.file.read(), f'{token}')
-        if n_file["status"] == 200:
-            file_info = n_file["data"]["files_info"]
-            for data_ in file_info:
-                file_urls.append(data_["file_url"])
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not allowed to send file",
-            )
-        new_obj['files'] = file_urls
+    file_instance = FileStorage(org_id)
+    result_url = file_instance.upload(file)
+    file_urls.append(result_url)
 
+    new_obj['files'] = file_urls
     message = Message(**new_obj, org_id=org_id, room_id=room_id)
 
     response = await create_message(org_id=org_id, message=message)
@@ -117,7 +109,7 @@ async def send_message(
 
     message.message_id = response["data"]["object_id"]
 
-    # # Publish to centrifugo in the background.
+    # Publish to centrifugo in the background.
     background_tasks.add_task(
         centrifugo_client.publish,
         room_id,

@@ -78,14 +78,15 @@ class MessageRequest(BaseModel):
         "saved_by": []
         "created_at": "2021-12-22 22:38:33.075643"
     }
+
     """
 
-    sender_id: str = Form(str)
+    sender_id: str
     emojis: List[Emoji] = []
     richUiData: Any = {}
     files: List[AnyHttpUrl] = []
     saved_by: List[str] = []
-    timestamp: int = 1640204440922
+    timestamp: int 
     created_at: str = str(datetime.utcnow())
 
     @classmethod
@@ -95,7 +96,6 @@ class MessageRequest(BaseModel):
         emojis: List[Emoji] = Form([]),
         richUiData: Any = Form({}),
         files: List[AnyHttpUrl] = Form([]),
-        # files: List[FileUrl] = [],
         saved_by: List[str] = Form([]),
         timestamp: int = Form(1640204440922),
         created_at: str = Form(str(datetime.utcnow())),
@@ -118,7 +118,7 @@ class Thread(MessageRequest):
     """
 
     room_id: str
-    org_id: str 
+    org_id: str
     message_id: str = Field(None, alias="_id")
     edited: bool = False
 

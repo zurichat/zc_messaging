@@ -1,5 +1,7 @@
 import requests
 from config.settings import settings
+import cloudinary
+import cloudinary.uploader
 
 
 class FileStorage:
@@ -30,17 +32,6 @@ class FileStorage:
             print(exception)
 
     
-    def upload(self, file, token):  # takes in files oh, 1 file
-        url = self.upload_multiple_api
-        files = {"file": file}
-        try:
-            response = requests.post(
-                url=url, files=files, headers={"Authorization": f"{token}"}
-            )
-        except requests.exceptions.RequestException as e:
-            print(e)
-            return None
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return {"status": response.status_code, "message": response.reason}
+    def upload(self, file):
+        result = cloudinary.uploader.upload(file.file)
+        return result.get('url')
