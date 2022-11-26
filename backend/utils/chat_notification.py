@@ -29,10 +29,9 @@ class Notification:
         tagged_users_list = []
         payload = {}
         get_tagged_users = message_obj.get("richUiData", " ")
-        if get_tagged_users:
-            message = get_tagged_users['blocks'][0]['text']
+        if get_tagged_users: 
             # get the text from the message object
-            text_message = message
+            text_message = get_tagged_users['blocks'][0]['text']
             # from the text in the message text, get the characters without '@'
             get_text_msg = text_message.split(' ')
             message_text = [text for text in get_text_msg if text.isalnum()]
