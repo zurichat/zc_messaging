@@ -11,7 +11,7 @@ import json
 router = APIRouter()
 
 @router.put(
-		"/org/{org_id}/rooms/{room_id}/messages/{message_id}/edithreads",
+		"/org/{org_id}/rooms/{room_id}/messages/{message_id}/threads",
 		response_model=ResponseModel,
 		status_code=status.HTTP_200_OK,
 		responses={
@@ -86,7 +86,6 @@ async def update_threads_message(
 				HTTPException [424]: Message not edited.
 		"""
 
-		# payload = Message(**request.dict(), org_id=org_id, room_id=room_id)
 		payload = request.dict()
 
 		loadedMessage = await get_message(org_id, room_id, message_id)
@@ -100,11 +99,6 @@ async def update_threads_message(
 						status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
 				)
 		
-		# if message["sender_id"] != payload["sender_id"]:
-		#     raise HTTPException(
-		#         status_code=status.HTTP_401_UNAUTHORIZED,
-		#         detail="You are not authorized to edit this message",
-		#     )
 
 		added_thread_message = await edit_message_threads(org_id, message_id, thread_to_add)
 
