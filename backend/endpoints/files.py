@@ -46,7 +46,7 @@ async def get_files(org_id: str, room_id: str):
 
 
 
-    return list_files
+    return zipfiles(list_files)
 # return a list of archived uploaded files
 
 
