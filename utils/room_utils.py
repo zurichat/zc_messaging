@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Any, Optional
 from utils.db import DataStorage
 from config.settings import settings
 
