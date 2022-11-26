@@ -1,9 +1,9 @@
 from config.settings import settings
-from endpoints import members, messages, rooms, sync, threads, file
+from endpoints import members, messages, rooms, sync, threads, files
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
-from .utils import message_utils
+from utils import message_utils
 
 
 app = FastAPI(
