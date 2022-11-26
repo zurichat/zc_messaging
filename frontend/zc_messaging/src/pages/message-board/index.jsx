@@ -236,6 +236,7 @@ const MessagingBoard = () => {
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}
               currentUserId={authUser?.user_id}
+              height={"92vh"}
             />
           </div>
           {/* <TypingNotice>Omo Jesu is typing</TypingNotice> */}
