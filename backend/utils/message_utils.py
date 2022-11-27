@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 from config.settings import settings
 from schema.message import Message
@@ -153,3 +153,10 @@ async def update_message(
     message["edited"] = True
 
     return await db.update(settings.MESSAGE_COLLECTION, message_id, message)
+
+
+async def upload_file(org_id: str, files: List[Any], token: str) -> Dict[str, Any]:
+    """
+        Upload Files
+    """
+    raise NotImplementedError

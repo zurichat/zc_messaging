@@ -1,10 +1,15 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Media, Message, MessageRequest
+from typing import List
+
+from fastapi import (APIRouter, BackgroundTasks, Depends, File, HTTPException,
+                     UploadFile, status)
+from fastapi.security import OAuth2PasswordBearer
+from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
+from utils.message_utils import upload_file
 
 router = APIRouter()
 
@@ -275,40 +280,57 @@ async def get_messages(org_id: str, room_id: str):
         status_code=status.HTTP_200_OK,
     )
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-@router.get(
-    "/org/{org_id}/members/{member_id}/media_files",
-    response_model=Media,
+
+@router.post(
+    "/org/{org_id}/rooms/{room_id}/media_upload",
+    response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
-async def get_media(org_id: str, member_id: str):
-    """Fetches all media uploaded by the particular member.
-
-    Args:
-        org_id (str): A unique identifier of an organization.
-        member_id (str): A unique identifier of the member.
-
-    Returns:
-        A dict containing a list of media objects.
-
-    Raises:
-        HTTPException [424]: Zc Core failed
+async def media_upload(
+    org_id: str,
+    room_id: str,
+    request: MessageRequest,
+    files: List[UploadFile] = File(...),
+    token: str = Depends(oauth2_scheme),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+):
     """
-    response = await get_media(org_id, member_id)
-    if response == []:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Member does not exist or no media found",
-        )
+        Uploads a file to the database.
+        Args:
+            org_id (str): A unique identifier of an organization.
+            room_id (str): A unique identifier of the room where messages are fetched from.
+            file (UploadFile): A file object to be uploaded.
 
-    if response is None:
+        Raises:
+            HTTPException [424]: Zc Core failed
+        """
+
+    response = await upload_file(org_id, files, token)
+
+    if response is not None:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail="Zc Core failed",
         )
 
+    message = Message(**request.dict(), org_id=org_id, room_id=room_id, token=token, files=files)
+
+    message.message_id = response["data"]["object_id"]
+
+    background_tasks.add_task(
+        centrifugo_client.publish,
+        room_id,
+        Events.MESSAGE_CREATE,
+        message.dict()
+    )
+
     return JSONResponse(
-        content=ResponseModel.success(data=response, message="Media retrieved"),
+        content=ResponseModel.success(
+            data=message.dict(),
+            message="Message Sent",
+        ),
         status_code=status.HTTP_200_OK,
     )

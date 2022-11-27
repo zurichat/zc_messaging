@@ -4,7 +4,6 @@ from config.settings import settings
 
 class FileStorage:
     """Serves as a layer for communication of plugin files and server.
-
     Provides a layer of abstraction for communication between plugin
     files and the database on zc_core.
     """
