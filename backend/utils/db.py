@@ -378,7 +378,7 @@ class DataStorage:
             for member in members:
                 return member if member["_id"] == member_id else {}
 
-    async def upload(
+    async def files_upload(
         self, files: List[Any], token: str
     ) -> Union[Dict[str, Any], List[AnyHttpUrl], None]:
         """

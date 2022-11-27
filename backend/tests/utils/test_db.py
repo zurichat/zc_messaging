@@ -59,7 +59,7 @@ class TestDBUpload:
                     ]
                 }
             }
-            response = await TestDB.upload(files, token)
+            response = await TestDB.files_upload(files, token)
             headers = {
                 "Authorization": token,
             }
@@ -80,7 +80,7 @@ class TestDBUpload:
 
         with mock.patch('requests.post') as mock_post:
             mock_post.side_effect = requests.exceptions.RequestException
-            response = await TestDB.upload(files, token)
+            response = await TestDB.files_upload(files, token)
             assert response is None
 
     async def test_upload_none(self, TestDB: DataStorage):
@@ -94,7 +94,7 @@ class TestDBUpload:
                 "status": 400,
                 "data": "test"
             }
-            response = await TestDB.upload(files, token)
+            response = await TestDB.files_upload(files, token)
             assert response == {
                 "status_code": 400,
                 "message": {
