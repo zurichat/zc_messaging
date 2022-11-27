@@ -6,11 +6,7 @@ from utils.db import DataStorage
 from utils.paginator import off_set
 
 
-<<<<<<< HEAD
-async def get_org_messages(org_id: str) -> Optional[List[Dict[str, Any]]]:
-=======
 async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[List[Dict[str, Any]]]:
->>>>>>> cb63f47124335054616951996835992142a5dc15
     """Gets all messages sent in  an organization.
 
     Args:
@@ -48,11 +44,7 @@ async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[List[
 
 
 async def get_room_messages(
-<<<<<<< HEAD
-    org_id: str, room_id: str
-=======
     org_id: str, room_id: str, page: int, limit: int
->>>>>>> cb63f47124335054616951996835992142a5dc15
 ) -> Optional[List[Dict[str, Any]]]:
     """Gets all messages sent inside  a room.
     Args:
