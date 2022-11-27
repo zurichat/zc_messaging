@@ -13,17 +13,22 @@ router = APIRouter()
 
 @router.get("/org/{org_id}/rooms/{room_id}/files")
 async def get_files(org_id: str, room_id: str):
+	"""
+		An endpoint that returns a list of images files uplaoded to th given room
 
+		params:
+		org_id: organization id number
+		room_id: room id number
+	"""
 
 	room_messages = await get_room_messages(org_id, room_id)
-	# return room_messages
+
     
 	if not room_messages:
 		raise HTTPException(
 			status_code=status.HTTP_404_NOT_FOUND,
 			detail={"No file was uploaded": room_messages},
 		)
-
 
 	list_files = []
 	for message in room_messages:
@@ -32,13 +37,7 @@ async def get_files(org_id: str, room_id: str):
 
 	return getImages(list_files)
 	
-        
 
-
-	
-
-    # return list_files
-# return a list of archived uploaded files
 
 
    

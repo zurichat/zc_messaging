@@ -11,7 +11,6 @@ def getImages(filenames: str):
 
 	filepaths = [" ".join(item)  for item in filenames]
 
-
 	list_of_images = []
 	for filepath in filepaths:
 		if filepath:
