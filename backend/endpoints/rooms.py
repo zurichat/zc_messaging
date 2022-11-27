@@ -508,5 +508,112 @@ async def update_room(
             content=ResponseModel.success(data=room, message="room updated"),
             status_code=status.HTTP_200_OK,
         )
+@router.get(
+    "/org/{org_id}/rooms/{room_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"detail": "Room not found"}
+    },
+)
+async def get_room_details(org_id: str, room_id: str):
 
+    """Get room Details.
+    Returns details of a room if the room is found in the database
+    Raises HTTP_404_NOT_FOUND if the room is not found
+    Args:
+        org_id (str): A unique identifier of an organisation
+        room_id (str): A unique identifier of the room
+    Returns:
+        HTTP_200_OK (Room retrieved successfully):
+
+        {
+    "status": "success",
+    "message": "Room retrieved successfully",
+    "data": {
+        "_id": "637f992a601ce3fc5dc7392d",
+        "created_at": "2022-11-24 16:17:46.715161",
+        "created_by": "637f9926601ce3fc5dc7392c",
+        "description": "",
+        "is_archived": false,
+        "is_private": false,
+        "org_id": "637f9926601ce3fc5dc7392b",
+        "room_members": {
+            "637f9926601ce3fc5dc7392c": {
+                "closed": false,
+                "role": "admin",
+                "starred": false
+            }
+        },
+        "room_name": "general",
+        "room_type": "CHANNEL",
+        "topic": ""
+    }
+}
+
+    Raises:
+        HTTPException [404]: Room not found
     
+    """
+    room = await get_room(org_id, room_id)
+    if not room:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
+        )
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ResponseModel.success(
+            data=room,
+            message="Room retrieved successfully",
+        ),
+    )
+    
+@router.delete(
+    "/org/{org_id}/rooms/{room_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"detail": "Room not found"}
+    },
+)
+async def delete_room(org_id: str, room_id: str):
+
+    """Deletes room.
+    Deletes a room if the room is found in the database
+    Raises HTTP_404_NOT_FOUND if the room is not found
+    Args:
+        org_id (str): A unique identifier of an organisation
+        room_id (str): A unique identifier of the room
+    Returns:
+        HTTP_200_OK (Room removed  successfully):
+
+    {
+    "status": "success",
+    "message": "Room Deleted successfully",
+    "data": {
+        "status": 200,
+        "message": "success",
+        "data": {
+            "deleted_count": 1
+        }
+    }
+}
+    Raises:
+        HTTPException [404]: Room not found
+    """
+
+    room = await remove_room(org_id, room_id)
+    if room["data"]["deleted_count"] == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
+        )
+
+   
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=ResponseModel.success(
+            data=room,
+            message="Room Deleted successfully",
+        ),
+    )    
