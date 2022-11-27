@@ -502,7 +502,7 @@ async def update_room(
     )
 
     return JSONResponse(
-            content=ResponseModel.success(data=room.dict(), message="room updated"),
+            content=ResponseModel.success(data=room, message="room updated"),
             status_code=status.HTTP_200_OK,
         )
 
