@@ -41,11 +41,11 @@ const sendMessageBoardHandler = async (
  * @description Retrieve all room messages
  */
 
-const getRoomMessagesHandler = async (orgId, roomId) => {
+const getRoomMessagesHandler = async (orgId, roomId, page = 1, size = 50) => {
   try {
     if (orgId && roomId) {
       const getRoomMessagesResponse = await axios.get(
-        `${BASE_URL}/org/${orgId}/rooms/${roomId}/messages`
+        `${BASE_URL}/org/${orgId}/rooms/${roomId}/messages?page=${page}&size=${size}`
       )
       return getRoomMessagesResponse.data
     }
