@@ -4,7 +4,7 @@ from starlette.responses import JSONResponse, Response
 from fastapi import FastAPI, UploadFile, File, APIRouter
 from fastapi.responses import FileResponse, JSONResponse
 from utils.message_utils import get_message, get_room_messages
-from utils.files_utils import zipfiles
+from utils.files_utils import getImages
 router = APIRouter()
 
 
@@ -13,7 +13,7 @@ router = APIRouter()
 
 @router.get("/org/{org_id}/rooms/{room_id}/files")
 async def get_files(org_id: str, room_id: str):
-    
+
 
 	room_messages = await get_room_messages(org_id, room_id)
 	# return room_messages

@@ -7,7 +7,7 @@ from fastapi import Response
 
 
 
-def zipfiles(filenames: str):
+def getImages(filenames: str):
 
 	filepaths = [" ".join(item)  for item in filenames]
 
