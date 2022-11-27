@@ -3,6 +3,7 @@ from fastapi_pagination import Page, add_pagination, paginate
 from typing import List
 from fastapi.security import OAuth2PasswordBearer
 from schema.message import Message, MessageRequest
+
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
