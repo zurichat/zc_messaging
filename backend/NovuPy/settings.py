@@ -1,20 +1,29 @@
+import os
+
 from decouple import config
 
-BASE_URL = 'https://api.novu.co/v1'
+"""
+install python-decouple and add the environment variables in a .env file to run locally
 
-# declare NOVU_API_KEY in .env file
-# example:
-# NOVU_API_KEY = acc7708b8e05bc3f7d61dd629d320b41
+in Production, create BASE_URL & NOVU_API_KEY with their respective values
+"""
 
+DEFAULT_BASE_URL = 'http://139.144.17.179:3000/'
+DEFAULT_API_KEY = '8a689f944b84abe929c2256c3499b828'
+
+BASE_URL = os.environ.get('BASE_URL', config(
+    'BASE_URL', default=DEFAULT_BASE_URL))
+
+NOVU_API_KEY = os.environ.get('NOVU_API_KEY', config(
+    'NOVU_API_KEY', default=DEFAULT_API_KEY))
 
 FULL_HEADER = {
-    'Authorization': 'ApiKey '+config('NOVU_API_KEY'),
+    'Authorization': 'ApiKey ' + NOVU_API_KEY,
     'Content_Type': 'application/json'
 }
 
 # simple header with just Api_key
-SMALL_HEADER = {'Authorization': 'ApiKey ' +
-                config('NOVU_API_KEY', '')}
+SMALL_HEADER = {'Authorization': 'ApiKey ' + NOVU_API_KEY}
 
 
 class Core:

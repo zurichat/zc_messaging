@@ -39,7 +39,7 @@ class Integration(Core):
         """
         Get integrations
         """
-        url = self.base_url+'/integrations'
+        url = self.base_url+'v1/integrations'
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url=url, headers=self.s_header)
@@ -50,7 +50,7 @@ class Integration(Core):
         """
         Get active integrations
         """
-        url = self.base_url+'/integrations/active'
+        url = self.base_url+'v1/integrations/active'
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url=url, headers=self.s_header)
@@ -61,10 +61,10 @@ class Integration(Core):
         """
         Create integration
         """
-        url = self.base_url+'/integrations'
+        url = self.base_url+'v1/integrations'
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(url=url, headers=self.headers, data=data)
+            response = await client.post(url=url, headers=self.headers, json=data)
 
         return response.json()
 
@@ -72,10 +72,10 @@ class Integration(Core):
         """
         Update integration
         """
-        url = self.base_url+f'/integrations/{id}'
+        url = self.base_url+f'v1/integrations/{id}'
 
         async with httpx.AsyncClient() as client:
-            response = await client.put(url=url, headers=self.headers, data=data)
+            response = await client.put(url=url, headers=self.headers, json=data)
 
         return response.json()
 
@@ -83,7 +83,7 @@ class Integration(Core):
         """
         Delete integration
         """
-        url = self.base_url+f'/integrations/{id}'
+        url = self.base_url+f'v1/integrations/{id}'
 
         async with httpx.AsyncClient() as client:
             response = await client.delete(url=url, headers=self.s_header)
