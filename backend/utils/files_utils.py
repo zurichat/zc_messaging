@@ -3,29 +3,18 @@ import zipfile
 import io
 from typing import List
 
+from fastapi import Response
 
-def zipfiles(filenames: List[str]):
 
-	"""
-		An Helper function to help handling of multiple file
-	"""
-	
-	zip_subdir = "dummy_archive_path"
-	zip_filename = "archive.zip"
-	
-		# filenames = ["dummy_url path1", "dummy_url path12" ]
 
-	data = io.BytesIO()
-	temp = zipfile.ZipFile(data, "w")
+def zipfiles(filenames: str):
 
-	for filepath in filenames:
-		fdir, fname = os.path.split(filepath)
-		zip_path = os.path.join(zip_subdir, fname)
-		temp.write(fdir, zip_path)
+	filepaths = [" ".join(item)  for item in filenames]
 
-	temp.close()
-	resp = Response(data.getvalue(), media_type="image/png-compressed", headers={
-		'Content-Disposition': f'attachment;filename={zip_filename}'
-	})
 
-	return resp
+	list_of_images = []
+	for filepath in filepaths:
+		if filepath:
+			list_of_images.append(filepath)
+
+	return list_of_images
