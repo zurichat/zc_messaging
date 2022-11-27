@@ -4,7 +4,6 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
-
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
@@ -38,6 +37,6 @@ app.include_router(
 
 app.mount(
     "/",
-    StaticFiles(directory="../frontend/dist", html=True, check_dir=False),
+    StaticFiles(directory="../frontend/zc_messaging/src/", html=True, check_dir=False),
     name="static",
 )

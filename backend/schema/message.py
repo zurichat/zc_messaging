@@ -3,7 +3,7 @@ import concurrent.futures
 from datetime import datetime
 from typing import Any, List
 
-from fastapi import HTTPException, status, UploadFile, Form
+from fastapi import HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 from utils.room_utils import get_room
 
@@ -86,29 +86,9 @@ class MessageRequest(BaseModel):
     richUiData: Any = {}
     files: List[AnyHttpUrl] = []
     saved_by: List[str] = []
-    timestamp: int 
+    timestamp: int
     created_at: str = str(datetime.utcnow())
 
-    @classmethod
-    def as_form(
-        cls,
-        sender_id: str = Form('619ba4671a5f54782939d385'),
-        emojis: List[Emoji] = Form([]),
-        richUiData: Any = Form({}),
-        files: List[AnyHttpUrl] = Form([]),
-        saved_by: List[str] = Form([]),
-        timestamp: int = Form(1640204440922),
-        created_at: str = Form(str(datetime.utcnow())),
-    ): 
-        return cls(
-            sender_id=sender_id, 
-            emojis=emojis, 
-            richUiData=richUiData, 
-            files=files, 
-            saved_by=saved_by, 
-            timestamp=timestamp, 
-            created_at=created_at
-        )
 
 class Thread(MessageRequest):
     """Provide structure for the thread schema
@@ -164,3 +144,4 @@ class Message(Thread):
     """
 
     threads: List[Thread] = []
+

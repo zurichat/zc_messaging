@@ -1,7 +1,7 @@
-import requests
-from config.settings import settings
 import cloudinary
 import cloudinary.uploader
+import requests
+from config.settings import settings
 
 
 class FileStorage:
@@ -21,7 +21,7 @@ class FileStorage:
             self.plugin_id = plugin["id"] if plugin else None
             self.upload_api = f"{settings.BASE_URL}/upload/file/" + "{self.plugin_id}"
             self.upload_multiple_api = (
-                f"{settings.BASE_URL}/upload/files/" + f"{self.plugin_id}"
+                f"{settings.BASE_URL}/upload/files/" + "{self.plugin_id}"
             )
             self.delete_file_api = (
                 f"{settings.BASE_URL}/delete/file/" + "{self.plugin_id}"
@@ -31,7 +31,10 @@ class FileStorage:
         except requests.exceptions.RequestException as exception:
             print(exception)
 
-    
-    def upload(self, file):
-        result = cloudinary.uploader.upload(file.file)
-        return result.get('url')
+def upload(file):
+    '''upload file to the cloudinary database'''
+
+    result = cloudinary.uploader.upload(file.file, resource_type='auto')
+    url = result.get('url')
+    return url
+

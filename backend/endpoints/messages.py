@@ -1,17 +1,20 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status, UploadFile, File, Depends, Form
-from fastapi_pagination import Page, add_pagination, paginate
+from typing import List
+
+from fastapi import (APIRouter, BackgroundTasks, Depends, HTTPException,
+                     UploadFile, status)
+from fastapi.security import OAuth2PasswordBearer
+# from fastapi_pagination import Page, add_pagination, paginate
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
+from utils.file_storage import upload
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
-from utils.file_storage import FileStorage
-# from fastapi.security import OAuth2PasswordBearer
 
 router = APIRouter()
 
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @router.post(
@@ -26,14 +29,9 @@ router = APIRouter()
 async def send_message(
     org_id: str,
     room_id: str,
+    request: MessageRequest,
     background_tasks: BackgroundTasks,
-    # token: str = Depends(oauth2_scheme), ### NOTE
-    token: str = Form(str),
-    file: UploadFile = Form(File(...)),
-    # file: List[UploadFile] = Form(File(...)), ### NOTE Here I am try to implement away that a user can upload multiple files It's still in development.
-    request: MessageRequest = Depends(MessageRequest.as_form),
-):   
-
+):
     """Creates and sends a message from a user inside a room.
 
     Registers a new document to the messages database collection while
@@ -86,14 +84,7 @@ async def send_message(
         HTTPException [424]: Message not sent.
     """
 
-    new_obj = {**request.dict()}
-    file_urls = []
-    file_instance = FileStorage(org_id)
-    result_url = file_instance.upload(file)
-    file_urls.append(result_url)
-
-    new_obj['files'] = file_urls
-    message = Message(**new_obj, org_id=org_id, room_id=room_id)
+    message = Message(**request.dict(), org_id=org_id, room_id=room_id)
 
     response = await create_message(org_id=org_id, message=message)
 
@@ -232,11 +223,11 @@ async def update_message(
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=Page[Message],
+    response_model=[].append(Message),
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
-async def get_messages(org_id: str, room_id: str):
+async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15):
     """Fetches all messages sent in a particular room.
 
     Args:
@@ -274,7 +265,7 @@ async def get_messages(org_id: str, room_id: str):
         HTTPException [424]: Zc Core failed
     """
 
-    response = await get_room_messages(org_id, room_id)
+    response = await get_room_messages(org_id, room_id, page, limit)
     if response == []:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -287,6 +278,121 @@ async def get_messages(org_id: str, room_id: str):
             detail="Zc Core failed",
         )
 
-    return paginate(response)
+    result = {
+            "data": response,
+            "page": page,
+            "size": limit
+    }
 
-add_pagination(router)
+    return JSONResponse(
+        content=ResponseModel.success(data=result, message="Messages retrieved"),
+        status_code=status.HTTP_200_OK,
+    )
+
+
+# NOTE this is my function
+@router.post(
+    "/org/{org_id}/rooms/{room_id}/my-messages",
+    response_model=ResponseModel,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        404: {"description": "Room or sender not found"},
+        424: {"description": "ZC Core failed"},
+    },
+)
+async def send_message_(
+    org_id: str,
+    room_id: str,
+    message_: str,
+    background_tasks: BackgroundTasks,
+    file: List[UploadFile],
+    # token: str = Depends(oauth2_scheme),
+    request: MessageRequest = Depends(MessageRequest),
+):
+
+    """Creates and sends a message from a user inside a room.
+
+    Registers a new document to the messages database collection while
+    publishing to all members of the room in the background.
+
+    Args:
+        org_id (str): A unique identifier of an organisation.
+        request (MessageRequest): A pydantic schema that defines the message request parameters.
+        room_id (str): A unique identifier of the room where the message is being sent to.
+        background_tasks (BackgroundTasks): A background task for publishing to all
+                                            members of the room.
+
+    Returns:
+        A dict containing data about the message that was created.
+
+        {
+            "status": "success",
+            "message": "new message sent",
+            "data": {
+                "sender_id": "619bab3b1a5f54782939d400",
+                "emojis": [],
+                "richUiData": {
+                "blocks": [
+                    {
+                    "key": "eljik",
+                    "text": "Larry Gaaga",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                    "data": {}
+                    }
+                ],
+                "entityMap": {}
+                },
+                "files": [],
+                "saved_by": [],
+                "timestamp": 0,
+                "created_at": "2022-02-01 19:20:55.891264",
+                "room_id": "61e6855e65934b58b8e5d1df",
+                "org_id": "619ba4671a5f54782939d384",
+                "message_id": "61f98d0665934b58b8e5d286",
+                "edited": false,
+                "threads": []
+            }
+        }
+
+    Raises:
+        HTTPException [404]: Room does not exist || Sender not a member of this room.
+        HTTPException [424]: Message not sent.
+    """
+
+    new_obj = {**request.dict()}
+    file_urls = []
+
+    #############
+    result_url = upload(file)
+    file_urls.append(result_url)
+    #############
+
+    new_obj['files'] = file_urls
+    # new_obj['message'] =
+    new_obj['blocks']['text'] = message_
+    message = Message(**new_obj, org_id=org_id, room_id=room_id)
+
+    response = await create_message(org_id=org_id, message=message)
+
+    if not response or response.get("status_code"):
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"Message not sent": response},
+        )
+    message.message_id = response["data"]["object_id"]
+
+    # Publish to centrifugo in the background.
+    background_tasks.add_task(
+        centrifugo_client.publish,
+        room_id,
+        Events.MESSAGE_CREATE,
+        message.dict(),
+    )
+    return JSONResponse(
+        content=ResponseModel.success(data=message.dict(), message="new message sent"),
+        status_code=status.HTTP_201_CREATED,
+    )
+
