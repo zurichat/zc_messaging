@@ -30,7 +30,7 @@ async def get_files(org_id: str, room_id: str):
 
 		list_files.append(message['files'])
 
-	return zipfiles(list_files)
+	return getImages(list_files)
 	
         
 
