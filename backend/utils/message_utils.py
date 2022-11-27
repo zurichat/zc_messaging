@@ -1,5 +1,4 @@
 from typing import Any, Dict, List, Optional
-
 from config.settings import settings
 from schema.message import Message
 from utils.db import DataStorage
