@@ -3,9 +3,14 @@ from typing import Any, Optional, List, Dict
 from config.settings import settings
 from schema.message import Message
 from utils.db import DataStorage
+from utils.paginator import off_set
 
 
+<<<<<<< HEAD
 async def get_org_messages(org_id: str) -> Optional[List[Dict[str, Any]]]:
+=======
+async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[List[Dict[str, Any]]]:
+>>>>>>> cb63f47124335054616951996835992142a5dc15
     """Gets all messages sent in  an organization.
 
     Args:
@@ -32,7 +37,9 @@ async def get_org_messages(org_id: str) -> Optional[List[Dict[str, Any]]]:
     """
 
     DB = DataStorage(org_id)
-    response = await DB.read(settings.MESSAGE_COLLECTION)
+    skip = await off_set(page, limit)
+    options = {"limit":limit, "skip":skip, "sort":{"_id":-1}}
+    response = await DB.read(settings.MESSAGE_COLLECTION, options=options)
 
     if not response or "status_code" in response:
         return None
@@ -41,7 +48,11 @@ async def get_org_messages(org_id: str) -> Optional[List[Dict[str, Any]]]:
 
 
 async def get_room_messages(
+<<<<<<< HEAD
     org_id: str, room_id: str
+=======
+    org_id: str, room_id: str, page: int, limit: int
+>>>>>>> cb63f47124335054616951996835992142a5dc15
 ) -> Optional[List[Dict[str, Any]]]:
     """Gets all messages sent inside  a room.
     Args:
@@ -69,7 +80,9 @@ async def get_room_messages(
     """
 
     DB = DataStorage(org_id)
-    response = await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id})
+    skip = await off_set(page, limit)
+    options = {"limit":limit, "skip":skip, "sort":{"_id":-1}}
+    response = await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id}, options=options)
 
     if response is None:
         return []
@@ -110,6 +123,7 @@ async def get_message(
     """
 
     DB = DataStorage(org_id)
+    
     query = {"room_id": room_id, "_id": message_id}
     response = await DB.read(settings.MESSAGE_COLLECTION, query=query)
 
