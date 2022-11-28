@@ -6,9 +6,10 @@ from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
+from utils.chat_notification import Notification
 
 router = APIRouter()
-
+notification = Notification()
 
 @router.post(
     "/org/{org_id}/rooms/{room_id}/messages",
@@ -88,7 +89,7 @@ async def send_message(
         )
 
     message.message_id = response["data"]["object_id"]
-
+    user_msg_notification = await notification.messages_trigger(message_obj=message)
     # Publish to centrifugo in the background.
     background_tasks.add_task(
         centrifugo_client.publish,
