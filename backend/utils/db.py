@@ -40,7 +40,6 @@ class DataStorage:
         self.write_api = f"{settings.BASE_URL}/data/write"
         self.read_api = f"{settings.BASE_URL}/data/read"
         self.delete_api = f"{settings.BASE_URL}/data/delete"
-        self.upload_api = f"{settings.BASE_URL}/upload/files"
         self.get_members_api = (
             f"{settings.BASE_URL}/organizations/{organization_id}/members/"
         )
