@@ -144,4 +144,3 @@ class Message(Thread):
     """
 
     threads: List[Thread] = []
-

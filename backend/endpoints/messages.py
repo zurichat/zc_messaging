@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import (APIRouter, BackgroundTasks, Depends, HTTPException,
+from fastapi import (APIRouter, BackgroundTasks, Depends, File, HTTPException,
                      UploadFile, status)
 from fastapi.security import OAuth2PasswordBearer
 # from fastapi_pagination import Page, add_pagination, paginate
@@ -303,12 +303,13 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15
 async def send_message_(
     org_id: str,
     room_id: str,
-    message_: str,
+    # message_: str, #### NOTE I don't know If you want me to add a message to it, if you do I can do it
     background_tasks: BackgroundTasks,
-    file: List[UploadFile],
     # token: str = Depends(oauth2_scheme),
+    file: List[UploadFile] = File(default=None),
     request: MessageRequest = Depends(MessageRequest),
 ):
+    ########## NOTE I didn't want to change the message schema, but just know that the emoji and the files filled in the schema are required. I didn't make it required
 
     """Creates and sends a message from a user inside a room.
 
@@ -362,17 +363,20 @@ async def send_message_(
         HTTPException [424]: Message not sent.
     """
 
+    print(request.dict())
+
+    # request.dict()['richUiData']['blocks'] = {'text': message_}
     new_obj = {**request.dict()}
     file_urls = []
 
     #############
-    result_url = upload(file)
-    file_urls.append(result_url)
+    if file is not None:
+        for item in file:
+            result_url = upload(item)
+            file_urls.append(result_url)
     #############
 
     new_obj['files'] = file_urls
-    # new_obj['message'] =
-    new_obj['blocks']['text'] = message_
     message = Message(**new_obj, org_id=org_id, room_id=room_id)
 
     response = await create_message(org_id=org_id, message=message)
@@ -395,4 +399,3 @@ async def send_message_(
         content=ResponseModel.success(data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
     )
-
