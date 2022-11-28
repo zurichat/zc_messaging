@@ -1,6 +1,7 @@
-from typing import Any, Optional, List, Dict
-from utils.db import DataStorage
+from typing import Any, Optional
+
 from config.settings import settings
+from utils.db import DataStorage
 
 DEFAULT_DM_IMG = (
     "https://cdn.iconscout.com/icon/free/png-256/"
@@ -14,7 +15,7 @@ async def get_org_rooms(
     room_type: Optional[str] = None,
     is_private: Optional[bool] = None,
     is_default: Optional[bool] = None,
-) -> Optional[List[Dict[str, Any]]]:
+) -> Optional[list[dict[str, Any]]]:
     """Get all rooms in an organization.
 
     The list of the rooms can be filtered based on the values passed to the parameters.
@@ -81,7 +82,7 @@ async def get_org_rooms(
     return response
 
 
-async def get_room(org_id: str, room_id: str) -> Dict[str, Any]:
+async def get_room(org_id: str, room_id: str) -> dict[str, Any]:
     """Get information of a specific room of an organization.
 
     Args:
@@ -119,7 +120,7 @@ async def get_room(org_id: str, room_id: str) -> Dict[str, Any]:
     return response
 
 
-async def get_room_members(org_id: str, room_id: str) -> Dict[str, Dict[str, Any]]:
+async def get_room_members(org_id: str, room_id: str) -> dict[str, dict[str, Any]]:
     """Get the members of a specific room.
 
     Args:
@@ -127,7 +128,8 @@ async def get_room_members(org_id: str, room_id: str) -> Dict[str, Dict[str, Any
         room_id (str): The room id.
 
     Returns:
-        dict[str, dict[str, Any]]: A key value pair of room's members info mapped according to RoomMember schema.
+        dict[str, dict[str, Any]]: A key value pair of room's members
+        info mapped according to RoomMember schema.
 
         {
             "619ba4671a5f54782939d385": {
@@ -141,7 +143,8 @@ async def get_room_members(org_id: str, room_id: str) -> Dict[str, Dict[str, Any
 
     db = DataStorage(org_id)
     query = {"_id": room_id}
-    options = {"sort": {"created_at": -1}, "projection": {"room_members": 1, "_id": 0}}
+    options = {"sort": {"created_at": -1},
+               "projection": {"room_members": 1, "_id": 0}}
 
     response = await db.read(settings.ROOM_COLLECTION, query=query, options=options)
 
@@ -151,7 +154,7 @@ async def get_room_members(org_id: str, room_id: str) -> Dict[str, Dict[str, Any
     return response.get("room_members")
 
 
-async def get_member_starred_rooms(org_id: str, member_id: str) -> List[Dict[str, Any]]:
+async def get_member_starred_rooms(org_id: str, member_id: str) -> list[dict[str, Any]]:
     """Get all starred rooms of an organization's member.
 
     Args:
@@ -229,8 +232,8 @@ async def is_starred_room(org_id: str, room_id: str, member_id: str) -> bool:
 
 
 async def remove_room_member(
-    org_id: str, room_data: Dict[str, Any], member_id: str
-) -> Dict[str, Any]:
+    org_id: str, room_data: dict[str, Any], member_id: str
+) -> dict[str, Any]:
     """Removes a member from a room.
 
     Args:
@@ -267,8 +270,9 @@ async def remove_room_member(
 
     return {"member_id": member_id, "room_id": room_id}
 
+
 async def remove_room(
-    org_id: str, room: str):
+        org_id: str, room: str):
     """Removes a room.
 
     Args:
@@ -296,8 +300,8 @@ async def remove_room(
                     "deleted_count": 0
                 }
             }
-    
-    
+
+
 
     Raises:
         ValueError:room not found.
@@ -305,9 +309,8 @@ async def remove_room(
     """
 
     db = DataStorage(org_id)
-    response = await db.delete(settings.ROOM_COLLECTION,room)
+    response = await db.delete(settings.ROOM_COLLECTION, room)
     if not response or "status_code" in response:
         return {}
-
 
     return response
