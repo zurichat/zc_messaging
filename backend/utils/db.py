@@ -1,9 +1,8 @@
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import requests
 from fastapi import status
 from fastapi.exceptions import HTTPException
-from pydantic import AnyHttpUrl
 
 from config.settings import settings
 
@@ -378,59 +377,3 @@ class DataStorage:
         if members:
             for member in members:
                 return member if member["_id"] == member_id else {}
-
-    async def files_upload(
-        self, files: list[Any], token: str
-    ) -> Union[dict[str, Any], list[AnyHttpUrl], None]:
-        """
-        Uploads files to zc_core.
-
-        Args:
-            files (list[Any]): A list of files to be uploaded.
-            token (str): The user's token.
-
-        Returns:
-            On success, a list containing the file urls of the uploaded files.
-            _type_: Union[dict[str, Any], list[AnyHttpUrl], None]
-
-            In case of error:
-
-                {
-                    "status": 200,
-                    "message": "success",
-                    "data": null
-                }
-        """
-
-        files = [("files", file) for file in files]
-        url = self.upload_api + f"/{self.plugin_id}"
-
-        headers = {
-            "Authorization": token,
-        }
-
-        try:
-            response = requests.post(url=url, files=files, headers=headers)
-        except requests.exceptions.RequestException:
-            return None
-
-        if response.status_code == 200:
-            """ Expecting this => data
-            {
-                "status": 200,
-                "data": {
-                    "files_info": [
-                        {
-                            "file_url": "https://api.filestackapi.com/test"
-                        }
-                    ]
-                }
-            }
-            """
-            data: dict[str, Union[int, dict[str, list[dict[str, str]]]]
-                       ] = response.json()
-
-            if data.get("status") == 200:
-                return [file["file_url"] for file in data["data"]["files_info"]]
-
-        return {"status_code": response.status_code, "message": response.json()}
