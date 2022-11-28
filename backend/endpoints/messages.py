@@ -1,4 +1,5 @@
-from fastapi import (APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status)
+from fastapi import Depends, File, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi_pagination import Page, add_pagination, paginate
 from typing import List
 from fastapi.security import OAuth2PasswordBearer
