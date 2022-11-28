@@ -41,10 +41,10 @@ async def details_of_file(org_id: str, room_id: str, message_id: str):
                     "file-size" : file_size
             }
         details.append(details_of_file)
-        return details
+        print(details)
     if not files:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="file not found"
         )
     
         
