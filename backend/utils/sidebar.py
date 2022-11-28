@@ -166,7 +166,7 @@ class Sidebar:
             {dict}: {dict containing user info}
         """
 
-        DB = DB(org_id)
+        DB = DataStorage(org_id)
         room_type_query = room_type
         if room_type != RoomType.CHANNEL:
             room_type_query = {"$ne": RoomType.CHANNEL}

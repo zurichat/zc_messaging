@@ -243,7 +243,7 @@ class DataStorage:
             return None
         if response.status_code == 200:
             return response.json().get("data")
-        return {"status_code": response.status_code, "message": response.reason, "response": response.json()}
+        return {"status_code": response.status_code, "message": response.reason}
 
     async def delete(self, collection_name: str, document_id: str) -> Any:
         """Delete data from zc_messaging collections.
