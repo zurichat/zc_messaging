@@ -31,7 +31,7 @@ async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
         ]
     """
 
-    DB = DataStorage(org_id)
+    DB = DB(org_id)
     response = await DB.read(settings.MESSAGE_COLLECTION)
 
     if not response or "status_code" in response:
@@ -68,7 +68,7 @@ async def get_room_messages(
         ]
     """
 
-    DB = DataStorage(org_id)
+    DB = DB(org_id)
     response = await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id})
 
     if response is None:
@@ -109,7 +109,7 @@ async def get_message(
         }
     """
 
-    DB = DataStorage(org_id)
+    DB = DB(org_id)
     query = {"room_id": room_id, "_id": message_id}
     response = await DB.read(settings.MESSAGE_COLLECTION, query=query)
 
