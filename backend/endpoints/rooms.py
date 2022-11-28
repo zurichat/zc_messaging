@@ -69,6 +69,7 @@ async def create_room(
         room_obj.id = room_id["room_id"]  # adding the room id to the data
         # instantiate the Notication's function that handles DM users subscription
         create_dm_subscriber = await notification.dm_subscriber_create(room_obj=room_obj)
+        
         return JSONResponse(
             content=ResponseModel.success(data=room_obj.dict(), message="room created"),
             status_code=status.HTTP_201_CREATED,
@@ -246,10 +247,6 @@ async def join_room(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="only existing members can add new members",
             )
-    # instantiate the Notication's function that handles channel users subscription
-    create_channel_subscriber = await notification.channel_subcriber_create(
-        org_id=org_id, member_id=member_id
-        )
     if room["room_type"].upper() == RoomType.CHANNEL:
         if room["is_private"] is True and (member["role"].lower() != Role.ADMIN):
             raise HTTPException(
@@ -278,6 +275,11 @@ async def join_room(
         data=members,
     )  # publish to centrifugo in the background
 
+    # instantiate the Notication's function that handles channel users subscription
+    create_channel_subscriber = await notification.channel_subcriber_create(
+        org_id=org_id, member_id=member_id
+        )
+        
     if update_response and update_response.get("status_code", None) is None:
         return JSONResponse(
             status_code=status.HTTP_200_OK,
