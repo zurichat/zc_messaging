@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from config.settings import settings
 from schema.message import Message
@@ -6,14 +6,14 @@ from utils.db import DataStorage
 from utils.paginator import off_set
 
 
-async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[List[Dict[str, Any]]]:
+async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[list[dict[str, Any]]]:
     """Gets all messages sent in  an organization.
 
     Args:
         org_id (str): The organization id
 
     Returns:
-        List[dict]: A list of key value pairs of messages info mapped according to message schema.
+        list[dict]: A list of key value pairs of messages info mapped according to message schema.
 
         [
             {
@@ -45,14 +45,14 @@ async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[List[
 
 async def get_room_messages(
     org_id: str, room_id: str, page: int, limit: int
-) -> Optional[List[Dict[str, Any]]]:
+) -> Optional[list[dict[str, Any]]]:
     """Gets all messages sent inside  a room.
     Args:
         org_id (str): The organization id
         room_id (str): The room id
 
     Returns:
-        List[dict]: A list of key value pairs of messages info mapped according to message schema.
+        list[dict]: A list of key value pairs of messages info mapped according to message schema.
 
         [
             {
@@ -87,7 +87,7 @@ async def get_room_messages(
 
 async def get_message(
     org_id: str, room_id: str, message_id: str
-) -> Optional[Dict[str, Any]]:
+) -> Optional[dict[str, Any]]:
     """Get a specific message in a room.
 
     Args:
@@ -125,7 +125,7 @@ async def get_message(
     return response
 
 
-async def create_message(org_id: str, message: Message) -> Dict[str, Any]:
+async def create_message(org_id: str, message: Message) -> dict[str, Any]:
     """Creates a message document in the database.
 
     Args:
@@ -133,7 +133,7 @@ async def create_message(org_id: str, message: Message) -> Dict[str, Any]:
         message (Message): The message object to be saved.
 
     Returns:
-        Dict[str, Any]: The response returned by DataStorage's write method.
+        dict[str, Any]: The response returned by DataStorage's write method.
     """
 
     db = DataStorage(org_id)
@@ -142,17 +142,17 @@ async def create_message(org_id: str, message: Message) -> Dict[str, Any]:
 
 
 async def update_message(
-    org_id: str, message_id: str, message: Dict[str, Any]
-) -> Dict[str, Any]:
+    org_id: str, message_id: str, message: dict[str, Any]
+) -> dict[str, Any]:
     """Updates a message document in the database.
 
     Args:
         org_id (str): The organization id where the message is being updated.
         message_id (str): The id of the message to be edited.
-        message (Dict[str, Any]): The new data.
+        message (dict[str, Any]): The new data.
 
     Returns:
-        Dict[str, Any]: The response returned by DataStorage's update method.
+        dict[str, Any]: The response returned by DataStorage's update method.
     """
 
     db = DataStorage(org_id)

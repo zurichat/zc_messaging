@@ -1,10 +1,11 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import requests
-from config.settings import settings
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from pydantic import AnyHttpUrl
+
+from config.settings import settings
 
 
 class DataStorage:
@@ -76,7 +77,7 @@ class DataStorage:
             )
             self.plugin_id = plugin.get("id")
 
-    async def write(self, collection_name: str, data: Dict[str, Any]) -> Any:
+    async def write(self, collection_name: str, data: dict[str, Any]) -> Any:
         """Writes data to zc_messaging collections.
 
         Calls the zc_core write endpoint (POST) and writes `data` to `collection_name`.
@@ -129,7 +130,7 @@ class DataStorage:
         return {"status_code": response.status_code, "message": response.json()}
 
     async def update(
-        self, collection_name: str, document_id: str, data: Dict[str, Any]
+        self, collection_name: str, document_id: str, data: dict[str, Any]
     ) -> Any:
         """Updates data to zc_messaging collections.
 
@@ -188,8 +189,8 @@ class DataStorage:
         self,
         collection_name: str,
         resource_id: Optional[str] = None,
-        query: Optional[Dict[str, Any]] = None,
-        options: Optional[Dict[str, Any]] = None,
+        query: Optional[dict[str, Any]] = None,
+        options: Optional[dict[str, Any]] = None,
     ) -> Any:
         """Reads data from zc_messaging collections.
 
@@ -299,7 +300,7 @@ class DataStorage:
             return response.json()
         return {"status_code": response.status_code, "message": response.reason}
 
-    async def get_all_members(self) -> Optional[List[Dict[str, Any]]]:
+    async def get_all_members(self) -> Optional[list[dict[str, Any]]]:
         """Gets a list of all members registered in an organisation.
         Calls the zc_core endpoint(GET) and retrieves the list of all members
         for a specific organization id.
@@ -349,8 +350,8 @@ class DataStorage:
             return response.json().get("data")
 
     async def get_member(
-        self, member_id: str, members: List[Dict[str, Any]]
-    ) -> Optional[Dict[str, Any]]:
+        self, member_id: str, members: list[dict[str, Any]]
+    ) -> Optional[dict[str, Any]]:
         """Get the information of a single registered member in an organisation.
 
         Args:
@@ -379,18 +380,18 @@ class DataStorage:
                 return member if member["_id"] == member_id else {}
 
     async def files_upload(
-        self, files: List[Any], token: str
-    ) -> Union[Dict[str, Any], List[AnyHttpUrl], None]:
+        self, files: list[Any], token: str
+    ) -> Union[dict[str, Any], list[AnyHttpUrl], None]:
         """
         Uploads files to zc_core.
 
         Args:
-            files (List[Any]): A list of files to be uploaded.
+            files (list[Any]): A list of files to be uploaded.
             token (str): The user's token.
 
         Returns:
             On success, a list containing the file urls of the uploaded files.
-            _type_: Union[Dict[str, Any], List[AnyHttpUrl], None]
+            _type_: Union[dict[str, Any], list[AnyHttpUrl], None]
 
             In case of error:
 
@@ -426,7 +427,7 @@ class DataStorage:
                 }
             }
             """
-            data: Dict[str, Union[int, Dict[str, List[Dict[str, str]]]]
+            data: dict[str, Union[int, dict[str, list[dict[str, str]]]]
                        ] = response.json()
 
             if data.get("status") == 200:
