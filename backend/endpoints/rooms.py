@@ -439,8 +439,6 @@ async def get_members(org_id: str, room_id: str):
         ),
     )
 
-<<<<<<< HEAD
-=======
 
 @router.put(
     "/org/{org_id}/members/{member_id}/rooms/{room_id}",
@@ -507,7 +505,7 @@ async def update_room(
     )
 
     return JSONResponse(
-            content=ResponseModel.success(data=room.dict(), message="room updated"),
+            content=ResponseModel.success(data=room, message="room updated"),
             status_code=status.HTTP_200_OK,
         )
 @router.get(
@@ -619,4 +617,3 @@ async def delete_room(org_id: str, room_id: str):
             message="Room Deleted successfully",
         ),
     )    
->>>>>>> cb63f47124335054616951996835992142a5dc15
