@@ -228,7 +228,7 @@ const MessagingBoard = () => {
       <MessageRoomViewHeader name={`#${roomName}`} />
       <Container>
         <MessagingArea>
-          <div style={{ height: "calc(100% - 29px)" }}>
+          <div style={{ height: "100%" }}>
             <MessageBoard
               isLoadingMessages={isLoadingRoomMessages}
               messages={roomMessages || []}
