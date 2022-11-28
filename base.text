@@ -57,7 +57,8 @@ tomli==1.2.2
 trio==0.19.0
 typing-extensions==3.10.0.2
 urllib3==1.26.7
-uvicorn[standard]
+uvicorn==0.17.5
+uvloop==0.17.0
 virtualenv==20.9.0
 watchgod==0.7
 websockets==10.0
