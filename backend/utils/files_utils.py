@@ -2,15 +2,15 @@ import os
 import zipfile
 import io
 import wget
+from typing import List
 from starlette.responses import StreamingResponse, Response
 
 
-
-def zipfiles(filenames: str):
+def zipfiles(file_paths: List[str]):
 	"""
 		Helper Function for get_files function to retrieve images
 		param:
-			filenames: list of lists of filepath
+			filepaths: list of lists of filepath
 		returns:
 			Archive file with images
 	"""
@@ -19,10 +19,10 @@ def zipfiles(filenames: str):
 
 	data = io.BytesIO()
 	temp = zipfile.ZipFile(data, "w")
-	for filepath in filenames:
-		fdir, fname = os.path.split(filepath)
-		zip_path = os.path.join(zip_subdir, fname)
-		image_file = wget.download(filepath)
+	for file_path in file_paths:
+		file_dir, file_name = os.path.split(file_path )
+		zip_path = os.path.join(zip_subdir, file_name)
+		image_file = wget.download(file_path )
 		temp.write(image_file, zip_path)
 
 	temp.close()
@@ -31,5 +31,4 @@ def zipfiles(filenames: str):
     })
 
 	return resp
-	
 	
