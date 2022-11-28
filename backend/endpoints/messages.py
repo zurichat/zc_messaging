@@ -395,4 +395,3 @@ async def send_message_(
         content=ResponseModel.success(data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
     )
-
