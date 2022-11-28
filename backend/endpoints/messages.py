@@ -1,8 +1,6 @@
 from fastapi import Depends, File, UploadFile, status
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi_pagination import Page, add_pagination, paginate
-from typing import List
-from fastapi.security import OAuth2PasswordBearer
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
@@ -10,6 +8,8 @@ from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
 from utils.message_utils import upload_file
+from typing import List
+from fastapi.security import OAuth2PasswordBearer
 
 router = APIRouter()
 
