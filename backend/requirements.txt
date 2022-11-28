@@ -10,7 +10,6 @@ certifi==2021.10.8
 cfgv==3.3.1
 charset-normalizer==2.0.7
 click==8.0.3
-cloudinary==1.30.0
 colorama==0.4.4
 coverage==6.0.2
 distlib==0.3.3
@@ -36,7 +35,7 @@ platformdirs==2.4.0
 pluggy==1.0.0
 pre-commit==2.15.0
 py==1.10.0
-pydantic
+pydantic==1.8.2
 pylint==2.11.1
 pyparsing==3.0.1
 pytest==6.2.5
@@ -45,12 +44,10 @@ pytest-cov==3.0.0
 pytest-mock==3.6.1
 python-dateutil==2.8.2
 python-dotenv==0.19.1
-python-multipart==0.0.5
 PyYAML==6.0
 regex==2021.10.23
 requests==2.26.0
 rfc3986==1.5.0
-six==1.16.0
 six==1.16.0
 sniffio==1.2.0
 sortedcontainers==2.4.0
@@ -64,4 +61,6 @@ uvicorn[standard]
 virtualenv==20.9.0
 watchgod==0.7
 websockets==10.0
+wget==3.2
 wrapt==1.13.2
+cloudinary==1.30.0

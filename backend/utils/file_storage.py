@@ -1,8 +1,10 @@
-import cloudinary
-import cloudinary.uploader
+from typing import Any, Union
 import requests
 from config.settings import settings
-from typing import List, Dict, Any
+from pydantic import AnyHttpUrl
+import cloudinary
+import cloudinary.uploader
+
 
 class FileStorage:
     """Serves as a layer for communication of plugin files and server.
@@ -27,19 +29,69 @@ class FileStorage:
                 f"{settings.BASE_URL}/delete/file/" + "{self.plugin_id}"
             )
             self.organization_id = organization_id
+            self.upload_api_url = f"{settings.BASE_URL}/upload/file/" + self.plugin_id
 
         except requests.exceptions.RequestException as exception:
             print(exception)
 
+    async def files_upload(
+        self, files: list[Any], token: str
+    ) -> Union[dict[str, Any], list[AnyHttpUrl], None]:
+        """
+        Uploads files to zc_core.
+
+        Args:
+            files (list[Any]): A list of files to be uploaded.
+            token (str): The user's token.
+
+        Returns:
+            On success, a list containing the file urls of the uploaded files.
+            _type_: Union[dict[str, Any], list[AnyHttpUrl], None]
+
+            In case of error:
+
+                {
+                    "status": 200,
+                    "message": "success",
+                    "data": null
+                }
+        """
+
+        files = [("files", file) for file in files]
+
+        headers = {
+            "Authorization": "Bearer " + token,
+        }
+
+        try:
+            response = requests.post(url=self.upload_api_url, files=files, headers=headers)
+        except requests.exceptions.RequestException:
+            return None
+
+        if response.status_code == 200:
+            """ Expecting this => data
+            {
+                "status": 200,
+                "data": {
+                    "files_info": [
+                        {
+                            "file_url": "https://api.filestackapi.com/test"
+                        }
+                    ]
+                }
+            }
+            """
+            data: dict[str, Union[int, dict[str, list[dict[str, str]]]]
+                       ] = response.json()
+
+            if data.get("status") == 200:
+                return [file["file_url"] for file in data["data"]["files_info"]]
+
+        return {"status_code": response.status_code, "message": response.json()}
+
+
+
+
 async def upload(file):
-    '''upload file to the cloudinary database'''
-
-    result = cloudinary.uploader.upload(file.file, resource_type='auto')
-    url = result.get('url')
-    return url
-
-# async def upload_file(org_id: str, files: List[Any], token: str) -> Dict[str, Any]:
-#     """
-#         Upload Files
-#     """
-#     raise NotImplementedError
+    result = cloudinary.uploader.upload(file.file)
+    return result.get('url')

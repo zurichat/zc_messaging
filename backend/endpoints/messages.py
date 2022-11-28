@@ -1,18 +1,16 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import (APIRouter, BackgroundTasks, Depends, File, HTTPException,
                      UploadFile, status, Form)
 from fastapi.security import OAuth2PasswordBearer
-# from fastapi_pagination import Page, add_pagination, paginate
+from fastapi_pagination import Page, add_pagination, paginate
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
-# from utils.db import DataStorage
 from utils.file_storage import upload
-# from utils.message_utils import upload_file
 
 router = APIRouter()
 
@@ -32,8 +30,8 @@ async def send_message(
     org_id: str,
     room_id: str,
     background_tasks: BackgroundTasks,
-    file: UploadFile = Form(File(...)),
-    # files: List[UploadFile] = Form(File()),
+    file: UploadFile = Form(File(default=None)),
+    # files: List[UploadFile] = Form(File(...)), ## NOTE Unable to upload multiple files
     request: MessageRequest = Depends(MessageRequest.as_form),
 ):
 
@@ -92,8 +90,10 @@ async def send_message(
     new_obj = {**request.dict()}
     file_urls = []
 
-    result_url = await upload(file)
-    file_urls.append(result_url)
+    if file is not None:
+        print(file)
+        result_url = await upload(file)
+        file_urls.append(result_url)
 
     new_obj['files'] = file_urls
     message = Message(**new_obj, org_id=org_id, room_id=room_id)

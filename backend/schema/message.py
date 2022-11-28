@@ -3,7 +3,7 @@ import concurrent.futures
 from datetime import datetime
 from typing import Any, List
 
-from fastapi import HTTPException, status, Form
+from fastapi import HTTPException, status, Form, UploadFile, File
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 from utils.room_utils import get_room
 
@@ -22,7 +22,6 @@ class Emoji(BaseModel):
 class MessageRequest(BaseModel):
     """
     Provides a base model for all threads
-
 
     This is the message model that will be used to create a message
     {
@@ -97,7 +96,7 @@ class MessageRequest(BaseModel):
         richUiData: Any = Form({}),
         files: List[AnyHttpUrl] = Form([]),
         saved_by: List[str] = Form([]),
-        timestamp: int = Form(1640204440922),
+        timestamp: int = Form(int),
         created_at: str = Form(str(datetime.utcnow())),
     ): 
         return cls(
@@ -109,7 +108,6 @@ class MessageRequest(BaseModel):
             timestamp=timestamp, 
             created_at=created_at
         )
-        
 
 
 class Thread(MessageRequest):
