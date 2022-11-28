@@ -1,16 +1,18 @@
 from typing import List
 
 from fastapi import (APIRouter, BackgroundTasks, Depends, File, HTTPException,
-                     UploadFile, status)
+                     UploadFile, status, Form)
 from fastapi.security import OAuth2PasswordBearer
 # from fastapi_pagination import Page, add_pagination, paginate
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
-from utils.file_storage import upload
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
+# from utils.db import DataStorage
+from utils.file_storage import upload
+# from utils.message_utils import upload_file
 
 router = APIRouter()
 
@@ -29,9 +31,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 async def send_message(
     org_id: str,
     room_id: str,
-    request: MessageRequest,
     background_tasks: BackgroundTasks,
+    file: UploadFile = Form(File(...)),
+    # files: List[UploadFile] = Form(File()),
+    request: MessageRequest = Depends(MessageRequest.as_form),
 ):
+
     """Creates and sends a message from a user inside a room.
 
     Registers a new document to the messages database collection while
@@ -84,7 +89,14 @@ async def send_message(
         HTTPException [424]: Message not sent.
     """
 
-    message = Message(**request.dict(), org_id=org_id, room_id=room_id)
+    new_obj = {**request.dict()}
+    file_urls = []
+
+    result_url = await upload(file)
+    file_urls.append(result_url)
+
+    new_obj['files'] = file_urls
+    message = Message(**new_obj, org_id=org_id, room_id=room_id)
 
     response = await create_message(org_id=org_id, message=message)
 
@@ -93,9 +105,8 @@ async def send_message(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail={"Message not sent": response},
         )
-
     message.message_id = response["data"]["object_id"]
-
+    
     # Publish to centrifugo in the background.
     background_tasks.add_task(
         centrifugo_client.publish,
@@ -103,11 +114,11 @@ async def send_message(
         Events.MESSAGE_CREATE,
         message.dict(),
     )
-
     return JSONResponse(
         content=ResponseModel.success(data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
     )
+
 
 
 @router.put(
@@ -287,115 +298,4 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15
     return JSONResponse(
         content=ResponseModel.success(data=result, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
-    )
-
-
-# NOTE this is my function
-@router.post(
-    "/org/{org_id}/rooms/{room_id}/my-messages",
-    response_model=ResponseModel,
-    status_code=status.HTTP_201_CREATED,
-    responses={
-        404: {"description": "Room or sender not found"},
-        424: {"description": "ZC Core failed"},
-    },
-)
-async def send_message_(
-    org_id: str,
-    room_id: str,
-    # message_: str, #### NOTE I don't know If you want me to add a message to it, if you do I can do it
-    background_tasks: BackgroundTasks,
-    # token: str = Depends(oauth2_scheme),
-    file: List[UploadFile] = File(default=None),
-    request: MessageRequest = Depends(MessageRequest),
-):
-    ########## NOTE I didn't want to change the message schema, but just know that the emoji and the files filled in the schema are required. I didn't make it required
-
-    """Creates and sends a message from a user inside a room.
-
-    Registers a new document to the messages database collection while
-    publishing to all members of the room in the background.
-
-    Args:
-        org_id (str): A unique identifier of an organisation.
-        request (MessageRequest): A pydantic schema that defines the message request parameters.
-        room_id (str): A unique identifier of the room where the message is being sent to.
-        background_tasks (BackgroundTasks): A background task for publishing to all
-                                            members of the room.
-
-    Returns:
-        A dict containing data about the message that was created.
-
-        {
-            "status": "success",
-            "message": "new message sent",
-            "data": {
-                "sender_id": "619bab3b1a5f54782939d400",
-                "emojis": [],
-                "richUiData": {
-                "blocks": [
-                    {
-                    "key": "eljik",
-                    "text": "Larry Gaaga",
-                    "type": "unstyled",
-                    "depth": 0,
-                    "inlineStyleRanges": [],
-                    "entityRanges": [],
-                    "data": {}
-                    }
-                ],
-                "entityMap": {}
-                },
-                "files": [],
-                "saved_by": [],
-                "timestamp": 0,
-                "created_at": "2022-02-01 19:20:55.891264",
-                "room_id": "61e6855e65934b58b8e5d1df",
-                "org_id": "619ba4671a5f54782939d384",
-                "message_id": "61f98d0665934b58b8e5d286",
-                "edited": false,
-                "threads": []
-            }
-        }
-
-    Raises:
-        HTTPException [404]: Room does not exist || Sender not a member of this room.
-        HTTPException [424]: Message not sent.
-    """
-
-    print(request.dict())
-
-    # request.dict()['richUiData']['blocks'] = {'text': message_}
-    new_obj = {**request.dict()}
-    file_urls = []
-
-    #############
-    if file is not None:
-        for item in file:
-            result_url = upload(item)
-            file_urls.append(result_url)
-    #############
-
-    new_obj['files'] = file_urls
-    message = Message(**new_obj, org_id=org_id, room_id=room_id)
-
-    response = await create_message(org_id=org_id, message=message)
-
-    if not response or response.get("status_code"):
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"Message not sent": response},
-        )
-    message.message_id = response["data"]["object_id"]
-
-    # Publish to centrifugo in the background.
-    background_tasks.add_task(
-        centrifugo_client.publish,
-        room_id,
-        Events.MESSAGE_CREATE,
-        message.dict(),
-    )
-    return JSONResponse(
-        content=ResponseModel.success(data=message.dict(), message="new message sent"),
-        status_code=status.HTTP_201_CREATED,
     )

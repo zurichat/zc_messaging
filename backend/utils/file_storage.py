@@ -2,7 +2,7 @@ import cloudinary
 import cloudinary.uploader
 import requests
 from config.settings import settings
-
+from typing import List, Dict, Any
 
 class FileStorage:
     """Serves as a layer for communication of plugin files and server.
@@ -31,10 +31,15 @@ class FileStorage:
         except requests.exceptions.RequestException as exception:
             print(exception)
 
-def upload(file):
+async def upload(file):
     '''upload file to the cloudinary database'''
 
     result = cloudinary.uploader.upload(file.file, resource_type='auto')
     url = result.get('url')
     return url
 
+# async def upload_file(org_id: str, files: List[Any], token: str) -> Dict[str, Any]:
+#     """
+#         Upload Files
+#     """
+#     raise NotImplementedError
