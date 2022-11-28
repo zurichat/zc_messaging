@@ -268,3 +268,48 @@ async def remove_room_member(
         raise ConnectionError("Unable to remove room member")
 
     return {"member_id": member_id, "room_id": room_id}
+
+async def remove_room(
+    org_id: str, room: str):
+    """Removes a room.
+
+    Args:
+        org_id (str): The organization id
+        room (str): The room to be removed.
+
+   Returns:
+            On success, a dict containing the success status and
+            and how many documents were successfully deleted.
+
+            {
+                "status": 200,
+                "message": "success",
+                "data": {
+                    "deleted_count": 1
+                }
+            }
+
+            In case of error:
+
+            {
+                "status": 200,
+                "message": "success",
+                "data": {
+                    "deleted_count": 0
+                }
+            }
+    
+    
+
+    Raises:
+        ValueError:room not found.
+        RequestException: ZC Core fails to remove user from room.
+    """
+
+    db = DataStorage(org_id)
+    response = await db.delete(settings.ROOM_COLLECTION,room)
+    if not response or "status_code" in response:
+        return {}
+
+
+    return response
