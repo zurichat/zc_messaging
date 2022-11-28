@@ -1,8 +1,8 @@
 from utils.db import DataStorage
 from config.settings import settings
 
-async def off_set(page: int, limit: int):
-    return (page-1)*limit
+async def off_set(page: int, size: int):
+    return (page-1)*size
 
 
 async def page_urls(page: int, size: int, org_id : int, room_id: int, endpoint: str):

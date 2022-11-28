@@ -6,7 +6,7 @@ from utils.db import DataStorage
 from utils.paginator import off_set
 
 
-async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[list[dict[str, Any]]]:
+async def get_org_messages(org_id: str, page: int, size: int) -> Optional[list[dict[str, Any]]]:
     """Gets all messages sent in  an organization.
 
     Args:
@@ -33,8 +33,8 @@ async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[list[
     """
 
     DB = DataStorage(org_id)
-    skip = await off_set(page, limit)
-    options = {"limit":limit, "skip":skip, "sort":{"_id":-1}}
+    skip = await off_set(page, size)
+    options = {"limit":size, "skip":skip, "sort":{"_id":-1}}
     response = await DB.read(settings.MESSAGE_COLLECTION, options=options)
 
     if not response or "status_code" in response:
@@ -44,7 +44,7 @@ async def get_org_messages(org_id: str, page: int, limit: int) -> Optional[list[
 
 
 async def get_room_messages(
-    org_id: str, room_id: str, page: int, limit: int
+    org_id: str, room_id: str, page: int, size: int
 ) -> Optional[list[dict[str, Any]]]:
     """Gets all messages sent inside  a room.
     Args:
@@ -73,8 +73,8 @@ async def get_room_messages(
     DB = DataStorage(org_id)
 
     
-    skip = await off_set(page, limit)
-    options = {"limit":limit, "skip":skip, "sort":{"_id":-1}}
+    skip = await off_set(page, size)
+    options = {"limit":size, "skip":skip, "sort":{"_id":-1}}
     response = await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id}, options=options)
     
 
