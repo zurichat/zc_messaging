@@ -27,8 +27,8 @@ const Threads = () => {
     const threads_data = getThreadHandler(org_ud, sender_ud)
     if (threads_data != []) {
       threads_data
-        .then(respsonse => {
-          let threads_array = respsonse.data
+        .then(response => {
+          let threads_array = response.data
           let dumpy_threads_Arr = []
           for (let i = 0; i < threads_array.length; i++) {
             for (let j = 0; j < threads_array[i].threads.length; j++) {

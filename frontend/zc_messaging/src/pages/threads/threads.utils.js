@@ -16,6 +16,7 @@ const getThreadHandler = async (orgId, senderId) => {
         // `${BASE_URL}/org/${orgId}/member/${senderId}/threads`
         // but hosted code does not have this end-point I created in the backend
         `http://localhost:8000/api/v1/org/${orgId}/member/${senderId}/threads`
+        // http://localhost:8000/api/v1/org/63686b924746182adae96b8d/member/63686b924746182adae96b8e/threads
       )
       return getThreadRequest.data
       // catch error is handled in ./index.jsx where getThreadRequest is called
