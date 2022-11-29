@@ -1,9 +1,0 @@
-anyio-3.6.2 certifi-2022.9.24 h11-0.14.0 httpcore-0.16.1 httpx-0.23.1 idna-3.4 sniffio-1.3.0
-
-fastapi-0.87.0 pydantic-1.10.2 starlette-0.21.0 typing-extensions-4.4.0
-
-installed click-8.1.3 colorama-0.4.6 uvicorn-0.20.0
-
-charset-normalizer-2.1.1 requests-2.28.1 urllib3-1.26.13
-
-bson-0.5.10 python-dateutil-2.8.2 six-1.16.0
