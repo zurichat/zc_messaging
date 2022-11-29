@@ -4,7 +4,6 @@ import requests
 
 router = APIRouter()
 
-
 @router.get("/org/{org_id}/rooms/{room_id}/messages/{message_id}")
 async def details_of_file(org_id: str, room_id: str, message_id: str):
     """
@@ -18,25 +17,32 @@ async def details_of_file(org_id: str, room_id: str, message_id: str):
 
     org_id :6373eb474746182adae97314
     room_id: 6373eb4f4746182adae97316
-    message_id:637fe320601ce3fc5dc739ea
+    message_id:638229130ff68071db65aea6
 """
-    messages = await get_message(org_id, room_id, message_id)
+    message = await get_message(org_id, room_id, message_id)
+    
+    if not message:
+        raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="message not found"
+        )
     details = []
-    files = messages.get('files')
+
+    files = message.get('files')
+  
     for file in files:
         my_file = requests.get(file)
+
         file_size = round(len(my_file.content)/1000, 1)
-        file_info = file_name_split[len(file_name_split)-1].split(".")
         file_name_split = file.split("/")
-        file_name = file_info[0]
-        file_type = file_info[1]
+        file_name = file_name_split[len(file_name_split) - 1].split(".")[0]
+        file_type = my_file.headers.get("content-type").split("/")[1]
+
         details_of_file = {
                     "file-name" : file_name,
                     "file-type" : file_type,
-                    "file-size" : file_size
+                    "file-size" : f"{file_size}kb"
             }
         details.append(details_of_file)
 
     return details
  
-    
