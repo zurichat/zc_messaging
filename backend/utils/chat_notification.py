@@ -62,7 +62,7 @@ class Notification:
                             status_code=404, 
                             detail="Sender ID doesn't exist"
                         )
-                sender_info = [user for user in get_room_users if user['_id'] == sender_id]
+                sender_info = [user for user in get_sender_details if user['_id'] == sender_id]
                 sender_firstname = sender_info[0]['first_name']
                 sender_lastname = sender_info[0]['last_name']
                 sender_name = sender_firstname + ' ' + sender_lastname
