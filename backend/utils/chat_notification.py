@@ -315,11 +315,12 @@ class Notification:
                 status_code=404, 
                 detail="Organization doesn't have a member"
             )
+
         get_sender_details = [
             user for user in room_members  if user['_id'] == member_id
             ]
         sender_firstname = get_sender_details[0]['first_name']
-        sender_lastname = get_sender_details[0]['lastt_name']
+        sender_lastname = get_sender_details[0]['last_name']
         payload['senderName'] = sender_firstname + ' ' + sender_lastname
         payload['messageBody'] = message
         get_members = await get_room_members(org_id, room_id)
