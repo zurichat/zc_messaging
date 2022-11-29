@@ -1,16 +1,13 @@
-from typing import List, Optional
-
 from fastapi import (APIRouter, BackgroundTasks, Depends, File, HTTPException,
-                     UploadFile, status, Form)
+                     UploadFile, status)
 from fastapi.security import OAuth2PasswordBearer
-from fastapi_pagination import Page, add_pagination, paginate
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
+from utils.file_storage import FileStorage
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
-from utils.file_storage import upload
 
 router = APIRouter()
 
@@ -30,9 +27,9 @@ async def send_message(
     org_id: str,
     room_id: str,
     background_tasks: BackgroundTasks,
-    file: UploadFile = Form(File(default=None)),
-    # files: List[UploadFile] = Form(File(...)), ## NOTE Unable to upload multiple files
+    token: str = Depends(oauth2_scheme),
     request: MessageRequest = Depends(MessageRequest.as_form),
+    file: UploadFile = File(default=None),  # NOTE Unable to upload multiple files
 ):
 
     """Creates and sends a message from a user inside a room.
@@ -86,14 +83,15 @@ async def send_message(
         HTTPException [404]: Room does not exist || Sender not a member of this room.
         HTTPException [424]: Message not sent.
     """
-
     new_obj = {**request.dict()}
     file_urls = []
 
     if file is not None:
-        print(file)
-        result_url = await upload(file)
-        file_urls.append(result_url)
+        file_obj = [('file', (f'{file.filename}', f'{file.file}', f'{file.content_type}'))]
+
+        fileStorage = FileStorage(org_id)
+        file_url = await fileStorage.files_upload(file_obj, token)
+        file_urls.append(file_url)
 
     new_obj['files'] = file_urls
     message = Message(**new_obj, org_id=org_id, room_id=room_id)
@@ -106,7 +104,7 @@ async def send_message(
             detail={"Message not sent": response},
         )
     message.message_id = response["data"]["object_id"]
-    
+
     # Publish to centrifugo in the background.
     background_tasks.add_task(
         centrifugo_client.publish,
@@ -118,7 +116,6 @@ async def send_message(
         content=ResponseModel.success(data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
     )
-
 
 
 @router.put(
