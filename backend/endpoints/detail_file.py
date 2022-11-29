@@ -21,7 +21,6 @@ async def details_of_file(org_id: str, room_id: str, message_id: str):
 			The details of a file uploaded
 
     org_id :6373eb474746182adae97314
-    6373eb4f4746182adae97316
     room_id: 6373eb4f4746182adae97316
     message_id:637fe320601ce3fc5dc739ea
 """
