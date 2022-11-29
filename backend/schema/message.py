@@ -23,7 +23,6 @@ class MessageRequest(BaseModel):
     """
     Provides a base model for all threads
 
-
     This is the message model that will be used to create a message
     {
         "message_id": "1640204440922",
