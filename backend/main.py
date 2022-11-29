@@ -37,6 +37,6 @@ app.include_router(
 
 app.mount(
     "/",
-    StaticFiles(directory="../frontend/zc_messaging/src/", html=True, check_dir=False),
+    StaticFiles(directory="../frontend/dist", html=True, check_dir=False),
     name="static",
 )
