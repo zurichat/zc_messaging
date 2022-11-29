@@ -26,9 +26,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 async def send_message(
     org_id: str,
     room_id: str,
+    token: str,
     background_tasks: BackgroundTasks,
-    token: str = Depends(oauth2_scheme),
-    request: MessageRequest = Depends(MessageRequest.as_form),
+    request: MessageRequest = Depends(),
     file: UploadFile = File(default=None),  # NOTE Unable to upload multiple files
 ):
 
