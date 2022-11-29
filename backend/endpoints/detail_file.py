@@ -35,7 +35,7 @@ async def details_of_file(org_id: str, room_id: str, message_id: str):
         file_name = file_info[0]
         file_type = file_info[1]
         details_of_file = {
-                    "filename" : file_name,
+                    "file-name" : file_name,
                     "file-type" : file_type,
                     "file-size" : file_size
             }
@@ -45,11 +45,3 @@ async def details_of_file(org_id: str, room_id: str, message_id: str):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="file not found"
         )
-    
-        
-
-    
-
-                
-
- 
