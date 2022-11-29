@@ -1,6 +1,6 @@
 // Need to use the React-specific entry point to import createApi
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import { GetWorkspaceUsers } from "@zuri/utilities"
+import { getCurrentWorkspaceUsers } from "@zuri/utilities"
 import { BASE_URL } from "../../utils/constants"
 
 // Define a service using a base URL and expected endpoints
@@ -10,6 +10,7 @@ export const messagesApi = createApi({
   // refetchOnFocus: true,
   refetchOnReconnect: true,
   refetchOnMountOrArgChange: true,
+  tagTypes: ["Messages"],
   endpoints: builder => ({
     getMessagesInRoom: builder.query({
       async queryFn(_arg, _queryApi, _extraOptions, fetchWithBQ) {
@@ -17,14 +18,14 @@ export const messagesApi = createApi({
         const getMessagesInRoomResponse = await fetchWithBQ(
           `/org/${orgId}/rooms/${roomId}/messages`
         )
-        if (Array.isArray(getMessagesInRoomResponse.data.data)) {
-          const workspaceUsers = await GetWorkspaceUsers()
+        if (Array.isArray(getMessagesInRoomResponse?.data?.data)) {
+          const workspaceUsers = await getCurrentWorkspaceUsers()
           const roomMessages = getMessagesInRoomResponse.data.data
           return {
             data: roomMessages
               .filter(message => message.richUiData && message.timestamp)
               .map(message => {
-                const sender = workspaceUsers.users.find(
+                const sender = workspaceUsers.find(
                   user => user._id === message.sender_id
                 )
                 return {
@@ -70,9 +71,50 @@ export const messagesApi = createApi({
         )
         queryFulfilled.catch(patchResult.undo)
       }
+    }),
+    updateMessageInRoom: builder.mutation({
+      query(data) {
+        const { orgId, roomId, sender, messageData, messageId } = data
+        return {
+          url: `/org/${orgId}/rooms/${roomId}/messages/${messageId}`,
+          method: "PUT",
+          body: {
+            sender_id: sender.sender_id,
+            ...messageData
+          }
+        }
+      },
+      invalidatesTags: ["Messages"],
+      async onQueryStarted(
+        { orgId, roomId, sender, messageData },
+        { dispatch, queryFulfilled }
+      ) {
+        const patchResult = dispatch(
+          messagesApi.util.updateQueryData(
+            "getMessagesInRoom",
+            { orgId, roomId },
+
+            draft => {
+              let foundDraft = draft.indexOf(
+                draft.find(each => each._id === messageData._id)
+              )
+              draft[foundDraft] = { sender, ...messageData }
+            }
+          )
+        )
+        try {
+          await queryFulfilled
+          return
+        } catch {
+          patchResult.undo
+        }
+      }
     })
   })
 })
 
-export const { useGetMessagesInRoomQuery, useSendMessageInRoomMutation } =
-  messagesApi
+export const {
+  useGetMessagesInRoomQuery,
+  useSendMessageInRoomMutation,
+  useUpdateMessageInRoomMutation
+} = messagesApi

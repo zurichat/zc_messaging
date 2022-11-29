@@ -1,4 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from fastapi_pagination import Page, add_pagination, paginate
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
@@ -215,11 +216,11 @@ async def update_message(
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=ResponseModel,
+    response_model=[].append(Message),
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
-async def get_messages(org_id: str, room_id: str):
+async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15):
     """Fetches all messages sent in a particular room.
 
     Args:
@@ -257,7 +258,7 @@ async def get_messages(org_id: str, room_id: str):
         HTTPException [424]: Zc Core failed
     """
 
-    response = await get_room_messages(org_id, room_id)
+    response = await get_room_messages(org_id, room_id, page, limit)
     if response == []:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -270,7 +271,13 @@ async def get_messages(org_id: str, room_id: str):
             detail="Zc Core failed",
         )
 
+    result = {
+            "data": response,
+            "page": page,
+            "size": limit
+    }
+
     return JSONResponse(
-        content=ResponseModel.success(data=response, message="Messages retrieved"),
+        content=ResponseModel.success(data=result, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )

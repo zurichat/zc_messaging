@@ -3,9 +3,9 @@ import styled from "styled-components"
 export const Container = styled.main`
   display: flex;
   height: 100%;
-  padding-top: 1.93rem;
   gap: 8px;
   background: #f9f9f9;
+  position: relative;
 `
 
 export const MessagingArea = styled.div`

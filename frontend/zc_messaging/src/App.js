@@ -1,5 +1,5 @@
 import React from "react"
-import { GetUserInfo } from "@zuri/utilities"
+import { getUserInfo } from "@zuri/utilities"
 import AppRoutes from "./routes"
 import { useDispatch } from "react-redux"
 import { setUser } from "./redux/store/reducers/authUserSlice"
@@ -8,7 +8,7 @@ export default function App() {
   const dispatch = useDispatch()
   React.useEffect(() => {
     ;(async () => {
-      const userInfo = await GetUserInfo()
+      const userInfo = await getUserInfo()
       if (userInfo && userInfo.user) {
         dispatch(
           setUser({

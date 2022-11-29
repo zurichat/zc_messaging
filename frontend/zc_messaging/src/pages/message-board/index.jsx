@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { Helmet } from "react-helmet"
-import { MessageBoard, PluginHeader } from "@zuri/zuri-ui"
-import { SubscribeToChannel } from "@zuri/utilities"
+import { MessageBoard, MessageRoomViewHeader } from "@zuri/ui"
+import { subscribeToChannel } from "@zuri/utilities"
 import { Container, MessagingArea, TypingNotice } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
 import { useSelector, useDispatch } from "react-redux"
@@ -10,7 +10,8 @@ import getMessageSender from "../../utils/getMessageSender.js"
 import {
   messagesApi,
   useGetMessagesInRoomQuery,
-  useSendMessageInRoomMutation
+  useSendMessageInRoomMutation,
+  useUpdateMessageInRoomMutation
 } from "../../redux/services/messages.js"
 import { useGetRoomsAvailableToUserQuery } from "../../redux/services/rooms"
 import generatePageTitle from "../../utils/generatePageTitle"
@@ -41,24 +42,23 @@ const MessagingBoard = () => {
         roomId
       },
       {
+        skip: Boolean(!roomId),
         refetchOnMountOrArgChange: true
       }
     )
   const [sendNewMessage, { isLoading: isSending }] =
     useSendMessageInRoomMutation()
+
+  const [updateMessage] = useUpdateMessageInRoomMutation()
+
   useEffect(() => {
     if (!roomId) {
       fetchDefaultRoom(currentWorkspaceId, authUser?.user_id).then(result => {
         navigateTo(`/${result.room_id}`, { replace: true })
       })
     }
-    if (roomsAvailable) {
-      const room = roomsAvailable[roomId]
-      setRoomName(room?.room_name)
-      setPageTitle(generatePageTitle(room?.room_name))
-    }
     if (roomId && authUser.user_id) {
-      SubscribeToChannel(roomId, data => {
+      subscribeToChannel(roomId, data => {
         if (data.data.data.sender_id !== authUser.user_id) {
           getMessageSender(data.data.data.sender_id).then(sender => {
             dispatch(
@@ -85,7 +85,15 @@ const MessagingBoard = () => {
         }
       })
     }
-  }, [roomId, authUser, roomsAvailable])
+  }, [roomId, authUser])
+
+  useEffect(() => {
+    if (roomsAvailable) {
+      const room = roomsAvailable[roomId]
+      setRoomName(room?.room_name)
+      setPageTitle(generatePageTitle(room?.room_name))
+    }
+  }, [roomId, roomsAvailable])
 
   const sendMessageHandler = async message => {
     const currentDate = new Date()
@@ -114,9 +122,9 @@ const MessagingBoard = () => {
     // if message_id is not undefined then it's coming from already rendered emoji in message container
 
     const emoji = emojiObject.character
-    const newEmojiName = messageId ? emojiObject.name : emojiObject.unicodeName
+    const newEmojiName = emojiObject.unicodeName || emojiObject.name
     const messageIndex = newMessages.findIndex(
-      message => message.message_id === messageId
+      message => message._id === messageId
     )
 
     if (messageIndex < 0) {
@@ -125,7 +133,7 @@ const MessagingBoard = () => {
 
     const message = newMessages[messageIndex]
     const emojiIndex = message.emojis.findIndex(
-      emoji => emoji.name === newEmojiName
+      emoji => emoji.name.toLowerCase() === newEmojiName.toLowerCase()
     )
 
     if (emojiIndex >= 0) {
@@ -139,7 +147,27 @@ const MessagingBoard = () => {
         // now, if the user is the only person that has reacted, then the emoji
         // should be removed entirely.
         if (message.emojis[emojiIndex].count <= 1) {
-          message.emojis.splice(emojiIndex, 1)
+          let emojisArray = message.emojis.filter(
+            emoji => emoji.name.toLowerCase() !== newEmojiName.toLowerCase()
+          )
+          let updatedMessage = {
+            ...message,
+            emojis: emojisArray,
+            edited: true,
+            message_id: messageId
+          }
+          updateMessage({
+            orgId: currentWorkspaceId,
+            roomId,
+            sender: {
+              sender_id: authUser?.user_id,
+              sender_name: authUser?.user_name,
+              sender_image_url: authUser?.user_image_url
+            },
+            messageData: { ...updatedMessage },
+            messageId: updatedMessage._id
+          })
+          // message.emojis.splice(emojiIndex, 1)
         } else {
           message.emojis[emojiIndex].reactedUsersId.splice(reactedUserIdIndex)
           message.emojis[emojiIndex].count =
@@ -147,9 +175,7 @@ const MessagingBoard = () => {
         }
       } else {
         // the user has not reacted and will now be added to the list and count incremented
-        // console.log("reacted-user-id-index", message.emojis[emojiIndex])
-        // console.log("id", currentUserId)
-        // console.log("type", isArray(message.emojis[emojiIndex].reactedUsersId))
+
         message.emojis[emojiIndex].reactedUsersId = [
           ...message.emojis[emojiIndex].reactedUsersId,
           currentUserId
@@ -159,16 +185,34 @@ const MessagingBoard = () => {
     } else {
       // the emoji does not exist
       // create the emoji object and push
+
       const newEmojiObject = {
         name: newEmojiName,
         count: 1,
         emoji: emoji,
         reactedUsersId: [currentUserId]
       }
-      message.emojis.push(newEmojiObject)
+      let emojisArray = [...message.emojis, newEmojiObject]
+      let updatedMessage = {
+        ...message,
+        emojis: emojisArray,
+        edited: true,
+        message_id: messageId
+      }
+
+      updateMessage({
+        orgId: currentWorkspaceId,
+        roomId,
+        sender: {
+          sender_id: authUser?.user_id,
+          sender_name: authUser?.user_name,
+          sender_image_url: authUser?.user_image_url
+        },
+        messageData: { ...updatedMessage },
+        messageId: updatedMessage._id
+      })
     }
 
-    newMessages[messageIndex] = message
     return false
   }
 
@@ -181,10 +225,10 @@ const MessagingBoard = () => {
       <Helmet>
         <title>{pageTitle}</title>
       </Helmet>
-      <PluginHeader name={`#${roomName}`} />
+      <MessageRoomViewHeader name={`#${roomName}`} />
       <Container>
         <MessagingArea>
-          <div style={{ height: "calc(100% - 29px)" }}>
+          <div style={{ height: "100%" }}>
             <MessageBoard
               isLoadingMessages={isLoadingRoomMessages}
               messages={roomMessages || []}
@@ -192,6 +236,7 @@ const MessagingBoard = () => {
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}
               currentUserId={authUser?.user_id}
+              height={"92vh"}
             />
           </div>
           {/* <TypingNotice>Omo Jesu is typing</TypingNotice> */}
