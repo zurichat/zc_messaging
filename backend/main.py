@@ -1,5 +1,5 @@
 from config.settings import settings
-from endpoints import members, messages, rooms, sync, threads
+from endpoints import members, messages, rooms, sync, threads, files, detail_file
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
@@ -33,7 +33,12 @@ app.include_router(
 app.include_router(
     sync.router, prefix=settings.API_V1_STR, tags=["sync"]
 )  # include urls from sync.py
-
+app.include_router(
+    detail_file.router, prefix=settings.API_V1_STR, tags=["details_of_files"]
+)  # include urls from detail_file.py
+app.include_router(
+        files.router, prefix=settings.API_V1_STR, tags=["files"]
+)   # include urls from files.py
 
 app.mount(
     "/",
