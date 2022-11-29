@@ -1,6 +1,7 @@
-from fastapi import APIRouter,  status, HTTPException
-from utils.message_utils import get_message
 import requests
+from fastapi import APIRouter, HTTPException, status
+
+from utils.message_utils import get_message
 
 router = APIRouter()
 
@@ -37,12 +38,12 @@ async def details_of_file(org_id: str, room_id: str, message_id: str):
         file_name = file_name_split[len(file_name_split) - 1].split(".")[0]
         file_type = my_file.headers.get("content-type").split("/")[1]
 
-        details_of_file = {
+        file_details = {
                     "file-name" : file_name,
                     "file-type" : file_type,
                     "file-size" : f"{file_size}kb"
             }
-        details.append(details_of_file)
+        details.append(file_details)
 
     return details
  
