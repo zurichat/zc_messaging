@@ -88,6 +88,7 @@ async def send_message(
             detail={"Message not sent": response},
         )
 
+    message.message_id = response["data"]["object_id"] 
     # Publish to centrifugo in the background.
     background_tasks.add_task(
         centrifugo_client.publish,
@@ -95,7 +96,7 @@ async def send_message(
         Events.MESSAGE_CREATE,
         message.dict(),
     )
-    message.message_id = response["data"]["object_id"]
+    
     # instantiate the Notication's function that handles message notification
     user_msg_notification = await notification.messages_trigger(message_obj=message)
     
