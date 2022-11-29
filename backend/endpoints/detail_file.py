@@ -1,10 +1,6 @@
-from fastapi import APIRouter, UploadFile,  status, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import APIRouter,  status, HTTPException
 from utils.message_utils import get_message
-from starlette.responses import JSONResponse, Response
-import datetime, zipfile,json
-from endpoints import image
-import requests, zipfile, os
+import requests
 
 router = APIRouter()
 
