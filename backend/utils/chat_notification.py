@@ -176,9 +176,9 @@ class Notification:
                 status_code=404, 
                 detail="User data in this organization not found"
             )
-        user_first_name = get_user_details[0]['first_name']
-        user_last_name = get_user_details[0]['last_name']
-        user_email = get_user_details[0]['email']
+        user_first_name = user_info[0]['first_name']
+        user_last_name = user_info[0]['last_name']
+        user_email = user_info[0]['email']
         # subscribe user to Novu for message notification
         create_subcriber = await subscriber.identify(member_id,{
             "email": user_email,
