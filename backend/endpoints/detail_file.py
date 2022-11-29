@@ -7,7 +7,11 @@ from endpoints import image
 import requests, zipfile, os
 
 router = APIRouter()
-"""
+
+
+@router.get("/org/{org_id}/rooms/{room_id}/messages/{message_id}")
+async def details_of_file(org_id: str, room_id: str, message_id: str):
+    """
 	An endpoint that returns the details of a file uplaoded to the given room
 	params:
 		org_id: organization id number
@@ -21,11 +25,7 @@ router = APIRouter()
     room_id: 6373eb4f4746182adae97316
     message_id:637fe320601ce3fc5dc739ea
 """
-
-@router.get("/org/{org_id}/rooms/{room_id}/messages/{message_id}")
-async def details_of_file(org_id: str, room_id: str, message_id: str):
     messages = await get_message(org_id, room_id, message_id)
-    print(messages)
     details = []
     files = messages.get('files')
     for file in files:
@@ -41,7 +41,7 @@ async def details_of_file(org_id: str, room_id: str, message_id: str):
                     "file-size" : file_size
             }
         details.append(details_of_file)
-        print(details)
+        return details
     if not files:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="file not found"
@@ -50,13 +50,7 @@ async def details_of_file(org_id: str, room_id: str, message_id: str):
         
 
     
-    #for file in files:
-    
-  
-    
-    #print(file)
-    #print(detail)
-   
+
                 
 
  
