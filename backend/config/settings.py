@@ -1,27 +1,6 @@
 import secrets
 
 from pydantic import BaseSettings
-import cloudinary
-import os
-
-from dotenv import load_dotenv
-
-load_dotenv()
-
-
-
-# cloudinary.config(
-#     cloud_name = 'deizhrjy7',
-#     api_key = 225348553815486,
-#     api_secret = 'R-7ratXg_ALTCUoEvds9xnbfqiA'
-# )
-
-cloudinary.config(
-    cloud_name = os.getenv('CLOUD_NAME'),
-    api_key = os.getenv('API_KEY'),
-    api_secret = os.getenv('API_SECRET')
-)
-
 
 class Settings(BaseSettings):
     """Class to hold application config values."""

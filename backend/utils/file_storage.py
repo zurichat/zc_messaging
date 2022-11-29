@@ -71,4 +71,4 @@ class FileStorage:
         if response.status_code == 200:
             return response.json()['data']["file_url"]
 
-        return {"status_code": response.status_code, "message": response.json()}
+        return None

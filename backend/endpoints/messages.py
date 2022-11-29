@@ -91,7 +91,8 @@ async def send_message(
 
         fileStorage = FileStorage(org_id)
         file_url = await fileStorage.files_upload(file_obj, token)
-        file_urls.append(file_url)
+        if file_url:
+            file_urls.append(file_url)
 
     new_obj['files'] = file_urls
     message = Message(**new_obj, org_id=org_id, room_id=room_id)

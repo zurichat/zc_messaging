@@ -63,4 +63,3 @@ watchgod==0.7
 websockets==10.0
 wget==3.2
 wrapt==1.13.2
-cloudinary==1.30.0
