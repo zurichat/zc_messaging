@@ -7,12 +7,12 @@ import "./threads.css"
 import { Toast } from "react-bootstrap"
 
 const Threads = () => {
-  const [threads, setThreads] = useState([])
-  const [showMsgA, setShowMsgA] = useState(false)
-  const [showMsgB, setShowMsgB] = useState(false)
+  const [threadsData, setThreadsData] = useState([])
+  const [statusMsgA, setStatusMsgA] = useState(false)
+  const [errMsgB, setErrMsgB] = useState(false)
 
-  const toggleTstShowA = () => setShowMsgA(!showMsgA)
-  const toggleTstShowB = () => setShowMsgB(!showMsgB)
+  const toggleTstShowA = () => setStatusMsgA(!statusMsgA)
+  const toggleTstShowB = () => setErrMsgB(!errMsgB)
 
   const jsonDataParse = data => {
     return JSON.parse(data)
@@ -31,11 +31,11 @@ const Threads = () => {
           let threads_array = response.data
           let dumpy_threads_Arr = []
           for (let i = 0; i < threads_array.length; i++) {
-            for (let j = 0; j < threads_array[i].threads.length; j++) {
-              dumpy_threads_Arr.push(threads_array[i].threads[j])
+            for (let j = 0; j < threads_array[i].threadsData.length; j++) {
+              dumpy_threads_Arr.push(threads_array[i].threadsData[j])
             }
           }
-          setThreads(dumpy_threads_Arr)
+          setThreadsData(dumpy_threads_Arr)
         })
         .catch(err => {
           console.error(err)
@@ -54,7 +54,7 @@ const Threads = () => {
       <div>
         <div>
           <div>
-            <Toast show={showMsgA} onClose={toggleTstShowA} bg="primary">
+            <Toast show={statusMsgA} onClose={toggleTstShowA} bg="primary">
               <Toast.Header>
                 <h3 className="me-auto"></h3>
               </Toast.Header>
@@ -64,7 +64,7 @@ const Threads = () => {
             </Toast>
           </div>
           <div>
-            <Toast show={showMsgB} onClose={toggleTstShowB} bg="danger">
+            <Toast show={errMsgB} onClose={toggleTstShowB} bg="danger">
               <Toast.Header>
                 <h3 className="me-auto"></h3>
               </Toast.Header>
@@ -75,8 +75,8 @@ const Threads = () => {
           </div>
         </div>
         <div className="Threads_main_wrapper_45x2c">
-          {threads ? (
-            <ThreadList threadListData={threads} />
+          {threadsData ? (
+            <ThreadList threadListData={threadsData} />
           ) : (
             <p>Loading...</p>
           )}
