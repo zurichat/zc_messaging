@@ -135,4 +135,3 @@ async def get_thread_messages(org_id: str, room_id: str, message_id: str):
         content=ResponseModel.success(data=response, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )
-
