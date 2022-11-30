@@ -1,5 +1,5 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from fastapi_pagination import Page, add_pagination, paginate
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
@@ -8,6 +8,8 @@ from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
 
 router = APIRouter()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @router.post(
@@ -22,9 +24,10 @@ router = APIRouter()
 async def send_message(
     org_id: str,
     room_id: str,
-    request: MessageRequest,
     background_tasks: BackgroundTasks,
+    request: MessageRequest,
 ):
+
     """Creates and sends a message from a user inside a room.
 
     Registers a new document to the messages database collection while
@@ -76,7 +79,6 @@ async def send_message(
         HTTPException [404]: Room does not exist || Sender not a member of this room.
         HTTPException [424]: Message not sent.
     """
-
     message = Message(**request.dict(), org_id=org_id, room_id=room_id)
 
     response = await create_message(org_id=org_id, message=message)
@@ -86,7 +88,6 @@ async def send_message(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail={"Message not sent": response},
         )
-
     message.message_id = response["data"]["object_id"]
 
     # Publish to centrifugo in the background.
@@ -96,7 +97,6 @@ async def send_message(
         Events.MESSAGE_CREATE,
         message.dict(),
     )
-
     return JSONResponse(
         content=ResponseModel.success(data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
@@ -271,11 +271,7 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15
             detail="Zc Core failed",
         )
 
-    result = {
-            "data": response,
-            "page": page,
-            "size": limit
-    }
+    result = {"data": response, "page": page, "size": limit}
 
     return JSONResponse(
         content=ResponseModel.success(data=result, message="Messages retrieved"),
