@@ -1,6 +1,6 @@
 import React from "react"
 import ThreadItem from "./ThreadItem"
-import "./threadList.css"
+import "./threadList.module.css"
 
 const ThreadList = ({ threadListData }) => (
   <div className="threadList-Wrap">

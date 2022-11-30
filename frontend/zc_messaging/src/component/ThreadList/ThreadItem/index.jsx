@@ -1,5 +1,5 @@
 import React from "react"
-import "./threadItem.css"
+import "./threadItem.module.css"
 import moment from "moment"
 
 const ThreadItem = ({
