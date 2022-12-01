@@ -64,3 +64,4 @@ watchgod==0.7
 websockets==10.4
 wget==3.2
 wrapt==1.13.2
+python-decouple==3.6

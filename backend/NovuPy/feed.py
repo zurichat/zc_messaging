@@ -22,7 +22,7 @@ class Feed(Core):
         """
         Get feed
         """
-        url = self.base_url+'/feeds'
+        url = self.base_url+'v1/feeds'
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url=url, headers=self.s_header)
@@ -33,7 +33,7 @@ class Feed(Core):
         """
         Create Feed
         """
-        url = self.base_url+'/feeds'
+        url = self.base_url+'v1/feeds'
 
         async with httpx.AsyncClient() as client:
             response = await client.post(url=url, headers=self.header, data=data)
@@ -44,7 +44,7 @@ class Feed(Core):
         """
         Create Feed
         """
-        url = self.base_url+f'/feeds/{feed_id}'
+        url = self.base_url+f'v1/feeds/{feed_id}'
 
         async with httpx.AsyncClient() as client:
             response = await client.delete(url=url, headers=self.header)
