@@ -1,13 +1,9 @@
-from typing import Optional
-
-from fastapi import (APIRouter, BackgroundTasks, Body, File, HTTPException,
-                     UploadFile, status)
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
-from utils.files_utils import upload_files
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
 from utils.paginator import page_urls
@@ -29,10 +25,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 async def send_message(
     org_id: str,
     room_id: str,
-    token: str,
     background_tasks: BackgroundTasks,
-    request: MessageRequest = Body(...),
-    file: Optional[UploadFile] = File(default=None),
+    request: MessageRequest,
 ):
 
     """Creates and sends a message from a user inside a room.
@@ -86,14 +80,7 @@ async def send_message(
         HTTPException [404]: Room does not exist || Sender not a member of this room.
         HTTPException [424]: Message not sent.
     """
-    new_message_object = {**request.dict()}
-    file_urls = []
-
-    if file is not None:
-        file_urls = await upload_files(org_id, file, token)
-
-    new_message_object["files"] = file_urls
-    message = Message(**new_message_object, org_id=org_id, room_id=room_id)
+    message = Message(**request.dict(), org_id=org_id, room_id=room_id)
 
     response = await create_message(org_id=org_id, message=message)
 
