@@ -6,6 +6,7 @@ from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
+from utils.paginator import page_urls
 
 router = APIRouter()
 
@@ -220,7 +221,7 @@ async def update_message(
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
-async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15):
+async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15):
     """Fetches all messages sent in a particular room.
 
     Args:
@@ -258,7 +259,8 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15
         HTTPException [424]: Zc Core failed
     """
 
-    response = await get_room_messages(org_id, room_id, page, limit)
+    response = await get_room_messages(org_id, room_id, page, size)
+    paging, total_count = await page_urls(page, size, org_id, room_id, endpoint=f"/api/v1/org/{org_id}/rooms/{room_id}/messages")
     if response == []:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -271,7 +273,14 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15
             detail="Zc Core failed",
         )
 
-    result = {"data": response, "page": page, "size": limit}
+    result = {
+            "data": response,
+            "page": page,
+            "size": size,
+            "total": total_count,
+            "previous": paging.get('previous'),
+            "next": paging.get('next')         
+    }
 
     return JSONResponse(
         content=ResponseModel.success(data=result, message="Messages retrieved"),
