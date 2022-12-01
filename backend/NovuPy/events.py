@@ -91,7 +91,7 @@ class Events(Core):
             data["name"] = event_name
 
             async with httpx.AsyncClient() as client:
-                response = await client.post(url=url, headers=self.headers, data=data)
+                response = await client.post(url=url, headers=self.headers, json=data)
             return response.json()
 
         except httpx.RequestError:
@@ -114,7 +114,7 @@ class Events(Core):
             data["name"] = event_name
 
             async with httpx.AsyncClient() as client:
-                response = await client.post(url=url, headers=self.headers, data=data)
+                response = await client.post(url=url, headers=self.headers, json=data)
 
         except httpx.RequestError:
             raise HTTPException(status_code=500, detail="Something went wrong")
