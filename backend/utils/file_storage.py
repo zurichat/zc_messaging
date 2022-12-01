@@ -2,6 +2,7 @@ from typing import Any, Union
 
 import requests
 from config.settings import settings
+from fastapi.exceptions import HTTPException
 from pydantic import AnyHttpUrl
 
 
@@ -28,7 +29,6 @@ class FileStorage:
                 f"{settings.BASE_URL}/delete/file/" + self.plugin_id
             )
             self.organization_id = organization_id
-            self.upload_api_url = f"{settings.BASE_URL}/upload/file/" + self.plugin_id
 
         except requests.exceptions.RequestException as exception:
             print(exception)
@@ -56,19 +56,21 @@ class FileStorage:
                 }
         """
 
-        # files = [("files", file) for file in files]
-        # # NOTE to use when we implement multiple uploads
-
         headers = {
             "Authorization": "Bearer " + token,
         }
 
         try:
-            response = requests.post(url=self.upload_api, files=files, headers=headers)
+            response = requests.post(
+                url=self.upload_api, files=files, headers=headers
+                )
         except requests.exceptions.RequestException:
             return None
 
         if response.status_code == 200:
             return response.json()['data']["file_url"]
 
-        return None
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=response.json()["message"],
+        )
