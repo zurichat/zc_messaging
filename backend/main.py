@@ -34,7 +34,6 @@ app.include_router(
     sync.router, prefix=settings.API_V1_STR, tags=["sync"]
 )  # include urls from sync.py
 
-
 app.mount(
     "/",
     StaticFiles(directory="../frontend/dist", html=True, check_dir=False),

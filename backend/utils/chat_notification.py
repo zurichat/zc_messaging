@@ -1,8 +1,9 @@
 from NovuPy.events import Events
 from NovuPy.subscribers import Subscribers
-from room_utils import get_room_members, get_room
+from utils.room_utils import get_room_members, get_room
 from fastapi import HTTPException
-from db import DataStorage
+from utils.db import DataStorage
+from config.settings import settings
 
 subscriber = Subscribers()
 event = Events()
@@ -16,7 +17,7 @@ class Notification:
 
 
     async def tagged_user_trigger_create(
-        self, message_obj
+        self, message_obj, room_name
         ):
         """
         A method that creates a notification trigger for tagged users
@@ -67,12 +68,13 @@ class Notification:
                 sender_lastname = sender_info[0]['last_name']
                 sender_name = sender_firstname + ' ' + sender_lastname
                 payload['senderName'] = sender_name
+                payload['channelName'] = room_name
                 payload['messageBody'] = new_message
-                tagged_users = await event.trigger({
-                    "name":"channel-message",
+                tagged_users = await event.trigger("channel-message",{
                     "payload": payload,
                     "to": tagged_users_list
                 })
+                print(tagged_users)
                 if tagged_users['statusCode'] !=201:
                     raise HTTPException(
                         status_code=422, 
@@ -243,8 +245,7 @@ class Notification:
         for member_id, values in room.items():
             if member_id == sender_id:
                 del room[member_id]
-            dm_trigger_create = await event.trigger({
-                "name": 'direct-message',
+            dm_trigger_create = await event.trigger('direct-message',{
                 "payload": payload,
                 "to": [member_id]
             })
@@ -275,6 +276,16 @@ class Notification:
                 status_code=400, 
                 detail="Invalid data input"
                 )
+        DB = DataStorage(organization_id=org_id)
+        query = {"_id": room_id}
+        # get room data
+        get_room = await DB.read(settings.ROOM_COLLECTION, query=query)
+        if not get_room:
+            raise HTTPException(
+                status_code=404,
+                detail="Room with supplied ID not found"
+            )
+        room_name = get_room["room_name"]
         try:
             message = message_obj['richUiData']['blocks'][0]['text']
             sender_id = message_obj["sender_id"]
@@ -306,9 +317,7 @@ class Notification:
                 detail="failed to create a DM Novu instance"
                 )
             return "dm notification trigger successful"
-        # fetch sender data from DB
-        DB = DataStorage(organization_id=org_id)
-        
+        # fetch sender data from DB 
         room_members = await DB.get_all_members()
         if not room_members:
             raise HTTPException(
@@ -322,6 +331,7 @@ class Notification:
         sender_firstname = get_sender_details[0]['first_name']
         sender_lastname = get_sender_details[0]['last_name']
         payload['senderName'] = sender_firstname + ' ' + sender_lastname
+        payload['channelName'] = room_name
         payload['messageBody'] = message
         get_members = await get_room_members(org_id, room_id)
         for member_id, value in get_members.items():
@@ -330,8 +340,7 @@ class Notification:
             room_member_list.append(member_id)
          # send a message notification to every user in either in the channel
          #  or Group DM by calling the Novu trigger method
-        channel_or_group_msg_notification = await event.trigger({
-            "name":'channel-message',
+        channel_or_group_msg_notification = await event.trigger('channel-message',{
             "payload": payload,
             "to": room_member_list
             })
@@ -348,7 +357,7 @@ class Notification:
             get_tagged_users = tagged_message['entityMap']
             if get_tagged_users !=[]:
                 notify_tagged_users = await self.tagged_user_trigger_create(
-                    message_obj
+                    message_obj, room_name
                     )
             # raise an http exception if novu fails to send message notification
             # to tagged users
