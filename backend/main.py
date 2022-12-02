@@ -36,9 +36,9 @@ app.include_router(
 app.include_router(
     detail_file.router, prefix=settings.API_V1_STR, tags=["details_of_files"]
 )  # include urls from detail_file.py
-app.include_router(
-        files.router, prefix=settings.API_V1_STR, tags=["files"]
-)   # include urls from files.py
+# app.include_router(
+#         files.router, prefix=settings.API_V1_STR, tags=["files"]
+# )   # include urls from files.py
 
 
 app.mount(
