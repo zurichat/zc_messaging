@@ -3,16 +3,16 @@ import { Helmet } from "react-helmet"
 import { ThreadList } from "../../component"
 import generatePageTitle from "../../utils/generatePageTitle"
 import { getThreadHandler } from "./threads.utils"
-import "./threads.css"
+import "./threads.module.css"
 import { Toast } from "react-bootstrap"
 
 const Threads = () => {
   const [threadsData, setThreadsData] = useState([])
-  const [statusMsgA, setStatusMsgA] = useState(false)
-  const [errMsgB, setErrMsgB] = useState(false)
+  const [statusMsg, setStatusMsg] = useState(false)
+  const [errMsg, setErrMsg] = useState(false)
 
-  const toggleTstShowA = () => setStatusMsgA(!statusMsgA)
-  const toggleTstShowB = () => setErrMsgB(!errMsgB)
+  const toggleStatShow = () => setStatusMsg(!statusMsg)
+  const toggleErrShow = () => setErrMsg(!errMsg)
 
   const jsonDataParse = data => {
     return JSON.parse(data)
@@ -39,10 +39,10 @@ const Threads = () => {
         })
         .catch(err => {
           console.error(err)
-          toggleTstShowB()
+          toggleErrShow()
         })
     } else {
-      toggleTstShowA()
+      toggleStatShow()
     }
   }, [])
 
@@ -54,7 +54,7 @@ const Threads = () => {
       <div>
         <div>
           <div>
-            <Toast show={statusMsgA} onClose={toggleTstShowA} bg="primary">
+            <Toast show={statusMsg} onClose={toggleStatShow} bg="primary">
               <Toast.Header>
                 <h3 className="me-auto"></h3>
               </Toast.Header>
@@ -64,7 +64,7 @@ const Threads = () => {
             </Toast>
           </div>
           <div>
-            <Toast show={errMsgB} onClose={toggleTstShowB} bg="danger">
+            <Toast show={errMsg} onClose={toggleErrShow} bg="danger">
               <Toast.Header>
                 <h3 className="me-auto"></h3>
               </Toast.Header>
