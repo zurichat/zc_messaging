@@ -270,11 +270,6 @@ async def join_room(
         data=members,
     )  # publish to centrifugo in the background
 
-    # instantiate the Notication's function that handles channel users subscription
-    create_channel_subscriber = await notification.channel_subcriber_create(
-        org_id=org_id, member_id=member_id
-        )
-        
     if update_response and update_response.get("status_code", None) is None:
         return JSONResponse(
             status_code=status.HTTP_200_OK,
