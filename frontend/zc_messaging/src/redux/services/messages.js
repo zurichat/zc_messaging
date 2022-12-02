@@ -18,11 +18,12 @@ export const messagesApi = createApi({
         const getMessagesInRoomResponse = await fetchWithBQ(
           `/org/${orgId}/rooms/${roomId}/messages`
         )
-        if (Array.isArray(getMessagesInRoomResponse?.data?.data)) {
+        if (Array.isArray(getMessagesInRoomResponse?.data?.data?.data)) {
           const workspaceUsers = await getCurrentWorkspaceUsers()
-          const roomMessages = getMessagesInRoomResponse.data.data
+          const roomMessages = getMessagesInRoomResponse.data.data.data
           return {
             data: roomMessages
+              .reverse()
               .filter(message => message.richUiData && message.timestamp)
               .map(message => {
                 const sender = workspaceUsers.find(
