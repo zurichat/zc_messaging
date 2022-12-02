@@ -30,8 +30,11 @@ class Notification:
         """
         tagged_users_list = []
         payload = {}
-        get_tagged_users = message_obj.get("richUiData", " ")
+        message_data = dict(message_obj)
+        get_tagged_users = message_data.get("richUiData", " ")
+        org_id = message_data.get("org_id", '')
         if get_tagged_users: 
+            DB =  DataStorage(organization_id=org_id)
             # get the text from the message object
             text_message = get_tagged_users['blocks'][0]['text']
             # from the text in the message text, get the characters without '@'
@@ -44,7 +47,6 @@ class Notification:
                 for message in range(len(user_msg_tag)):
                     tagged_user_email = user_msg_tag[str(message)]['data']['mention']['link']
                     # get user details from DB
-                    DB =  DataStorage(organization_id=get_tagged_users['org_id'])
                     get_room_users = await DB.get_all_members()
                     if not get_room_users:
                         raise HTTPException(
@@ -56,7 +58,7 @@ class Notification:
                         ]
                     tagged_users_list.append(tagged_user[0]['_id'])
                 # use sender ID to fetch sender's data from the DB
-                sender_id = message_obj["sender_id"]
+                sender_id = message_data["sender_id"]
                 get_sender_details = await DB.get_all_members()
                 if not get_sender_details:
                         raise HTTPException(
@@ -74,125 +76,14 @@ class Notification:
                     "payload": payload,
                     "to": tagged_users_list
                 })
-                print(tagged_users)
-                if tagged_users['statusCode'] !=201:
+                tagged_user_notification_status = tagged_users.get("status", " ")
+                if not tagged_user_notification_status:
                     raise HTTPException(
                         status_code=422, 
                         detail="Novu couldn't send notifications to tagged users"
                         )
                 return tagged_users
 
-
-
-    async def dm_subscriber_create(self, room_obj):
-        """
-        A function that subscribes a DM user to Novu
-        Args:
-            (i) room_obj -> Dict
-
-        Raise:
-            HTTP_422- when novu failed to create DM notification
-            HTTP_400- when room object argument passed is invalid
-        """
-        org_id = room_obj.get("org_id", " ")
-        if not room_obj or org_id:
-            raise HTTPException(
-                status_code=400, 
-                detail="Room object data is invalid"
-                )
-        if room_obj['room_type'] != 'DM':
-            raise HTTPException(
-                status_code=400, 
-                detail="This function is only for DM"
-                )
-        try:
-            room_members = room_obj['room_members']
-        except:
-            raise HTTPException(
-                status_code=400, 
-                detail="room members can't be empty"
-            )
-        for member_id, value in room_members:
-            # fetch user data from DB
-            DB = DataStorage(organization_id=org_id)
-            get_user_details = await DB.get_all_members()
-            if not get_user_details:
-                raise HTTPException(
-                    status_code=404, 
-                    detail="Organization has no member"
-                )
-            user_info = [
-                user for user in get_user_details  if user['_id'] == member_id
-                ]
-            if not user_info:
-                raise HTTPException(
-                    status_code=404, 
-                    detail="User data in this organization not found"
-                )
-            user_first_name = user_info[0]['first_name']
-            user_last_name = user_info[0]['last_name']
-            user_email = user_info[0]['email']
-            # subscribe user to Novu for message notification
-            create_subcriber = await subscriber.identify(
-                member_id, {
-                "email": user_email,
-                "firstName": user_first_name,
-                "lastName": user_last_name
-                })
-            if create_subcriber['statusCode'] !=201:
-                raise HTTPException(
-                status_code=422, 
-                detail="User's Novu subscription failed"
-                )
-        return create_subcriber
-        
-        
-
-    async def channel_subcriber_create(self, org_id, member_id):
-        """
-        A function that create the Novu's subscriber object for a room user
-        Args:
-            (i) org_id
-            (ii) member_id
-        Raise:
-            HTTP_422- when novu failed to create subcription for channel users
-        """
-        if not member_id or org_id:
-            raise HTTPException(
-                status_code=400, 
-                detail="ID argument required"
-                )
-        # fetch user data from DB
-        DB = DataStorage(organization_id=org_id)
-        get_user_details = await DB.get_all_members()
-        if not get_user_details:
-            raise HTTPException(
-                status_code=404,
-                detail="Organization doesn't have a member"
-            )
-        user_info = [
-            user for user in get_user_details  if user['_id'] == member_id
-            ]
-        if not user_info:
-            raise HTTPException(
-                status_code=404, 
-                detail="User data in this organization not found"
-            )
-        user_first_name = user_info[0]['first_name']
-        user_last_name = user_info[0]['last_name']
-        user_email = user_info[0]['email']
-        # subscribe user to Novu for message notification
-        create_subcriber = await subscriber.identify(member_id,{
-            "email": user_email,
-            "firstName": user_first_name,
-            "lastName": user_last_name
-            })
-        if create_subcriber.status_code != 201:
-            raise HTTPException(
-                status_code=422, 
-                detail="User Novu subscription failed"
-                )
-        return create_subcriber
         
 
 
@@ -249,7 +140,10 @@ class Notification:
                 "payload": payload,
                 "to": [member_id]
             })
-            if dm_trigger_create['statusCode'] !=201:
+            dm_trigger_create_statuscode = dm_trigger_create.get("status", " ")
+            # if the novu response doesn't contain a status as a key, 
+            # it means the novu instance failed 
+            if not dm_trigger_create_statuscode:
                 raise HTTPException(
                 status_code=422, 
                 detail="Novu couldn't create DM notification trigger"
@@ -269,26 +163,22 @@ class Notification:
         """
         payload = {}
         room_member_list = []
-        org_id = message_obj.get("org_id", '')
-        room_id = message_obj.get("room_id", '')
-        if not org_id or room_id or message_obj:
-            raise HTTPException(
-                status_code=400, 
-                detail="Invalid data input"
-                )
+        message_data = dict(message_obj)
+        org_id = message_data.get("org_id", '')
+        room_id = message_data.get("room_id", '')
         DB = DataStorage(organization_id=org_id)
         query = {"_id": room_id}
         # get room data
-        get_room = await DB.read(settings.ROOM_COLLECTION, query=query)
-        if not get_room:
+        get_room_data = await DB.read(settings.ROOM_COLLECTION, query=query)
+        if not get_room_data:
             raise HTTPException(
                 status_code=404,
                 detail="Room with supplied ID not found"
             )
-        room_name = get_room["room_name"]
+        room_name = get_room_data["room_name"]
         try:
-            message = message_obj['richUiData']['blocks'][0]['text']
-            sender_id = message_obj["sender_id"]
+            message = message_data['richUiData']['blocks'][0]['text']
+            sender_id = message_data["sender_id"]
         except:
             raise HTTPException(
                 status_code=400, 
@@ -306,7 +196,12 @@ class Notification:
             dm_notification = await self.dm_message_trigger(
                 org_id,room_id,sender_id, message
                 )
-            if dm_notification['statusCode'] !=201:
+            dm_notification_status_code = dm_notification.get("status", " ")
+            # check the novu instance response to get the status code
+            # this logic was used becuase if the novu operation fails,
+            # it will return a statusCode as a key and if the operation 
+            # is successful it returns status as a key.
+            if not dm_notification_status_code:
                 raise HTTPException(
                     status_code=422, 
                     detail="Failed to process Novu instance"
@@ -326,7 +221,7 @@ class Notification:
             )
 
         get_sender_details = [
-            user for user in room_members  if user['_id'] == member_id
+            user for user in room_members  if user['_id'] == sender_id
             ]
         sender_firstname = get_sender_details[0]['first_name']
         sender_lastname = get_sender_details[0]['last_name']
@@ -334,10 +229,9 @@ class Notification:
         payload['channelName'] = room_name
         payload['messageBody'] = message
         get_members = await get_room_members(org_id, room_id)
-        for member_id, value in get_members.items():
-            if member_id == sender_id:
-                del get_members[member_id]
-            room_member_list.append(member_id)
+        for member_id in get_members.keys():
+            if member_id != sender_id:
+                room_member_list.append(member_id)
          # send a message notification to every user in either in the channel
          #  or Group DM by calling the Novu trigger method
         channel_or_group_msg_notification = await event.trigger('channel-message',{
@@ -346,13 +240,14 @@ class Notification:
             })
         # raise an http exception if novu fails to send message notification
         # to group DM or channel room members
-        if channel_or_group_msg_notification["acknowledged"] != "true":
+        channel_notification_status = channel_or_group_msg_notification.get("status", " ")
+        if not channel_notification_status:
             raise HTTPException(
                 status_code=422, 
                 detail="Message notification failed"
                 )
         # send notification to tagged users if there's any
-        tagged_message = message_obj.get("richUiData", '')
+        tagged_message = message_data.get("richUiData", '')
         if tagged_message:
             get_tagged_users = tagged_message['entityMap']
             if get_tagged_users !=[]:
@@ -361,7 +256,8 @@ class Notification:
                     )
             # raise an http exception if novu fails to send message notification
             # to tagged users
-            if notify_tagged_users["acknowledged"] != "true":
+            novu_status = notify_tagged_users.get("status", " ")
+            if not novu_status :
                 raise HTTPException(
                     status_code=422, 
                     detail="failed to create a DM notification"

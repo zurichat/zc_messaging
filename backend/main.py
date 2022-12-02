@@ -40,6 +40,7 @@ app.include_router(
         files.router, prefix=settings.API_V1_STR, tags=["files"]
 )   # include urls from files.py
 
+
 app.mount(
     "/",
     StaticFiles(directory="../frontend/dist", html=True, check_dir=False),
