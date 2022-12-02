@@ -54,7 +54,7 @@ async def create_room(
             "starred": False,
             "closed": False,
         }
-
+    novu_dm_subscriber = await notification.dm_subscriber_create(room_obj=room_obj)
     response = await DB.write(settings.ROOM_COLLECTION, data=room_obj.dict())
     if response and response.get("status_code", None) is None:
         room_id = {"room_id": response.get("data").get("object_id")}
@@ -240,7 +240,6 @@ async def join_room(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="room not found" if not room else "DM room cannot be joined",
         )
-
     member = room.get("room_members").get(str(member_id))
     if member == None:
         raise HTTPException(
