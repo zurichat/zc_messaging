@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
@@ -36,10 +36,12 @@ async def send_message(
 
     Args:
         org_id (str): A unique identifier of an organisation.
-        request (MessageRequest): A pydantic schema that defines the message request parameters.
-        room_id (str): A unique identifier of the room where the message is being sent to.
-        background_tasks (BackgroundTasks): A background task for publishing to all
-                                            members of the room.
+        request (MessageRequest): A pydantic schema that defines
+        the message request parameters.
+        room_id (str): A unique identifier of the room where the message
+        is being sent to.
+        background_tasks (BackgroundTasks): A background task for publishing
+        to all members of the room.
 
     Returns:
         A dict containing data about the message that was created.
@@ -99,7 +101,8 @@ async def send_message(
         message.dict(),
     )
     return JSONResponse(
-        content=ResponseModel.success(data=message.dict(), message="new message sent"),
+        content=ResponseModel.success(
+            data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
     )
 
@@ -221,7 +224,9 @@ async def update_message(
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
-async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15):
+async def get_messages(
+    org_id: str, room_id: str, page: int = 1, size: int = 15
+):
     """Fetches all messages sent in a particular room.
 
     Args:
@@ -260,7 +265,9 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15)
     """
 
     response = await get_room_messages(org_id, room_id, page, size)
-    paging, total_count = await page_urls(page, size, org_id, room_id, endpoint=f"/api/v1/org/{org_id}/rooms/{room_id}/messages")
+    paging, total_count = await page_urls(
+        page, size, org_id, room_id,
+        endpoint=f"/api/v1/org/{org_id}/rooms/{room_id}/messages")
     if response == []:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -274,15 +281,16 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15)
         )
 
     result = {
-            "data": response,
-            "page": page,
-            "size": size,
-            "total": total_count,
-            "previous": paging.get('previous'),
-            "next": paging.get('next')         
+        "data": response,
+        "page": page,
+        "size": size,
+        "total": total_count,
+        "previous": paging.get('previous'),
+        "next": paging.get('next')
     }
 
     return JSONResponse(
-        content=ResponseModel.success(data=result, message="Messages retrieved"),
+        content=ResponseModel.success(
+            data=result, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )

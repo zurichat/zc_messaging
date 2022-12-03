@@ -3,7 +3,7 @@ import concurrent.futures
 from datetime import datetime
 from typing import Any, List
 
-from fastapi import HTTPException, status, Form, UploadFile, File
+from fastapi import Form, HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 from utils.room_utils import get_room
 
@@ -98,14 +98,14 @@ class MessageRequest(BaseModel):
         saved_by: List[str] = Form([]),
         timestamp: int = Form(int),
         created_at: str = Form(str(datetime.utcnow())),
-    ): 
+    ):
         return cls(
-            sender_id=sender_id, 
-            emojis=emojis, 
-            richUiData=richUiData, 
-            files=files, 
-            saved_by=saved_by, 
-            timestamp=timestamp, 
+            sender_id=sender_id,
+            emojis=emojis,
+            richUiData=richUiData,
+            files=files,
+            saved_by=saved_by,
+            timestamp=timestamp,
             created_at=created_at
         )
 
@@ -145,7 +145,8 @@ class Thread(MessageRequest):
             room = future.result()
         if not room:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Room does not exist"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Room does not exist"
             )
 
         if sender_id not in set(room["room_members"]):

@@ -1,35 +1,76 @@
-# from fastapi import HTTPException, status
-# from fastapi import APIRouter
-# from utils.message_utils import get_room_messages
-# from utils.files_utils import zipfiles
+from datetime import datetime
 
-# router = APIRouter()
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi.security import OAuth2PasswordBearer
+from pydantic import AnyHttpUrl
+from schema.message import Message
+from schema.response import ResponseModel
+from starlette.responses import JSONResponse
+from utils.file_storage import FileStorage
+
+router = APIRouter()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-# @router.get("/org/{org_id}/rooms/{room_id}/files")
-# async def get_files(org_id: str, room_id: str, page: int = 1, limit: int = 15):
-#     """
-#     An endpoint that returns a list of images files uplaoded to th given room
+@router.post(
+    "/org/{org_id}/room/{room_id}/sender/{sender_id}/files/upload",
+    response_model=ResponseModel,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        404: {"description": "Room or sender not found"},
+        424: {"description": "ZC Core failed"},
+    },
+)
+async def upload_files(
+    org_id: str,
+    room_id: str,
+    sender_id: str,
+    files: list[UploadFile] = File(...),
+    token: str = Depends(oauth2_scheme)
+):
+    """Uploads files to the file storage service
 
-#     params:
-#             org_id: organization id number: "6373eb474746182adae97314",
-#             room_id: room id number: "6373eb4f4746182adae97316"
-#     return:
-#             A list of filepaths urls
-#     """
+    Args:
+        org_id (str): A unique identifier of an organisation.
+        room_id (str): A unique identifier of the room where the message
+        sender_id (str): A unique identifier of the sender.
+        files (list[UploadFile], optional): A list of files to be uploaded.
+        Defaults to File(...).
+        token (str, optional): A token for authentication.
+        Defaults to Depends(oauth2_scheme).
 
-#     room_messages = await get_room_messages(org_id, room_id, page, limit)
+    Raises:
+        HTTPException: If the file storage service is not available.
 
-#     if not room_messages:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail={"No file was uploaded": room_messages},
-#         )
+    Returns:
+        A dict containing data about the message that was created.
+    """    
+    # Validate the sender_id and room_id
+    message = Message(
+        org_id=org_id, room_id=room_id,
+        sender_id=sender_id, timestamp=datetime.now().timestamp())
 
-#     file_paths = []
+    # upload file
+    file_store = FileStorage(organization_id=org_id)
+    files = [
+        file.file for file in files
+    ]
+    response = await file_store.files_upload(files, token)
 
-#     for message in room_messages:
-#         if len(message["files"]):
-#             file_paths = file_paths + message["files"]
+    # Anything other than a list is an error
+    if not isinstance(response, list):
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"Message not sent": response},
+        )
 
-#     return zipfiles(file_paths)
+    # extract the urls from the response
+    file_urls: list[AnyHttpUrl] = [obj["file_url"] for obj in response]
+    message.files = file_urls
+
+    return JSONResponse(
+        content=ResponseModel.success(
+            data=message.dict(), message="Files uploaded successfully"),
+        status_code=status.HTTP_201_CREATED,
+    )
