@@ -267,7 +267,7 @@ const MessagingBoard = () => {
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}
               currentUserId={authUser?.user_id}
-              onScrolll={handleScroll}
+              onHandleScroll={handleScroll}
             />
           </div>
           {/* <TypingNotice>Omo Jesu is typing</TypingNotice> */}
