@@ -259,7 +259,7 @@ const MessagingBoard = () => {
       <MessageRoomViewHeader name={`#${roomName}`} />
       <Container>
         <MessagingArea>
-          <div style={{ height: "calc(100% - 29px)" }}>
+          <div style={{ height: "100%" }}>
             <MessageBoard
               isLoadingMessages={isLoadingRoomMessages}
               messages={roomChats || []}
@@ -267,6 +267,7 @@ const MessagingBoard = () => {
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}
               currentUserId={authUser?.user_id}
+              height={"92vh"}
               onHandleScroll={handleScroll}
             />
           </div>

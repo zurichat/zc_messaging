@@ -3,9 +3,10 @@ from typing import Any, Optional
 from config.settings import settings
 from schema.message import Message
 from utils.db import DataStorage
+from utils.paginator import off_set
 
 
-async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
+async def get_org_messages(org_id: str, page: int, size: int) -> Optional[list[dict[str, Any]]]:
     """Gets all messages sent in  an organization.
 
     Args:
@@ -32,7 +33,9 @@ async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
     """
 
     DB = DataStorage(org_id)
-    response = await DB.read(settings.MESSAGE_COLLECTION)
+    skip = await off_set(page, size)
+    options = {"limit":size, "skip":skip, "sort":{"_id":-1}}
+    response = await DB.read(settings.MESSAGE_COLLECTION, options=options)
 
     if not response or "status_code" in response:
         return None
@@ -41,7 +44,7 @@ async def get_org_messages(org_id: str) -> Optional[list[dict[str, Any]]]:
 
 
 async def get_room_messages(
-    org_id: str, room_id: str
+    org_id: str, room_id: str, page: int, size: int
 ) -> Optional[list[dict[str, Any]]]:
     """Gets all messages sent inside  a room.
     Args:
@@ -69,7 +72,10 @@ async def get_room_messages(
     """
 
     DB = DataStorage(org_id)
-    response = await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id})
+    
+    skip = await off_set(page, size)
+    options = {"limit":size, "skip":skip, "sort":{"_id":-1}}
+    response = await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id}, options=options)
 
     if response is None:
         return []
@@ -110,6 +116,7 @@ async def get_message(
     """
 
     DB = DataStorage(org_id)
+    
     query = {"room_id": room_id, "_id": message_id}
     response = await DB.read(settings.MESSAGE_COLLECTION, query=query)
 
@@ -151,5 +158,22 @@ async def update_message(
 
     db = DataStorage(org_id)
     message["edited"] = True
+
+    return await db.update(settings.MESSAGE_COLLECTION, message_id, message)
+
+
+async def update_message_threads(
+    org_id: str, message_id: str, message: dict[str, Any]
+) -> dict[str, Any]:
+    """Updates a message document in the database.
+    Args:
+        org_id (str): The organization id where the message is being updated.
+        message_id (str): The id of the message to be edited.
+        message (dict[str, Any]): The new data.
+    Returns:
+        dict[str, Any]: The response returned by DataStorage's update method.
+    """
+
+    db = DataStorage(org_id)
 
     return await db.update(settings.MESSAGE_COLLECTION, message_id, message)
