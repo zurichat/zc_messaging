@@ -11,8 +11,8 @@ class Subscribers(Core):
         Returns a list of subscribers, could be paginated using the `page` query parameter
         """
         url = self.base_url + \
-            f'/subscribers?page={page}' if page else self.base_url + \
-            f'/subscribers'
+            f'v1/subscribers?page={page}' if page else self.base_url + \
+            f'v1/subscribers'
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url=url, headers=self.s_header)
@@ -61,7 +61,7 @@ class Subscribers(Core):
 
         """
 
-        url = self.base_url + '/subscribers'
+        url = self.base_url + 'v1/subscribers'
 
         if not data:
             data = {}
@@ -86,7 +86,7 @@ class Subscribers(Core):
         Get subscriber by your internal id used to identify the subscriber
         """
 
-        url = self.base_url + f'/subscribers/{subscriber_id}'
+        url = self.base_url + f'v1/subscribers/{subscriber_id}'
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url=url, headers=self.s_header)
@@ -98,7 +98,7 @@ class Subscribers(Core):
         Used to update the subscriber entity with new information
         """
 
-        url = self.base_url + f'/subscribers/{subscriber_id}'
+        url = self.base_url + f'v1/subscribers/{subscriber_id}'
 
         async with httpx.AsyncClient() as client:
             response = await client.put(url=url, headers=self.headers, data=data)
@@ -110,7 +110,7 @@ class Subscribers(Core):
         Deletes a subscriber entity from the Novu platform
         """
 
-        url = self.base_url + f'/subscribers/{subscriber_id}'
+        url = self.base_url + f'v1/subscribers/{subscriber_id}'
 
         async with httpx.AsyncClient() as client:
             response = await client.delete(url=url, headers=self.headers)
@@ -121,7 +121,7 @@ class Subscribers(Core):
         """
         Subscriber credentials associated to the delivery methods such as slack and push tokens.
         """
-        url = self.base_url + f'/subscribers/{subscriber_id}/credentials'
+        url = self.base_url + f'v1/subscribers/{subscriber_id}/credentials'
 
         async with httpx.AsyncClient() as client:
             response = await client.put(url=url, headers=self.headers, data=data)
@@ -132,7 +132,7 @@ class Subscribers(Core):
         """
         Get subscriber preferences
         """
-        url = self.base_url + f'/subscribers/{subscriber_id}/preferences'
+        url = self.base_url + f'v1/subscribers/{subscriber_id}/preferences'
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url=url, headers=self.s_header)
@@ -145,7 +145,7 @@ class Subscribers(Core):
         """
 
         url = self.base_url + \
-            f'/subscribers/{subscriber_id}/preferences/{template_id}'
+            f'v1/subscribers/{subscriber_id}/preferences/{template_id}'
 
         async with httpx.AsyncClient() as client:
             response = await client.patch(url=url, headers=self.headers, data=data)
@@ -157,7 +157,7 @@ class Subscribers(Core):
         Get a notification feed for a particular subscriber
         """
         url = self.base_url + \
-            f'/subscribers/{subscriber_id}/notifications/feed'
+            f'v1/subscribers/{subscriber_id}/notifications/feed'
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url=url, headers=self.s_header)
@@ -170,7 +170,7 @@ class Subscribers(Core):
         """
 
         url = self.base_url + \
-            f'/subscribers/{subscriber_id}/notifications/unseen'
+            f'v1/subscribers/{subscriber_id}/notifications/unseen'
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url=url, headers=self.s_header)
@@ -183,7 +183,7 @@ class Subscribers(Core):
         Mark a subscriber feed message as seen
         """
         url = self.base_url + \
-            f'subscribers/{subscriber_id}/messages/{message_id}/seen'
+            f'v1/subscribers/{subscriber_id}/messages/{message_id}/seen'
 
         async with httpx.AsyncClient() as client:
             response = await client.post(url=url, headers=self.s_header)
@@ -195,7 +195,7 @@ class Subscribers(Core):
         Mark message action as seen
         """
         url = self.base_url + \
-            f'subscribers/{subscriber_id}/messages/{message_id}/actions/{type}'
+            f'v1/subscribers/{subscriber_id}/messages/{message_id}/actions/{type}'
 
         async with httpx.AsyncClient() as client:
             response = await client.post(url=url, headers=self.s_header)

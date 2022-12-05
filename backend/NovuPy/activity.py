@@ -20,7 +20,7 @@ class Activity(Core):
         }
 
         """
-        url = self.base_url+'/activity'
+        url = self.base_url+'v1/activity'
 
         async with httpx.AsyncClient() as requests:
             response = await requests.get(url=url, headers=self.s_header, params=kwargs)
@@ -38,7 +38,7 @@ class Activity(Core):
             yearlySent: 0
         }
         """
-        url = self.base_url+'/activity/stats'
+        url = self.base_url+'v1/activity/stats'
         async with httpx.AsyncClient() as requests:
             response = await requests.get(url=url, headers=self.s_header)
 
