@@ -20,7 +20,7 @@ class FileStorage:
                 in item["template_url"]
             )
             self.plugin_id = plugin["id"] if plugin else None
-            self.upload_api = f"{settings.BASE_URL}/upload/files/" + \
+            self.upload_api = f"{settings.BASE_URL}/upload/file/" + \
                 self.plugin_id
             self.upload_multiple_api = (
                 f"{settings.BASE_URL}/upload/files/" + self.plugin_id
@@ -29,8 +29,6 @@ class FileStorage:
                 f"{settings.BASE_URL}/delete/file/" + self.plugin_id
             )
             self.organization_id = organization_id
-            self.upload_api_url = f"{settings.BASE_URL}/upload/files/" + \
-                self.plugin_id
 
         except requests.exceptions.RequestException as exception:
             print(exception)
@@ -69,11 +67,14 @@ class FileStorage:
 
         try:
             response = requests.post(
-                url=self.upload_api, files=files, headers=headers)
+                url=self.upload_multiple_api, files=files, headers=headers)
         except requests.exceptions.RequestException:
             return None
 
-        if response.status_code == 200:
-            return response.json()['data']["files_info"]
+        response_data: dict = response.json()
 
-        return None
+        if response.status_code == 200:
+            return response_data['data']["files_info"]
+
+        # This is the case of an error response
+        return response_data.get("message")
