@@ -18,7 +18,7 @@ export const messagesApi = createApi({
         const getMessagesInRoomResponse = await fetchWithBQ(
           `/org/${orgId}/rooms/${roomId}/messages?page=${pageIndex}&size=15`
         )
-        if (Array.isArray(getMessagesInRoomResponse?.data?.data.data)) {
+        if (Array.isArray(getMessagesInRoomResponse?.data?.data?.data)) {
           const workspaceUsers = await getCurrentWorkspaceUsers()
           const roomMessages = getMessagesInRoomResponse.data.data.data
           const chatTotal = getMessagesInRoomResponse.data.data.total
