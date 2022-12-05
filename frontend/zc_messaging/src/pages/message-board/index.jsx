@@ -121,7 +121,7 @@ const MessagingBoard = () => {
       },
       messageData: { ...newMessage }
     })
-    const newMessag = [
+    const newMessages = [
       {
         ...newMessage,
         orgId: currentWorkspaceId,
@@ -134,7 +134,7 @@ const MessagingBoard = () => {
       }
     ]
     setPageIndex(1)
-    setSaveRecentChat(prev => prev.concat(newMessag))
+    setSaveRecentChat(prev => prev.concat(newMessages))
     setRoomChats(prev => prev.concat(saveRecentChat))
     return true
   }
