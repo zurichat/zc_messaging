@@ -24,6 +24,10 @@ const MessagingBoard = () => {
   const currentWorkspaceId = localStorage.getItem("currentWorkspace")
   const [pageTitle, setPageTitle] = useState("")
   const [roomName, setRoomName] = useState("unknown-channel")
+  const [pageIndex, setPageIndex] = useState(1)
+  const [roomChats, setRoomChats] = useState([])
+  const [saveRecentChat, setSaveRecentChat] = useState([])
+  const chatSize = 15
   const { data: roomsAvailable, isLoading: IsLoadingRoomsAvailable } =
     useGetRoomsAvailableToUserQuery(
       {
@@ -35,11 +39,12 @@ const MessagingBoard = () => {
         refetchOnMountOrArgChange: true
       }
     )
-  const { data: roomMessages, isLoading: isLoadingRoomMessages } =
+  const { data: data, isLoading: isLoadingRoomMessages } =
     useGetMessagesInRoomQuery(
       {
         orgId: currentWorkspaceId,
-        roomId
+        roomId,
+        pageIndex
       },
       {
         skip: Boolean(!roomId),
@@ -92,6 +97,10 @@ const MessagingBoard = () => {
       const room = roomsAvailable[roomId]
       setRoomName(room?.room_name)
       setPageTitle(generatePageTitle(room?.room_name))
+      setPageIndex(1)
+      if (pageIndex === 1 && data?.roomMessages) {
+        setRoomChats(data?.roomMessages)
+      }
     }
   }, [roomId, roomsAvailable])
 
@@ -112,12 +121,27 @@ const MessagingBoard = () => {
       },
       messageData: { ...newMessage }
     })
+    const newMessages = [
+      {
+        ...newMessage,
+        orgId: currentWorkspaceId,
+        roomId,
+        sender: {
+          sender_id: authUser?.user_id,
+          sender_name: authUser?.user_name,
+          sender_image_url: authUser?.user_image_url
+        }
+      }
+    ]
+    setPageIndex(1)
+    setSaveRecentChat(prev => prev.concat(newMessages))
+    setRoomChats(prev => prev.concat(saveRecentChat))
     return true
   }
 
   const reactHandler = (event, emojiObject, messageId) => {
     const currentUserId = authUser?.user_id
-    const newMessages = [...roomMessages]
+    const newMessages = [...roomChats]
 
     // if message_id is not undefined then it's coming from already rendered emoji in message container
 
@@ -219,7 +243,14 @@ const MessagingBoard = () => {
   const SendAttachedFileHandler = file => {
     // do something with the file
   }
-
+  const handleScroll = event => {
+    const numPage = Math.ceil(data.total / chatSize)
+    if (event.currentTarget.scrollTop === 0 && pageIndex < numPage) {
+      setPageIndex(prev => prev + 1)
+      setRoomChats(prev => data.roomMessages.concat(prev))
+      event.currentTarget.scrollTop = 200
+    }
+  }
   return roomId ? (
     <>
       <Helmet>
@@ -231,12 +262,13 @@ const MessagingBoard = () => {
           <div style={{ height: "100%" }}>
             <MessageBoard
               isLoadingMessages={isLoadingRoomMessages}
-              messages={roomMessages || []}
+              messages={roomChats || []}
               onSendMessage={sendMessageHandler}
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}
               currentUserId={authUser?.user_id}
               height={"92vh"}
+              onHandleScroll={handleScroll}
             />
           </div>
           {/* <TypingNotice>Omo Jesu is typing</TypingNotice> */}

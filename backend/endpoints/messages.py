@@ -1,15 +1,19 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from fastapi_pagination import Page, add_pagination, paginate
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
+from utils.paginator import page_urls
 from utils.chat_notification import Notification
 
 router = APIRouter()
 notification = Notification()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 
 @router.post(
     "/org/{org_id}/rooms/{room_id}/messages",
@@ -23,9 +27,10 @@ notification = Notification()
 async def send_message(
     org_id: str,
     room_id: str,
-    request: MessageRequest,
     background_tasks: BackgroundTasks,
+    request: MessageRequest,
 ):
+
     """Creates and sends a message from a user inside a room.
 
     Registers a new document to the messages database collection while
@@ -77,7 +82,6 @@ async def send_message(
         HTTPException [404]: Room does not exist || Sender not a member of this room.
         HTTPException [424]: Message not sent.
     """
-
     message = Message(**request.dict(), org_id=org_id, room_id=room_id)
 
     response = await create_message(org_id=org_id, message=message)
@@ -87,9 +91,8 @@ async def send_message(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail={"Message not sent": response},
         )
-
     message.message_id = response["data"]["object_id"]
-  
+
     # Publish to centrifugo in the background.
     background_tasks.add_task(
         centrifugo_client.publish,
@@ -99,7 +102,7 @@ async def send_message(
     )
     # instantiate the Notication's function that handles message notification
     user_msg_notification = await notification.messages_trigger(message_obj=message)
-	
+    
     return JSONResponse(
         content=ResponseModel.success(data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
@@ -223,7 +226,7 @@ async def update_message(
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
-async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15):
+async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15):
     """Fetches all messages sent in a particular room.
 
     Args:
@@ -261,7 +264,8 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15
         HTTPException [424]: Zc Core failed
     """
 
-    response = await get_room_messages(org_id, room_id, page, limit)
+    response = await get_room_messages(org_id, room_id, page, size)
+    paging, total_count = await page_urls(page, size, org_id, room_id, endpoint=f"/api/v1/org/{org_id}/rooms/{room_id}/messages")
     if response == []:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -277,7 +281,10 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, limit: int = 15
     result = {
             "data": response,
             "page": page,
-            "size": limit
+            "size": size,
+            "total": total_count,
+            "previous": paging.get('previous'),
+            "next": paging.get('next')         
     }
 
     return JSONResponse(
