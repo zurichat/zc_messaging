@@ -2,10 +2,10 @@ from unittest import mock
 from unittest.mock import Mock
 
 import pytest
-import requests
 from config.settings import settings
-from requests import exceptions
+from requests.exceptions import RequestException
 from utils.file_storage import FileStorage
+
 
 @pytest.fixture
 def DummyFileStorage():
@@ -31,12 +31,14 @@ class TestFileStorageUpload:
     async def test_init(self, DummyFileStorage: FileStorage):
         """Test init"""
         assert DummyFileStorage.plugin_id == "test"
-        assert DummyFileStorage.upload_api_url == \
+        assert DummyFileStorage.upload_api == \
             f"{settings.BASE_URL}/upload/file/test"
+        assert DummyFileStorage.upload_multiple_api == \
+            f"{settings.BASE_URL}/upload/files/test"
 
-    async def test_file_upload(self, DummyFileStorage: FileStorage):
+    async def test_success(self, DummyFileStorage: FileStorage):
         """Test upload"""
-        files = ["test", "test1"]
+        files = [b"", b""]
         token = "test"
 
         with mock.patch('requests.post') as mock_post:
@@ -46,10 +48,12 @@ class TestFileStorageUpload:
                 "data": {
                     "files_info": [
                         {
-                            "file_url": "test"
+                            "file_url": "test",
+                            "original_name": "test"
                         },
                         {
-                            "file_url": "test1"
+                            "file_url": "test1",
+                            "original_name": "test1"
                         }
                     ]
                 }
@@ -59,41 +63,44 @@ class TestFileStorageUpload:
                 "Authorization": "Bearer " + token,
             }
             mock_post.assert_called_once_with(
-                url=DummyFileStorage.upload_api_url,
+                url=DummyFileStorage.upload_multiple_api,
                 files=[
-                    ("files", "test"),
-                    ("files", "test1"),
+                    ("file", b""),
+                    ("file", b""),
                 ],
                 headers=headers,
             )
-            assert response == ["test", "test1"]
+            assert response == [
+                {
+                    "file_url": "test",
+                    "original_name": "test"
+                },
+                {
+                    "file_url": "test1",
+                    "original_name": "test1"
+                }
+            ]
 
-    async def test_upload_error(self, DummyFileStorage: FileStorage):
+    async def test_storage_failure(self, DummyFileStorage: FileStorage):
         """Test upload"""
-        files = ["test", "test1"]
+        files = [b"", b""]
         token = "test"
 
         with mock.patch('requests.post') as mock_post:
-            mock_post.side_effect = requests.exceptions.RequestException
+            mock_post.side_effect = RequestException
             response = await DummyFileStorage.files_upload(files, token)
             assert response is None
 
-    async def test_upload_none(self, DummyFileStorage: FileStorage):
+    async def test_upload_error(self, DummyFileStorage: FileStorage):
         """Test upload"""
-        files = ["test", "test1"]
+        files = [b"", b""]
         token = "test"
 
         with mock.patch('requests.post') as mock_post:
             mock_post.return_value.status_code = 400
             mock_post.return_value.json.return_value = {
                 "status": 400,
-                "data": "test"
+                "message": "error message"
             }
             response = await DummyFileStorage.files_upload(files, token)
-            assert response == {
-                "status_code": 400,
-                "message": {
-                    "status": 400,
-                    "data": "test"
-                }
-            }
+            assert response == "error message"
