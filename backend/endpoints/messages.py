@@ -7,8 +7,11 @@ from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
 from utils.paginator import page_urls
+from utils.chat_notification import Notification
 
 router = APIRouter()
+notification = Notification()
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -98,6 +101,9 @@ async def send_message(
         Events.MESSAGE_CREATE,
         message.dict(),
     )
+    # instantiate the Notication's function that handles message notification
+    user_msg_notification = await notification.messages_trigger(message_obj=message)
+	
     return JSONResponse(
         content=ResponseModel.success(data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
