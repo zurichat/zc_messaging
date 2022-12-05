@@ -3,7 +3,7 @@ import concurrent.futures
 from datetime import datetime
 from typing import Any, List
 
-from fastapi import File, Form, HTTPException, UploadFile, status
+from fastapi import HTTPException, status, Form, UploadFile, File
 from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
 from utils.room_utils import get_room
 
@@ -22,7 +22,6 @@ class Emoji(BaseModel):
 class MessageRequest(BaseModel):
     """
     Provides a base model for all threads
-
     This is the message model that will be used to create a message
     {
         "message_id": "1640204440922",
@@ -77,7 +76,6 @@ class MessageRequest(BaseModel):
         "saved_by": []
         "created_at": "2021-12-22 22:38:33.075643"
     }
-
     """
 
     sender_id: str
@@ -98,21 +96,20 @@ class MessageRequest(BaseModel):
         saved_by: List[str] = Form([]),
         timestamp: int = Form(int),
         created_at: str = Form(str(datetime.utcnow())),
-    ):
+    ): 
         return cls(
-            sender_id=sender_id,
-            emojis=emojis,
-            richUiData=richUiData,
-            files=files,
-            saved_by=saved_by,
-            timestamp=timestamp,
+            sender_id=sender_id, 
+            emojis=emojis, 
+            richUiData=richUiData, 
+            files=files, 
+            saved_by=saved_by, 
+            timestamp=timestamp, 
             created_at=created_at
         )
 
 
 class Thread(MessageRequest):
     """Provide structure for the thread schema
-
     Class inherits from MessageRequest to hold
     data for the thread schema
     """
@@ -126,13 +123,10 @@ class Thread(MessageRequest):
     @classmethod
     def validates_message(cls, values):
         """Checks if the room_id and sender_id are valid
-
         Args:
             values [dict]: key value pair of sender and room id
-
         Returns:
             [dict]: key value pair of all object
-
         Raises:
             HTTPException [404]: if room_id or sender_id is invalid
         """
@@ -158,10 +152,8 @@ class Thread(MessageRequest):
 
 class Message(Thread):
     """Provides a base model for messages
-
     Message inherits from Thread
     and adds a field for list of threads
     """
 
     threads: List[Thread] = []
-

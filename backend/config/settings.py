@@ -2,7 +2,6 @@ import secrets
 
 from pydantic import BaseSettings
 
-
 class Settings(BaseSettings):
     """Class to hold application config values."""
 
