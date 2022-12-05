@@ -9,10 +9,10 @@ from utils.centrifugo import Events, centrifugo_client
 from utils.db import DataStorage
 from utils.room_utils import get_room, remove_room_member,remove_room
 from utils.sidebar import sidebar
-from utils.chat_notification import Notification
+
 
 router = APIRouter()
-notification = Notification()
+
 
 @router.post(
     "/org/{org_id}/members/{member_id}/rooms",
@@ -54,7 +54,6 @@ async def create_room(
             "starred": False,
             "closed": False,
         }
-    novu_dm_subscriber = await notification.dm_subscriber_create(room_obj=room_obj)
     response = await DB.write(settings.ROOM_COLLECTION, data=room_obj.dict())
     if response and response.get("status_code", None) is None:
         room_id = {"room_id": response.get("data").get("object_id")}
@@ -243,7 +242,6 @@ async def join_room(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="only existing members can add new members",
             )
-    novu_subscriber_create = await notification.channel_subcriber_create(member_id=member)
     if room["room_type"].upper() == RoomType.CHANNEL:
         if room["is_private"] is True and (member["role"].lower() != Role.ADMIN):
             raise HTTPException(

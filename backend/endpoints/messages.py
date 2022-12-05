@@ -208,6 +208,10 @@ async def update_message(
     background_tasks.add_task(
         centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, message
     )
+    
+    # instantiate the Notication's function that handles message notification
+    user_msg_notification = await notification.messages_trigger(message_obj=message)
+	
 
     return JSONResponse(
         content=ResponseModel.success(data=message, message="Message edited"),
