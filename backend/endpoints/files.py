@@ -3,7 +3,6 @@ from typing import Any, Type
 
 from fastapi import (APIRouter, BackgroundTasks, Depends, File, Form, Header,
                      HTTPException, UploadFile, status)
-from fastapi.security import OAuth2PasswordBearer
 from pydantic import AnyHttpUrl, BaseModel, Json
 from schema.message import Emoji, Message, MessageRequest
 from schema.response import ResponseModel
@@ -14,10 +13,8 @@ from utils.message_utils import create_message
 
 router = APIRouter()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-
-# The reason for this is because fastapi does not support
+# NOTE: The reason for this is because fastapi does not support
 # multipart/form-data requests with pydantic models
 # https://github.com/tiangolo/fastapi/issues/2387
 # used: https://github.com/tiangolo/fastapi/issues/2387#issuecomment-731662551
