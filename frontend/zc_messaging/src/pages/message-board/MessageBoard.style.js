@@ -3,7 +3,7 @@ import styled from "styled-components"
 export const Container = styled.main`
   display: flex;
   height: 100%;
-  gap: 8px;
+  gap: 3px;
   background: #f9f9f9;
   position: relative;
 `
@@ -11,6 +11,10 @@ export const Container = styled.main`
 export const MessagingArea = styled.div`
   flex: 1;
   background: white;
+`
+export const MessageWrapper = styled.div`
+  height: 100%;
+  position: relative;
 `
 
 export const RightAsideWrapper = styled.div`

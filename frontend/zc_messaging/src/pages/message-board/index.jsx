@@ -3,7 +3,12 @@ import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { Helmet } from "react-helmet"
 import { MessageBoard, MessageRoomViewHeader } from "@zuri/ui"
 import { subscribeToChannel } from "@zuri/utilities"
-import { Container, MessagingArea, TypingNotice } from "./MessageBoard.style"
+import {
+  Container,
+  MessagingArea,
+  TypingNotice,
+  MessageWrapper
+} from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
 import { useSelector, useDispatch } from "react-redux"
 import getMessageSender from "../../utils/getMessageSender.js"
@@ -26,6 +31,7 @@ const MessagingBoard = () => {
   const [roomName, setRoomName] = useState("unknown-channel")
   const [pageIndex, setPageIndex] = useState(1)
   const [roomChats, setRoomChats] = useState([])
+  const [showEmoji, setShowEmoji] = useState(false)
   const [isProcessing, setIsProcessing] = useState({
     status: false,
     message: []
@@ -190,6 +196,7 @@ const MessagingBoard = () => {
     }
 
     const message = newMessages[messageIndex]
+
     const emojiIndex = message.emojis.findIndex(
       emoji => emoji.name.toLowerCase() === newEmojiName.toLowerCase()
     )
@@ -214,6 +221,16 @@ const MessagingBoard = () => {
             edited: true,
             message_id: messageId
           }
+          //   Finds the message ID and updates the emojis array for the particular message
+          const newState = roomChats.map(chat => {
+            if (chat._id === messageId) {
+              return { ...updatedMessage }
+            }
+            return chat
+          })
+          //    sets the message array state
+          setRoomChats(newState)
+          //
           updateMessage({
             orgId: currentWorkspaceId,
             roomId,
@@ -227,13 +244,14 @@ const MessagingBoard = () => {
           })
           // message.emojis.splice(emojiIndex, 1)
         } else {
+          console.log("Block 2")
+
           message.emojis[emojiIndex].reactedUsersId.splice(reactedUserIdIndex)
           message.emojis[emojiIndex].count =
             message.emojis[emojiIndex].count - 1
         }
       } else {
         // the user has not reacted and will now be added to the list and count incremented
-
         message.emojis[emojiIndex].reactedUsersId = [
           ...message.emojis[emojiIndex].reactedUsersId,
           currentUserId
@@ -243,6 +261,7 @@ const MessagingBoard = () => {
     } else {
       // the emoji does not exist
       // create the emoji object and push
+      console.log("Block 1")
 
       const newEmojiObject = {
         name: newEmojiName,
@@ -257,7 +276,16 @@ const MessagingBoard = () => {
         edited: true,
         message_id: messageId
       }
-
+      //   Finds the message ID and updates the emojis array for the particular message
+      const newState = roomChats.map(chat => {
+        if (chat._id === messageId) {
+          return { ...updatedMessage }
+        }
+        return chat
+      })
+      //    sets the message array state
+      setRoomChats(newState)
+      //
       updateMessage({
         orgId: currentWorkspaceId,
         roomId,
@@ -270,30 +298,37 @@ const MessagingBoard = () => {
         messageId: updatedMessage._id
       })
     }
-
+    setShowEmoji(false)
     return false
   }
 
   const SendAttachedFileHandler = file => {
     // do something with the file
   }
+
   const handleScroll = event => {
     const numPage = Math.ceil(data.total / chatSize)
     if (event.currentTarget.scrollTop === 0 && pageIndex < numPage) {
       setPageIndex(prev => prev + 1)
-      setRoomChats(prev => data.roomMessages.concat(prev))
-      event.currentTarget.scrollTop = 200
     }
   }
+  useEffect(() => {
+    if (data?.roomMessages.length) {
+      setRoomChats(prev => data.roomMessages.concat(prev))
+    }
+  }, [data?.roomMessages])
+
+  //
+  //
   return roomId ? (
     <>
       <Helmet>
         <title>{pageTitle}</title>
       </Helmet>
-      <MessageRoomViewHeader name={`#${roomName}`} />
       <Container>
         <MessagingArea>
-          <div style={{ height: "100%" }}>
+          <MessageWrapper>
+            <MessageRoomViewHeader name={`#${roomName}`} />
             <MessageBoard
               isLoadingMessages={isLoadingRoomMessages}
               messages={
@@ -307,8 +342,10 @@ const MessagingBoard = () => {
               currentUserId={authUser?.user_id}
               height={"92vh"}
               onHandleScroll={handleScroll}
+              showEmoji={showEmoji}
+              setShowEmoji={setShowEmoji}
             />
-          </div>
+          </MessageWrapper>
           {/* <TypingNotice>Omo Jesu is typing</TypingNotice> */}
         </MessagingArea>
 
