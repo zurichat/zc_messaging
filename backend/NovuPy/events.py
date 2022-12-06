@@ -20,7 +20,7 @@ class Events(Core):
             page: 0
         }
         """
-        url = self.base_url + f"/messages"
+        url = self.base_url + f"v1/messages"
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url=url, headers=self.s_header, params=kwargs)
@@ -83,7 +83,7 @@ class Events(Core):
         }
 
         """
-        url = self.base_url + "/events/trigger"
+        url = self.base_url + "v1/events/trigger"
 
         if not data:
             data = {}
@@ -91,7 +91,7 @@ class Events(Core):
             data["name"] = event_name
 
             async with httpx.AsyncClient() as client:
-                response = await client.post(url=url, headers=self.headers, data=data)
+                response = await client.post(url=url, headers=self.headers, json=data)
             return response.json()
 
         except httpx.RequestError:
@@ -114,7 +114,7 @@ class Events(Core):
             data["name"] = event_name
 
             async with httpx.AsyncClient() as client:
-                response = await client.post(url=url, headers=self.headers, data=data)
+                response = await client.post(url=url, headers=self.headers, json=data)
 
         except httpx.RequestError:
             raise HTTPException(status_code=500, detail="Something went wrong")
@@ -131,7 +131,7 @@ class Events(Core):
         This is useful to cancel active digests, delays etc...
         """
 
-        url = self.base_url + f"/events/trigger/{transaction_id}"
+        url = self.base_url + f"v1/events/trigger/{transaction_id}"
 
         async with httpx.AsyncClient() as client:
             response = await client.delete(url=url, headers=self.s_headers)
