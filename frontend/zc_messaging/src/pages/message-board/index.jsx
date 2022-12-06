@@ -26,7 +26,10 @@ const MessagingBoard = () => {
   const [roomName, setRoomName] = useState("unknown-channel")
   const [pageIndex, setPageIndex] = useState(1)
   const [roomChats, setRoomChats] = useState([])
-  const [saveRecentChat, setSaveRecentChat] = useState([])
+  const [isProcessing, setIsProcessing] = useState({
+    status: false,
+    message: []
+  })
   const chatSize = 15
   const { data: roomsAvailable, isLoading: IsLoadingRoomsAvailable } =
     useGetRoomsAvailableToUserQuery(
@@ -103,6 +106,17 @@ const MessagingBoard = () => {
       }
     }
   }, [roomId, roomsAvailable])
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+
+  function generateString() {
+    let result = " "
+    const charactersLength = characters.length
+    for (let i = 0; i < 10; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength))
+    }
+    return result
+  }
 
   const sendMessageHandler = async message => {
     const currentDate = new Date()
@@ -111,6 +125,20 @@ const MessagingBoard = () => {
       emojis: [],
       richUiData: message
     }
+    const newMessages = [
+      {
+        ...newMessage,
+        _id: generateString(),
+        orgId: currentWorkspaceId,
+        roomId,
+        sender: {
+          sender_id: authUser?.user_id,
+          sender_name: authUser?.user_name,
+          sender_image_url: authUser?.user_image_url
+        }
+      }
+    ]
+    setIsProcessing({ status: true, message: roomChats.concat(newMessages) })
     sendNewMessage({
       orgId: currentWorkspaceId,
       roomId,
@@ -121,21 +149,27 @@ const MessagingBoard = () => {
       },
       messageData: { ...newMessage }
     })
-    const newMessages = [
-      {
-        ...newMessage,
-        orgId: currentWorkspaceId,
-        roomId,
-        sender: {
-          sender_id: authUser?.user_id,
-          sender_name: authUser?.user_name,
-          sender_image_url: authUser?.user_image_url
-        }
-      }
-    ]
-    setPageIndex(1)
-    setSaveRecentChat(prev => prev.concat(newMessages))
-    setRoomChats(prev => prev.concat(saveRecentChat))
+      .then(e => {
+        const newMessages = [
+          {
+            ...newMessage,
+            _id: e.data.data.message_id,
+            orgId: currentWorkspaceId,
+            roomId,
+            sender: {
+              sender_id: authUser?.user_id,
+              sender_name: authUser?.user_name,
+              sender_image_url: authUser?.user_image_url
+            }
+          }
+        ]
+        setRoomChats(prev => prev.concat(newMessages))
+        setIsProcessing({ status: false, message: [] })
+      })
+      .catch(() => {
+        setIsProcessing({ status: false, message: [] })
+      })
+
     return true
   }
 
@@ -262,7 +296,11 @@ const MessagingBoard = () => {
           <div style={{ height: "100%" }}>
             <MessageBoard
               isLoadingMessages={isLoadingRoomMessages}
-              messages={roomChats || []}
+              messages={
+                (isProcessing.status === true
+                  ? isProcessing.message
+                  : roomChats) || []
+              }
               onSendMessage={sendMessageHandler}
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}
