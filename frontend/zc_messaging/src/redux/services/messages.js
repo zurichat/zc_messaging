@@ -3,6 +3,9 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import { getCurrentWorkspaceUsers } from "@zuri/utilities"
 import { BASE_URL } from "../../utils/constants"
 
+//
+const user = JSON.parse(sessionStorage.getItem("user"))
+//
 // Define a service using a base URL and expected endpoints
 export const messagesApi = createApi({
   reducerPath: "messagesApi",
@@ -77,6 +80,37 @@ export const messagesApi = createApi({
         queryFulfilled.catch(patchResult.undo)
       }
     }),
+    sendMessageWithFile: builder.mutation({
+      query(data) {
+        const { orgId, roomId, messageData } = data
+        return {
+          url: `/org/${orgId}/room/${roomId}/files/upload`,
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${user?.token}`
+          },
+          body: messageData
+        }
+      },
+      onQueryStarted(
+        { orgId, roomId, sender, messageData },
+        { dispatch, queryFulfilled }
+      ) {
+        const patchResult = dispatch(
+          messagesApi.util.updateQueryData(
+            "getMessagesInRoom",
+            { orgId, roomId },
+            draft => {
+              draft.push({
+                sender,
+                ...messageData
+              })
+            }
+          )
+        )
+        queryFulfilled.catch(patchResult.undo)
+      }
+    }),
     updateMessageInRoom: builder.mutation({
       query(data) {
         const { orgId, roomId, sender, messageData, messageId } = data
@@ -121,5 +155,6 @@ export const messagesApi = createApi({
 export const {
   useGetMessagesInRoomQuery,
   useSendMessageInRoomMutation,
+  useSendMessageWithFileMutation,
   useUpdateMessageInRoomMutation
 } = messagesApi

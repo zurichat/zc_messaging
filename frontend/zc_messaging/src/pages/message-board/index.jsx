@@ -16,11 +16,14 @@ import {
   messagesApi,
   useGetMessagesInRoomQuery,
   useSendMessageInRoomMutation,
+  useSendMessageWithFileMutation,
   useUpdateMessageInRoomMutation
 } from "../../redux/services/messages.js"
 import { useGetRoomsAvailableToUserQuery } from "../../redux/services/rooms"
 import generatePageTitle from "../../utils/generatePageTitle"
+import { BASE_URL } from "../../utils/constants"
 
+//
 const MessagingBoard = () => {
   const { roomId } = useParams()
   const navigateTo = useNavigate()
@@ -32,6 +35,7 @@ const MessagingBoard = () => {
   const [pageIndex, setPageIndex] = useState(1)
   const [roomChats, setRoomChats] = useState([])
   const [refresh, setRefresh] = useState(false)
+  const [fileData, setFileData] = useState(null)
   const [showEmoji, setShowEmoji] = useState(false)
   const [isProcessing, setIsProcessing] = useState({
     status: false,
@@ -64,6 +68,9 @@ const MessagingBoard = () => {
     )
   const [sendNewMessage, { isLoading: isSending }] =
     useSendMessageInRoomMutation()
+
+  const [sendNewMessageWithFile, { isLoading: isPending }] =
+    useSendMessageWithFileMutation()
 
   const [updateMessage] = useUpdateMessageInRoomMutation()
 
@@ -131,56 +138,88 @@ const MessagingBoard = () => {
 
   const sendMessageHandler = async message => {
     const currentDate = new Date()
-    const newMessage = {
-      timestamp: currentDate.getTime(),
-      emojis: [],
-      richUiData: message
+    if (message.blocks[0].text) {
+      const newMessage = {
+        timestamp: currentDate.getTime(),
+        emojis: [],
+        richUiData: message
+      }
+      const newMessages = [
+        {
+          ...newMessage,
+          _id: generateString(),
+          orgId: currentWorkspaceId,
+          roomId,
+          sender: {
+            sender_id: authUser?.user_id,
+            sender_name: authUser?.user_name,
+            sender_image_url: authUser?.user_image_url
+          }
+        }
+      ]
+      setIsProcessing({ status: true, message: roomChats.concat(newMessages) })
     }
-    const newMessages = [
-      {
-        ...newMessage,
-        _id: generateString(),
+    if (fileData) {
+      var formData = new FormData()
+      formData.append("sender_id", authUser?.user_id)
+      formData.append("timestamp", currentDate.getTime())
+      formData.append("richUiData", JSON.stringify(message))
+      fileData.forEach(file => {
+        formData.append("attachment", file)
+      })
+      //   let url = `/org/${currentWorkspaceId}/room/${roomId}/files/upload`
+      //   const user = JSON.parse(sessionStorage.getItem("user"))
+      //   try {
+      //     fetch(`${BASE_URL + url}`, {
+      //       method: "POST",
+      //       headers: {
+      //         Authorization: `Bearer ${user?.token}`
+      //       },
+      //       body: formData
+      //     })
+      //       .then(res => res.json())
+      //       .then(response => console.log(response))
+      //       .catch(err => console.log(err))
+      //   } catch (error) {
+      //     console.log(error)
+      //   }
+      sendNewMessageWithFile({
+        orgId: currentWorkspaceId,
+        roomId,
+        messageData: formData
+      })
+    } else {
+      sendNewMessage({
         orgId: currentWorkspaceId,
         roomId,
         sender: {
           sender_id: authUser?.user_id,
           sender_name: authUser?.user_name,
           sender_image_url: authUser?.user_image_url
-        }
-      }
-    ]
-    setIsProcessing({ status: true, message: roomChats.concat(newMessages) })
-    sendNewMessage({
-      orgId: currentWorkspaceId,
-      roomId,
-      sender: {
-        sender_id: authUser?.user_id,
-        sender_name: authUser?.user_name,
-        sender_image_url: authUser?.user_image_url
-      },
-      messageData: { ...newMessage }
-    })
-      .then(e => {
-        const newMessages = [
-          {
-            ...newMessage,
-            _id: e.data.data.message_id,
-            orgId: currentWorkspaceId,
-            roomId,
-            sender: {
-              sender_id: authUser?.user_id,
-              sender_name: authUser?.user_name,
-              sender_image_url: authUser?.user_image_url
+        },
+        messageData: { ...newMessage }
+      })
+        .then(e => {
+          const newMessages = [
+            {
+              ...newMessage,
+              _id: e.data.data.message_id,
+              orgId: currentWorkspaceId,
+              roomId,
+              sender: {
+                sender_id: authUser?.user_id,
+                sender_name: authUser?.user_name,
+                sender_image_url: authUser?.user_image_url
+              }
             }
-          }
-        ]
-        setRoomChats(prev => prev.concat(newMessages))
-        setIsProcessing({ status: false, message: [] })
-      })
-      .catch(() => {
-        setIsProcessing({ status: false, message: [] })
-      })
-
+          ]
+          setRoomChats(prev => prev.concat(newMessages))
+          setIsProcessing({ status: false, message: [] })
+        })
+        .catch(() => {
+          setIsProcessing({ status: false, message: [] })
+        })
+    }
     return true
   }
 
@@ -249,8 +288,6 @@ const MessagingBoard = () => {
           })
           // message.emojis.splice(emojiIndex, 1)
         } else {
-          console.log("Block 2")
-
           message.emojis[emojiIndex].reactedUsersId.splice(reactedUserIdIndex)
           message.emojis[emojiIndex].count =
             message.emojis[emojiIndex].count - 1
@@ -266,8 +303,6 @@ const MessagingBoard = () => {
     } else {
       // the emoji does not exist
       // create the emoji object and push
-      console.log("Block 1")
-
       const newEmojiObject = {
         name: newEmojiName,
         count: 1,
@@ -308,7 +343,7 @@ const MessagingBoard = () => {
   }
 
   const SendAttachedFileHandler = file => {
-    // do something with the file
+    setFileData(file)
   }
 
   const handleScroll = event => {
