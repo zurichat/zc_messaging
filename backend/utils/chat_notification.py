@@ -68,9 +68,7 @@ class Notification:
                 sender_info = [
                     user for user in get_sender_details if user["_id"] == sender_id
                 ]
-                sender_firstname = sender_info[0]["first_name"]
-                sender_lastname = sender_info[0]["last_name"]
-                sender_name = sender_firstname + " " + sender_lastname
+                sender_name = sender_info[0]["user_name"]
                 payload["senderName"] = sender_name
                 payload["channelName"] = room_name
                 payload["messageBody"] = new_message
@@ -116,13 +114,12 @@ class Notification:
         if not sender_info:
             raise HTTPException(
                 status_code=404, detail="User with sender ID not found")
-        sender_firstname = sender_info[0]["first_name"]
-        sender_lastname = sender_info[0]["last_name"]
-        if not sender_lastname or sender_lastname:
+        sender = sender_info[0]["user_name"]
+        if not sender:
             raise HTTPException(
                 status_code=404, detail="Sender name field is empty")
         # populate the payload dictionary
-        payload["senderName"] = sender_firstname + " " + sender_lastname
+        payload["senderName"] = sender
         payload["messageBody"] = message
         # create novu subscription for room members in the channel
         # if none exist
@@ -208,9 +205,7 @@ class Notification:
 
         get_sender_details = [
             user for user in room_members if user["_id"] == sender_id]
-        sender_firstname = get_sender_details[0]["first_name"]
-        sender_lastname = get_sender_details[0]["last_name"]
-        payload["senderName"] = sender_firstname + " " + sender_lastname
+        payload["senderName"] = get_sender_details[0]["user_name"]
         payload["channelName"] = room_name
         payload["messageBody"] = text_message
         get_members = await get_room_members(org_id, room_id)
