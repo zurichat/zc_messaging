@@ -31,6 +31,7 @@ const MessagingBoard = () => {
   const [roomName, setRoomName] = useState("unknown-channel")
   const [pageIndex, setPageIndex] = useState(1)
   const [roomChats, setRoomChats] = useState([])
+  const [refresh, setRefresh] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
   const [isProcessing, setIsProcessing] = useState({
     status: false,
@@ -41,7 +42,8 @@ const MessagingBoard = () => {
     useGetRoomsAvailableToUserQuery(
       {
         orgId: currentWorkspaceId,
-        userId: authUser.user_id
+        userId: authUser.user_id,
+        refresh
       },
       {
         skip: Boolean(!authUser.user_id),
@@ -104,6 +106,9 @@ const MessagingBoard = () => {
   useEffect(() => {
     if (roomsAvailable) {
       const room = roomsAvailable[roomId]
+      if (!room?.room_name) {
+        setRefresh(!refresh)
+      }
       setRoomName(room?.room_name)
       setPageTitle(generatePageTitle(room?.room_name))
       setPageIndex(1)
