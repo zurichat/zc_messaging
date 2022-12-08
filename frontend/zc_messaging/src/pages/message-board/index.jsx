@@ -3,12 +3,7 @@ import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { Helmet } from "react-helmet"
 import { MessageBoard, MessageRoomViewHeader } from "@zuri/ui"
 import { subscribeToChannel } from "@zuri/utilities"
-import {
-  Container,
-  MessagingArea,
-  TypingNotice,
-  MessageWrapper
-} from "./MessageBoard.style"
+import { Container, MessagingArea, MessageWrapper } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
 import { useSelector, useDispatch } from "react-redux"
 import getMessageSender from "../../utils/getMessageSender.js"
@@ -21,7 +16,6 @@ import {
 } from "../../redux/services/messages.js"
 import { useGetRoomsAvailableToUserQuery } from "../../redux/services/rooms"
 import generatePageTitle from "../../utils/generatePageTitle"
-import { BASE_URL } from "../../utils/constants"
 
 //
 const MessagingBoard = () => {
@@ -167,22 +161,6 @@ const MessagingBoard = () => {
       fileData.forEach(file => {
         formData.append("attachment", file)
       })
-      //   let url = `/org/${currentWorkspaceId}/room/${roomId}/files/upload`
-      //   const user = JSON.parse(sessionStorage.getItem("user"))
-      //   try {
-      //     fetch(`${BASE_URL + url}`, {
-      //       method: "POST",
-      //       headers: {
-      //         Authorization: `Bearer ${user?.token}`
-      //       },
-      //       body: formData
-      //     })
-      //       .then(res => res.json())
-      //       .then(response => console.log(response))
-      //       .catch(err => console.log(err))
-      //   } catch (error) {
-      //     console.log(error)
-      //   }
       sendNewMessageWithFile({
         orgId: currentWorkspaceId,
         roomId,
