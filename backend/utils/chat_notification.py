@@ -16,11 +16,7 @@ class Notification:
     This class is called after the message instance or object has been created
     """
 
-    async def tagged_user_trigger_create(
-        self,
-        message_obj,
-        room_name
-    ):
+    async def tagged_user_trigger_create(self, message_obj, room_name):
         """
         A method that creates a notification trigger for tagged users
         Args:
