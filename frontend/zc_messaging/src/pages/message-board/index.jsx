@@ -30,6 +30,7 @@ const MessagingBoard = () => {
   const [roomChats, setRoomChats] = useState([])
   const [refresh, setRefresh] = useState(false)
   const [fileData, setFileData] = useState(null)
+
   const [showEmoji, setShowEmoji] = useState(false)
   const [isProcessing, setIsProcessing] = useState({
     status: false,
