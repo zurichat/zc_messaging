@@ -87,7 +87,7 @@ export const messagesApi = createApi({
           url: `/org/${orgId}/room/${roomId}/files/upload`,
           method: "POST",
           headers: {
-            Authorization: `Bearer ${user?.token}`
+            token: `${user?.token}`
           },
           body: messageData
         }
