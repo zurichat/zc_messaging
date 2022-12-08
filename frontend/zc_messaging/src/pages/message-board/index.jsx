@@ -159,7 +159,7 @@ const MessagingBoard = () => {
       formData.append("timestamp", currentDate.getTime())
       formData.append("richUiData", JSON.stringify(message))
       fileData.forEach(file => {
-        formData.append("attachment", file)
+        formData.append("attachments", file)
       })
       sendNewMessageWithFile({
         orgId: currentWorkspaceId,
