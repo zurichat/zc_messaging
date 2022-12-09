@@ -2,6 +2,7 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from schema.message import Thread, MessageRequest, Message
 from schema.response import ResponseModel
+from schema.thread_response import ThreadResponse
 from fastapi.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import get_message, get_room_messages, update_message_threads as edit_message_threads
@@ -11,29 +12,30 @@ import json
 
 router = APIRouter()
 
+
 @router.post(
-		"/org/{org_id}/rooms/{room_id}/messages/{message_id}/threads",
-		response_model=ResponseModel,
-		status_code=status.HTTP_201_CREATED,
-		responses={
-				404: {"description": "Message not found"},
-				424: {"description": "Message not added to thread"},
-		},
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}/threads",
+    response_model=ThreadResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        404: {"description": "Message not found"},
+        424: {"description": "Message not added to thread"},
+    },
 )
 async def add_messages_to_thread(org_id, room_id, message_id, request: MessageRequest):
     """Adds a thread to a parent message.
 
-		Edits an existing message document in the messages database collection while
-		publishing to all members of the room in the background.
+                Edits an existing message document in the messages database collection while
+                publishing to all members of the room in the background.
 
-		Args:
-				org_id: A unique identifier of the organization.
-				room_id: A unique identifier of the room.
-				message_id: A unique identifier of the message that is being edited.
-				request: A pydantic schema that defines the message request parameters.
-				
-		Returns:
-				A dict containing data about the message that was edited.
+                Args:
+                                org_id: A unique identifier of the organization.
+                                room_id: A unique identifier of the room.
+                                message_id: A unique identifier of the message that is being edited.
+                                request: A pydantic schema that defines the message request parameters.
+
+                Returns:
+                                A dict containing data about the message that was edited.
 
                 {
                     "status": 201,
@@ -49,12 +51,14 @@ async def add_messages_to_thread(org_id, room_id, message_id, request: MessageRe
                     }
                     }   
 
-	Raises:
-				HTTPException [401]: You are not authorized to edit this message.
-				HTTPException [404]: Message not found.
-				HTTPException [424]: Message not edited.
-	"""
-    response = await add_message_to_thread(org_id, room_id, message_id, request)
+        Raises:
+                                HTTPException [401]: You are not authorized to edit this message.
+                                HTTPException [404]: Message not found.
+                                HTTPException [424]: Message not edited.
+        """
+    thread = Thread(**request.dict(), org_id=org_id, room_id=room_id)
+
+    response, payload = await add_message_to_thread(org_id, room_id, message_id, request)
 
     if response is None:
         raise HTTPException(
@@ -62,13 +66,26 @@ async def add_messages_to_thread(org_id, room_id, message_id, request: MessageRe
             detail="Zc Core failed",
         )
 
+    result = {
+                "status": response["status"],
+                "event": "thread_message_create",
+                "thread_id": payload["thread_id"],
+                "room_id": room_id,
+                "message_id": message_id,
+                "thread": True,
+                "data": {
+                    "sender_id": payload['sender_id'],
+                    "message": payload['richUiData']['blocks'][0]['text'],
+                    "created_at": thread.created_at
+                }
+            }   
+
     return JSONResponse(
-        content=ResponseModel.success(data=response, message="Messages retrieved"),
+        content=result,
         status_code=status.HTTP_200_OK,
     )
 
 
-# Get all the the messages in a thread.
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages/{message_id}/threads",
@@ -77,7 +94,8 @@ async def add_messages_to_thread(org_id, room_id, message_id, request: MessageRe
     responses={424: {"detail": "ZC Core failed"}},
 )
 async def get_thread_messages(org_id: str, room_id: str, message_id: str):
-    """Fetches all messages sent in a particular room.
+    """
+    Fetches all the thread_messages under a parent message
 
     Args:
         org_id (str): A unique identifier of an organization.
@@ -123,7 +141,7 @@ async def get_thread_messages(org_id: str, room_id: str, message_id: str):
         HTTPException [424]: Zc Core failed
     """
 
-    response = await get_messages_in_thread(org_id, room_id, message_id )
+    response = await get_messages_in_thread(org_id, room_id, message_id)
 
     if response is None:
         raise HTTPException(
@@ -132,108 +150,112 @@ async def get_thread_messages(org_id: str, room_id: str, message_id: str):
         )
 
     return JSONResponse(
-        content=ResponseModel.success(data=response, message="Messages retrieved"),
+        content=ResponseModel.success(
+            data=response, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )
 
-# Add messages to the thread of a message
+
 @router.put(
-		"/org/{org_id}/rooms/{room_id}/messages/{message_id}/edithreads",
-		response_model=ResponseModel,
-		status_code=status.HTTP_200_OK,
-		responses={
-				401: {"description": "You are not authorized to edit this message"},
-				404: {"description": "Message not found"},
-				424: {"description": "Message not edited"},
-		},
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}/edithreads",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"description": "You are not authorized to edit this message"},
+        404: {"description": "Message not found"},
+        424: {"description": "Message not edited"},
+    },
 )
 async def update_threads_message(
-		org_id: str,
-		room_id: str,
-		message_id: str,
-		request: MessageRequest,
-		background_tasks: BackgroundTasks,
+    org_id: str,
+    room_id: str,
+    message_id: str,
+    request: MessageRequest,
+    background_tasks: BackgroundTasks,
 ):
 
-		payload = request.dict()
-		loadedMessage = await get_message(org_id, room_id, message_id)
-		loadedMessageThread = loadedMessage['threads']
-		thread_to_add = {"threads": [payload, *loadedMessageThread]}
+    payload = request.dict()
+    loadedMessage = await get_message(org_id, room_id, message_id)
+    loadedMessageThread = loadedMessage['threads']
+    thread_to_add = {"threads": [payload, *loadedMessageThread]}
 
-		if not loadedMessage:
-				raise HTTPException(
-						status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-				)
+    if not loadedMessage:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
+        )
 
-		added_thread_message = await edit_message_threads(org_id, message_id, thread_to_add)
+    added_thread_message = await edit_message_threads(org_id, message_id, thread_to_add)
 
-		if not added_thread_message:
-				raise HTTPException(
-						status_code=status.HTTP_424_FAILED_DEPENDENCY,
-						detail={"thread not added": added_thread_message},
-				)
+    if not added_thread_message:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail={"thread not added": added_thread_message},
+        )
 
-		# payload["edited"] = True
-		loadedMessage.update(thread_to_add)
+    # payload["edited"] = True
+    loadedMessage.update(thread_to_add)
 
-		# Publish to centrifugo in the background.
-		background_tasks.add_task(
-				centrifugo_client.publish,
-				room_id, 
-				Events.MESSAGE_UPDATE, 
-				loadedMessage
-		)
+    # Publish to centrifugo in the background.
+    background_tasks.add_task(
+        centrifugo_client.publish,
+        room_id,
+        Events.MESSAGE_UPDATE,
+        loadedMessage
+    )
 
-		return JSONResponse(
-				content=ResponseModel.success(data=loadedMessage, message="Thread Added"),
-				status_code=status.HTTP_200_OK,
-		)
+    return JSONResponse(
+        content=ResponseModel.success(
+            data=loadedMessage, message="Thread Added"),
+        status_code=status.HTTP_200_OK,
+    )
+
 
 @router.get(
-		"/org/{org_id}/member/{member_id}/threads",
-		response_model=ResponseModel,
-		status_code=status.HTTP_200_OK,
-		responses={424: {"detail": "ZC Core failed"}},
+    "/org/{org_id}/member/{member_id}/threads",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    responses={424: {"detail": "ZC Core failed"}},
 )
-async def get_threads(org_id: str, member_id: str):
-		room_response = await get_org_rooms(org_id=org_id, member_id=member_id)
+async def get_threads(org_id: str, member_id: str, page: int = 1, size: int = 15):
+    room_response = await get_org_rooms(org_id=org_id, member_id=member_id)
 
-		if room_response == []:
-			raise HTTPException(
-				status_code=status.HTTP_404_NOT_FOUND,
-				detail="Member does not exist or Org not found"
-			)
+    if room_response == []:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Member does not exist or Org not found"
+        )
 
-		if room_response is None:
-			raise HTTPException(
-				status_code=status.HTTP_424_FAILED_DEPENDENCY,
-				detail="Zc Core failed"
-			)
+    if room_response is None:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Zc Core failed"
+        )
 
-		room_ids = []
+    room_ids = []
 
-		for room in room_response:
-			room_ids.append(room['_id'])
-		
-		for room_id in room_ids:
-			single_room_resp = await get_room_messages(org_id, room_id)
-			if single_room_resp == []:
-					# Room not found
-					pass
+    for room in room_response:
+        room_ids.append(room['_id'])
 
-			if single_room_resp is None:
-					# Zc Core failed
-					pass
+    for room_id in room_ids:
+        single_room_resp = await get_room_messages(org_id, room_id, page, size)
+        if single_room_resp == []:
+            # Room not found
+            pass
 
-			# Gotten Single Room
+        if single_room_resp is None:
+            # Zc Core failed
+            pass
 
-		messages_w_thread = []
+        # Gotten Single Room
 
-		for messages in single_room_resp:
-			if messages['threads'] != []:
-				messages_w_thread.append(messages)
+    messages_w_thread = []
 
-		return JSONResponse(
-				content=ResponseModel.success(data=messages_w_thread, message="Rooms retrieved"),
-				status_code=status.HTTP_200_OK,
-		)
+    for messages in single_room_resp:
+        if messages['threads'] != []:
+            messages_w_thread.append(messages)
+
+    return JSONResponse(
+        content=ResponseModel.success(
+            data=messages_w_thread, message="Rooms retrieved"),
+        status_code=status.HTTP_200_OK,
+    )

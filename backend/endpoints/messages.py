@@ -223,7 +223,7 @@ async def update_message(
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=[].append(Message),
+    response_model=list[Message],
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
@@ -292,3 +292,5 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15)
         content=ResponseModel.success(data=result, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )
+
+    
