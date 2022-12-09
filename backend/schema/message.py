@@ -1,10 +1,11 @@
 import asyncio
 import concurrent.futures
+import inspect
 from datetime import datetime
-from typing import Any, List
+from typing import Any, List, Type
 
-from fastapi import HTTPException, status, Form, UploadFile, File
-from pydantic import AnyHttpUrl, BaseModel, Field, root_validator
+from fastapi import Form, HTTPException, status
+from pydantic import AnyHttpUrl, BaseModel, Field, Json, root_validator
 from utils.room_utils import get_room
 
 
@@ -98,14 +99,14 @@ class MessageRequest(BaseModel):
         saved_by: List[str] = Form([]),
         timestamp: int = Form(int),
         created_at: str = Form(str(datetime.utcnow())),
-    ): 
+    ):
         return cls(
-            sender_id=sender_id, 
-            emojis=emojis, 
-            richUiData=richUiData, 
-            files=files, 
-            saved_by=saved_by, 
-            timestamp=timestamp, 
+            sender_id=sender_id,
+            emojis=emojis,
+            richUiData=richUiData,
+            files=files,
+            saved_by=saved_by,
+            timestamp=timestamp,
             created_at=created_at
         )
 
@@ -164,3 +165,39 @@ class Message(Thread):
     """
 
     threads: List[Thread] = []
+
+
+# NOTE: The reason for this is because fastapi does not support
+# multipart/form-data requests with pydantic models
+# https://github.com/tiangolo/fastapi/issues/2387
+# used: https://github.com/tiangolo/fastapi/issues/2387#issuecomment-731662551
+def as_form(cls: Type[BaseModel]):
+    """
+    Adds an as_form class method to decorated models.
+    The as_form class method can be used with FastAPI endpoints
+    """
+    new_params = [
+        inspect.Parameter(
+            field.alias,
+            inspect.Parameter.POSITIONAL_ONLY,
+            default=(Form(field.default) if not field.required else Form(...)),
+        )
+        for field in cls.__fields__.values()
+    ]
+
+    async def _as_form(**data):
+        return cls(**data)
+
+    sig = inspect.signature(_as_form)
+    sig = sig.replace(parameters=new_params)
+    _as_form.__signature__ = sig
+    setattr(cls, "as_form", _as_form)
+    return cls
+
+
+@as_form
+class MessageFormData(MessageRequest):
+    richUiData: Json[Any] = "{}"
+    emojis: Json[list[Emoji]] = "[]"
+    files: Json[list[AnyHttpUrl]] = "[]"
+    saved_by: Json[list[str]] = "[]"

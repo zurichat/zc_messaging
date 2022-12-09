@@ -1,19 +1,17 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from schema.message import Message, MessageRequest
+from fastapi import (APIRouter, BackgroundTasks, Depends, File, Header,
+                     HTTPException, UploadFile, status)
+from schema.message import Message, MessageFormData, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
+from utils.chat_notification import Notification
+from utils.file_storage import FileStorage
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
 from utils.paginator import page_urls
-from utils.chat_notification import Notification
 
 router = APIRouter()
 notification = Notification()
-
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @router.post(
@@ -29,35 +27,45 @@ async def send_message(
     org_id: str,
     room_id: str,
     background_tasks: BackgroundTasks,
-    request: MessageRequest,
+    request: MessageRequest = Depends(MessageFormData.as_form),
+    attachments: list[UploadFile] = File([]),
+    token: str = Header(""),
 ):
-
-    """Creates and sends a message from a user inside a room.
-
-    Registers a new document to the messages database collection while
-    publishing to all members of the room in the background.
+    """
+    Uploads files to the file storage service, then
+    Creates and sends a message from a user inside a room with the file urls.
 
     Args:
-        org_id (str): A unique identifier of an organisation.
-        request (MessageRequest): A pydantic schema that defines the message request parameters.
-        room_id (str): A unique identifier of the room where the message is being sent to.
-        background_tasks (BackgroundTasks): A background task for publishing to all
-                                            members of the room.
+        org_id (str): The organization id
+        room_id (str): The room id
+        background_tasks (BackgroundTasks): Background tasks to run
+        request (MessageRequest, optional): The message request.
+        Defaults to Depends(MessageFormData.as_form).
+        attachments (list[UploadFile], optional): The files to upload.
+        Defaults to File([]).
+        token (str, optional): The user's token. Defaults to Header("").
+
+    Raises:
+        HTTPException [401]: If token is not provided if uploading files.
+        HTTPException [404]: Room does not exist or
+        Sender not a member of this room.
+        HTTPException [424]: If the file storage service is not available or
+        Message not sent.
 
     Returns:
-        A dict containing data about the message that was created.
-
+        In case of success:
+```json
         {
             "status": "success",
-            "message": "new message sent",
+            "message": "New message sent",
             "data": {
-                "sender_id": "619bab3b1a5f54782939d400",
+                "sender_id": "string",
                 "emojis": [],
                 "richUiData": {
                 "blocks": [
                     {
-                    "key": "eljik",
-                    "text": "Larry Gaaga",
+                    "key": "string",
+                    "text": "string",
                     "type": "unstyled",
                     "depth": 0,
                     "inlineStyleRanges": [],
@@ -71,27 +79,85 @@ async def send_message(
                 "saved_by": [],
                 "timestamp": 0,
                 "created_at": "2022-02-01 19:20:55.891264",
-                "room_id": "61e6855e65934b58b8e5d1df",
-                "org_id": "619ba4671a5f54782939d384",
-                "message_id": "61f98d0665934b58b8e5d286",
+                "room_id": "string",
+                "org_id": "string",
+                "message_id": "string",
                 "edited": false,
                 "threads": []
             }
         }
-
-    Raises:
-        HTTPException [404]: Room does not exist || Sender not a member of this room.
-        HTTPException [424]: Message not sent.
+```
+        In case of failure:
+```json
+        {
+            "status": "error",
+            "message": "Error message",
+        }
+```
     """
-    message = Message(**request.dict(), org_id=org_id, room_id=room_id)
+
+    # Validate the sender_id and room_id
+    message = Message(
+        **request.dict(), org_id=org_id,
+        room_id=room_id)
+
+    # Upload file if any
+    if attachments:
+
+        # Token is required for file storage service
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={
+                    "message": "Token is required for file storage service"
+                },
+            )
+
+        file_store = FileStorage(organization_id=org_id)
+        files = [
+            file.file for file in attachments
+        ]
+        response = await file_store.files_upload(files, token)
+
+        if response is None:
+            raise HTTPException(
+                status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                detail={
+                    "status": "error",
+                    "message": "File storage service is not available"
+                },
+            )
+
+        if isinstance(response, str):
+            # Meaning there was an error uploading the file
+            raise HTTPException(
+                status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                detail={
+                    "status": "error",
+                    "message": response
+                },
+            )
+
+        # Extract the urls from the response
+        file_urls = [obj["file_url"] for obj in response]
+
+        # NOTE: Currently, the file storage service returns a list of urls
+        # that also contains the urls of the files that were previously
+        # uploaded. So we need to remove those urls from the list
+        file_urls = file_urls[len(file_urls) - len(attachments):]
+
+        message.files = file_urls
 
     response = await create_message(org_id=org_id, message=message)
-
     if not response or response.get("status_code"):
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"Message not sent": response},
+            detail={
+                "status": "error",
+                "message": "Message not sent"
+            },
         )
+
     message.message_id = response["data"]["object_id"]
 
     # Publish to centrifugo in the background.
@@ -101,11 +167,10 @@ async def send_message(
         Events.MESSAGE_CREATE,
         message.dict(),
     )
-    # instantiate the Notication's function that handles message notification
-    user_msg_notification = await notification.messages_trigger(message_obj=message)
-	
+
     return JSONResponse(
-        content=ResponseModel.success(data=message.dict(), message="new message sent"),
+        content=ResponseModel.success(
+            data=message.dict(), message="New message sent"),
         status_code=status.HTTP_201_CREATED,
     )
 
@@ -280,15 +345,16 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15)
         )
 
     result = {
-            "data": response,
-            "page": page,
-            "size": size,
-            "total": total_count,
-            "previous": paging.get('previous'),
-            "next": paging.get('next')         
+        "data": response,
+        "page": page,
+        "size": size,
+        "total": total_count,
+        "previous": paging.get('previous'),
+        "next": paging.get('next')
     }
 
     return JSONResponse(
-        content=ResponseModel.success(data=result, message="Messages retrieved"),
+        content=ResponseModel.success(
+            data=result, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )
