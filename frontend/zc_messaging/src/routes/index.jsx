@@ -1,7 +1,13 @@
 import React from "react"
 import { Routes, Route } from "react-router-dom"
 import { ThreadBar, UserProfileBar, ChannelDetails } from "../component"
-import { ChannelBrowser, DmBrowser, MessagingBoard, Threads } from "../pages"
+import {
+  ChannelBrowser,
+  DmBrowser,
+  MessagingBoard,
+  Threads,
+  CommentingBoard
+} from "../pages"
 import { CommentBoard } from "@zuri/ui"
 
 /**
@@ -12,12 +18,7 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<MessagingBoard />} />
     <Route path="/:roomId" element={<MessagingBoard />}>
-      <Route
-        path="thread/:threadId"
-        element={
-          <CommentBoard commentBoardConfig={{ displayCommentBoard: true }} />
-        }
-      />
+      <Route path="thread/:threadId" element={<CommentingBoard />} />
       <Route path="member-profile/:memberId" element={<UserProfileBar />} />
       <Route path="channel-details/:channelId" element={<ChannelDetails />} />
     </Route>
