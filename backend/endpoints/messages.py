@@ -167,10 +167,22 @@ async def send_message(
         Events.MESSAGE_CREATE,
         message.dict(),
     )
+<<<<<<< HEAD
 
     return JSONResponse(
         content=ResponseModel.success(
             data=message.dict(), message="New message sent"),
+=======
+    # instantiate the Notication's function that handles message notification
+    try:
+        await notification.messages_trigger(message_obj=message)
+    except Exception as e:
+        print("Novu message error", e)
+
+    return JSONResponse(
+        content=ResponseModel.success(
+            data=message.dict(), message="new message sent"),
+>>>>>>> c8d87b6b0dad5e2d81f00922defeb7839d8231b3
         status_code=status.HTTP_201_CREATED,
     )
 
