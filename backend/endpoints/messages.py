@@ -5,7 +5,7 @@ from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.chat_notification import Notification
-from utils.file_storage import FileStorage
+from utils.files_utils import upload_files
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
 from utils.paginator import page_urls
@@ -103,49 +103,11 @@ async def send_message(
 
     # Upload file if any
     if attachments:
-
-        # Token is required for file storage service
-        if not token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={
-                    "message": "Token is required for file storage service"
-                },
-            )
-
-        file_store = FileStorage(organization_id=org_id)
-        files = [
-            file.file for file in attachments
-        ]
-        response = await file_store.files_upload(files, token)
-
-        if response is None:
-            raise HTTPException(
-                status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                detail={
-                    "status": "error",
-                    "message": "File storage service is not available"
-                },
-            )
-
-        if isinstance(response, str):
-            # Meaning there was an error uploading the file
-            raise HTTPException(
-                status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                detail={
-                    "status": "error",
-                    "message": response
-                },
-            )
-
-        # Extract the urls from the response
-        file_urls = [obj["file_url"] for obj in response]
-
-        # NOTE: Currently, the file storage service returns a list of urls
-        # that also contains the urls of the files that were previously
-        # uploaded. So we need to remove those urls from the list
-        file_urls = file_urls[len(file_urls) - len(attachments):]
-
+        file_urls = await upload_files(
+            token=token,
+            attachments=attachments,
+            org_id=org_id,
+        )
         message.files = file_urls
 
     response = await create_message(org_id=org_id, message=message)
