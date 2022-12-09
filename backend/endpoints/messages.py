@@ -103,12 +103,13 @@ async def send_message(
     )
     # instantiate the Notication's function that handles message notification
     try:
-        user_msg_notification = await notification.messages_trigger(message_obj=message)
+        await notification.messages_trigger(message_obj=message)
     except Exception as e:
-        print ("Novu message error", e)
+        print("Novu message error", e)
 
     return JSONResponse(
-        content=ResponseModel.success(data=message.dict(), message="new message sent"),
+        content=ResponseModel.success(
+            data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
     )
 
@@ -283,15 +284,16 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15)
         )
 
     result = {
-            "data": response,
-            "page": page,
-            "size": size,
-            "total": total_count,
-            "previous": paging.get('previous'),
-            "next": paging.get('next')
+        "data": response,
+        "page": page,
+        "size": size,
+        "total": total_count,
+        "previous": paging.get('previous'),
+        "next": paging.get('next')
     }
 
     return JSONResponse(
-        content=ResponseModel.success(data=result, message="Messages retrieved"),
+        content=ResponseModel.success(
+            data=result, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )
