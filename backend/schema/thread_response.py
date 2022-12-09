@@ -1,7 +1,4 @@
-from typing import Any, Dict
-
 from pydantic import BaseModel
-
 from datetime import datetime
 
 
@@ -16,5 +13,4 @@ class ThreadResponse(BaseModel):
     thread_id: str
     room_id: str
     message_id: str
-    thread: bool
     data: ThreadData

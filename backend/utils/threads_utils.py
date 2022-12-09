@@ -46,7 +46,6 @@ async def add_message_to_thread(org_id, room_id, message_id, request):
 
     # add message to a parent thread
     message = await get_message(org_id, room_id, message_id)
-    print(message)
     
     if not message:
         raise HTTPException(

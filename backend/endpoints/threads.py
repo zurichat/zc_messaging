@@ -43,7 +43,6 @@ async def add_messages_to_thread(org_id, room_id, message_id, request: MessageRe
                     "thread_id": "bd830644-2205-11ec-9853-2ff0a732e3ef",
                     "room_id": "614e1606f31a74e068e4d2e2",
                     "message_id": "6155a0e6be7f31a9275a1eca",
-                    "thread": true,
                     "data": {
                         "sender_id": "61467e181ab13c00bcc15607",
                         "message": "Checking out the threads",
@@ -72,7 +71,6 @@ async def add_messages_to_thread(org_id, room_id, message_id, request: MessageRe
                 "thread_id": payload["thread_id"],
                 "room_id": room_id,
                 "message_id": message_id,
-                "thread": True,
                 "data": {
                     "sender_id": payload['sender_id'],
                     "message": payload['richUiData']['blocks'][0]['text'],
