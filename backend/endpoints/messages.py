@@ -311,7 +311,6 @@ async def get_messages(
         )
 
     result = {
-<<<<<<< HEAD
             "data": response,
             "created_at": created_at,
             "page": page,
@@ -319,14 +318,6 @@ async def get_messages(
             "total": total_count,
             "previous": paging.get('previous'),
             "next": paging.get('next')
-=======
-        "data": response,
-        "page": page,
-        "size": size,
-        "total": total_count,
-        "previous": paging.get('previous'),
-        "next": paging.get('next')
->>>>>>> Updated the send message endpoint to upload files
     }
 
     return JSONResponse(
