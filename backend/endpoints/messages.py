@@ -136,8 +136,7 @@ async def send_message(
         print("Novu message error", e)
 
     return JSONResponse(
-        content=ResponseModel.success(
-            data=message.dict(), message="new message sent"),
+        content=ResponseModel.success(data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
     )
 
@@ -255,11 +254,13 @@ async def update_message(
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=[].append(Message),
+    response_model=list[Message],
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
-async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15):
+async def get_messages(
+    org_id: str, room_id: str, page: int = 1, size: int = 15, created_at: int = None
+):
     """Fetches all messages sent in a particular room.
 
     Args:
@@ -297,8 +298,16 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15)
         HTTPException [424]: Zc Core failed
     """
 
-    response = await get_room_messages(org_id, room_id, page, size)
-    paging, total_count = await page_urls(page, size, org_id, room_id, endpoint=f"/api/v1/org/{org_id}/rooms/{room_id}/messages")
+    response = await get_room_messages(org_id, room_id, page, size, created_at)
+
+    paging, total_count = await page_urls(
+        page,
+        size,
+        org_id,
+        room_id,
+        endpoint=f"/api/v1/org/{org_id}/rooms/{room_id}/messages",
+    )
+
     if response == []:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -312,16 +321,44 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15)
         )
 
     result = {
-        "data": response,
-        "page": page,
-        "size": size,
-        "total": total_count,
-        "previous": paging.get('previous'),
-        "next": paging.get('next')
+            "data": response,
+            "created_at": created_at,
+            "page": page,
+            "size": size,
+            "total": total_count,
+            "previous": paging.get('previous'),
+            "next": paging.get('next')
     }
 
     return JSONResponse(
-        content=ResponseModel.success(
-            data=result, message="Messages retrieved"),
+        content=ResponseModel.success(data=result, message="Messages retrieved"),
+        status_code=status.HTTP_200_OK,
+    )
+
+
+@router.get(
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
+    response_model=list[Message],
+    status_code=status.HTTP_200_OK,
+    responses={424: {"detail": "ZC Core failed"}},
+)   
+
+async def get_single_message(org_id: str, room_id: str, message_id: str):
+    response = await get_message(org_id, room_id, message_id)
+
+    if response == []:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Room does not exist or no message found",
+        )
+
+    if response is None:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Zc Core failed",
+        )
+
+    return JSONResponse(
+        content=ResponseModel.success(data=response, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )
