@@ -1,10 +1,9 @@
 from typing import Any, Optional
 
 import requests
+from config.settings import settings
 from fastapi import status
 from fastapi.exceptions import HTTPException
-
-from config.settings import settings
 
 
 class DataStorage:

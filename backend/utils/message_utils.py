@@ -1,5 +1,7 @@
+import datetime
+import json
 from typing import Any, Optional
-import datetime, json
+
 from config.settings import settings
 from schema.message import Message
 from utils.db import DataStorage
@@ -53,7 +55,7 @@ async def get_room_messages(
     #timestamp: int = None,
     created_at: int = None,
 ) -> Optional[list[dict[str, Any]]]:
-    
+
     """Gets all messages sent inside  a room.
     Args:
         org_id (str): The organization id
@@ -88,22 +90,22 @@ async def get_room_messages(
         date = datetime.datetime.now() - datetime.timedelta(days=created_at)
         raw_query ={ "room_id": room_id, "created_at": { "$gte":str(date).split()[0]} }
     else:
-        
+
         raw_query = {"room_id": room_id}
-        
+
     print(raw_query)
     response = await DB.read(
         settings.MESSAGE_COLLECTION,
         options=options,
         raw_query=raw_query,
     )
-    
+
     if response is None:
         return []
-    
+
     if "status_code" in response:
         return None
-    
+
     return response
 
 

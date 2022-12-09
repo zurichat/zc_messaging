@@ -102,10 +102,14 @@ async def send_message(
         message.dict(),
     )
     # instantiate the Notication's function that handles message notification
+<<<<<<< HEAD
     try:
         await notification.messages_trigger(message_obj=message)
     except Exception as e:
         print("Novu message error", e)
+=======
+    user_msg_notification = await notification.messages_trigger(message_obj=message)
+>>>>>>> e68aa2f (feat(GG-32): Implemented filtering at the backend for zuri chat)
 
     return JSONResponse(
         content=ResponseModel.success(data=message.dict(), message="new message sent"),
@@ -293,13 +297,13 @@ async def get_messages(
         )
 
     result = {
-        "data": response,
-        "created_at": created_at,
-        "page": page,
-        "size": size,
-        "total": total_count,
-        "previous": paging.get("previous"),
-        "next": paging.get("next"),
+            "data": response,
+            "created_at": created_at,
+            "page": page,
+            "size": size,
+            "total": total_count,
+            "previous": paging.get('previous'),
+            "next": paging.get('next')
     }
 
     return JSONResponse(

@@ -1,5 +1,6 @@
-from utils.db import DataStorage
 from config.settings import settings
+from utils.db import DataStorage
+
 
 async def off_set(page: int, size: int):
     return (page - 1) * size
