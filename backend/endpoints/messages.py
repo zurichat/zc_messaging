@@ -295,13 +295,13 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15)
 
 
 @router.get(
-    "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}/single",
     response_model=list[Message],
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )   
 
-async def get_message(org_id: str, room_id: str, message_id: str, page: int = 1, size: int = 15):
+async def get_single_message(org_id: str, room_id: str, message_id: str):
     response = await get_message(org_id, room_id, message_id)
 
     if response == []:
