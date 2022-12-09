@@ -227,7 +227,7 @@ async def update_message(
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=[].append(Message),
+    response_model=list[Message],
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
@@ -295,5 +295,33 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15)
     return JSONResponse(
         content=ResponseModel.success(
             data=result, message="Messages retrieved"),
+        status_code=status.HTTP_200_OK,
+    )
+
+
+@router.get(
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
+    response_model=list[Message],
+    status_code=status.HTTP_200_OK,
+    responses={424: {"detail": "ZC Core failed"}},
+)   
+
+async def get_single_message(org_id: str, room_id: str, message_id: str):
+    response = await get_message(org_id, room_id, message_id)
+
+    if response == []:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Room does not exist or no message found",
+        )
+
+    if response is None:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Zc Core failed",
+        )
+
+    return JSONResponse(
+        content=ResponseModel.success(data=response, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )
