@@ -4,10 +4,10 @@ from schema.message import Message, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
+from utils.chat_notification import Notification
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
 from utils.paginator import page_urls
-from utils.chat_notification import Notification
 
 router = APIRouter()
 notification = Notification()
@@ -102,10 +102,14 @@ async def send_message(
         message.dict(),
     )
     # instantiate the Notication's function that handles message notification
-    user_msg_notification = await notification.messages_trigger(message_obj=message)
-	
+    try:
+        await notification.messages_trigger(message_obj=message)
+    except Exception as e:
+        print("Novu message error", e)
+
     return JSONResponse(
-        content=ResponseModel.success(data=message.dict(), message="new message sent"),
+        content=ResponseModel.success(
+            data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
     )
 
@@ -280,15 +284,16 @@ async def get_messages(org_id: str, room_id: str, page: int = 1, size: int = 15)
         )
 
     result = {
-            "data": response,
-            "page": page,
-            "size": size,
-            "total": total_count,
-            "previous": paging.get('previous'),
-            "next": paging.get('next')         
+        "data": response,
+        "page": page,
+        "size": size,
+        "total": total_count,
+        "previous": paging.get('previous'),
+        "next": paging.get('next')
     }
 
     return JSONResponse(
-        content=ResponseModel.success(data=result, message="Messages retrieved"),
+        content=ResponseModel.success(
+            data=result, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )
