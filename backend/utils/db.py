@@ -189,6 +189,7 @@ class DataStorage:
         resource_id: Optional[str] = None,
         query: Optional[dict[str, Any]] = None,
         options: Optional[dict[str, Any]] = None,
+        raw_query: Optional [dict[str, Any]] = None
     ) -> Any:
         """Reads data from zc_messaging collections.
 
@@ -238,6 +239,7 @@ class DataStorage:
             "object_id": resource_id,
             "filter": query,
             "options": options,
+            "raw_query": raw_query
         }
 
         try:
