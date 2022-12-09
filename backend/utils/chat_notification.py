@@ -35,10 +35,6 @@ class Notification:
             DB = DataStorage(organization_id=org_id)
             # get the text from the message object
             text_message = get_tagged_users["blocks"][0]["text"]
-            # from the text in the message text, get the characters without '@'
-            get_text_msg = text_message.split(" ")
-            message_text = [text for text in get_text_msg if text.isalnum()]
-            new_message = " ".join(message_text)
             # check the message object to get the names of the tagged users
             user_msg_tag = get_tagged_users["entityMap"]
             if user_msg_tag != []:
@@ -71,7 +67,7 @@ class Notification:
                 sender_name = sender_info[0]["user_name"]
                 payload["senderName"] = sender_name
                 payload["channelName"] = room_name
-                payload["messageBody"] = new_message
+                payload["messageBody"] = text_message
                 tagged_users = await event.trigger(
                     "channel-message", {"payload": payload,
                                         "to": tagged_users_list}
@@ -168,10 +164,6 @@ class Notification:
         except:
             raise HTTPException(
                 status_code=400, detail="Invalid message input")
-        # from the text in the message text, get the characters without '@'
-        get_text_msg = message.split(" ")
-        message_text = [text for text in get_text_msg if text.isalnum()]
-        text_message = " ".join(message_text)
         try:
             room = await get_room(org_id, room_id)
         except:
@@ -180,7 +172,7 @@ class Notification:
         # create a notfication for the DM user
         if room["room_type"] == "DM":
             dm_notification = await self.dm_message_trigger(
-                org_id, room_id, sender_id, text_message
+                org_id, room_id, sender_id, message
             )
             dm_notification_status_code = dm_notification.get("status", " ")
             # check the novu instance response to get the status code
@@ -207,7 +199,7 @@ class Notification:
             user for user in room_members if user["_id"] == sender_id]
         payload["senderName"] = get_sender_details[0]["user_name"]
         payload["channelName"] = room_name
-        payload["messageBody"] = text_message
+        payload["messageBody"] = message
         get_members = await get_room_members(org_id, room_id)
         for member_id in get_members.keys():
             if member_id != sender_id:
