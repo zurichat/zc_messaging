@@ -1,4 +1,5 @@
-from http.client import HTTPException
+import uuid
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 import json
 from typing import Any, Optional
 from schema.message import Thread
@@ -8,7 +9,7 @@ from utils.db import DataStorage
 from utils.message_utils import get_message ,update_message
 from config.settings import settings
 
-# List  all messages in a thread
+# List all messages in a thread
 
 async def get_messages_in_thread(org_id, room_id, message_id):
     """Retrives all the messages in a thread.
@@ -56,9 +57,12 @@ async def add_message_to_thread(org_id, room_id, message_id, request):
     del message["_id"]
 
     thread= message["threads"]
+
+    payload["thread_id"] = str(uuid.uuid1())
+
     thread.append(payload)
    
     response = await update_message(org_id, message_id, message)
     
-    return response
+    return response, payload
 
