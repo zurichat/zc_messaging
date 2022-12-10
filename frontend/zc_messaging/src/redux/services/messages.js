@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 // Need to use the React-specific entry point to import createApi
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import { getCurrentWorkspaceUsers } from "@zuri/utilities"
@@ -121,14 +120,32 @@ export const messagesApi = createApi({
       async queryFn(_arg, _queryApi, _extraOptions, fetchWithBQ) {
         const { orgId, roomId, threadId, pageIndex } = _arg
         const getMessagesInRoomResponse = await fetchWithBQ(
-          `/org/${orgId}/rooms/${roomId}/messages/${threadId}/threads?page=${pageIndex}&size=15`
+          `/org/${orgId}/rooms/${roomId}/messages/${threadId}/threads`
+        )
+        const parent = await fetchWithBQ(
+          `/org/${orgId}/rooms/${roomId}/messages/${threadId}`
         )
         if (Array.isArray(getMessagesInRoomResponse?.data?.data)) {
           const workspaceUsers = await getCurrentWorkspaceUsers()
           const roomMessages = getMessagesInRoomResponse.data.data
+          const parentMessage = [parent?.data?.data]
           return {
             data: {
               roomMessages: roomMessages
+                .filter(message => message.richUiData && message.timestamp)
+                .map(message => {
+                  const sender = workspaceUsers.find(
+                    user => user._id === message.sender_id
+                  )
+                  return {
+                    ...message,
+                    sender: {
+                      sender_name: sender?.user_name,
+                      sender_image_url: sender?.image_url
+                    }
+                  }
+                }),
+              parentMessage: parentMessage
                 .filter(message => message.richUiData && message.timestamp)
                 .map(message => {
                   const sender = workspaceUsers.find(
@@ -145,7 +162,7 @@ export const messagesApi = createApi({
             }
           }
         }
-        return { data: { roomMessages: [] } }
+        return { data: { roomMessages: [], parentMessage: [] } }
       }
     }),
 
@@ -179,44 +196,6 @@ export const messagesApi = createApi({
         )
         queryFulfilled.catch(patchResult.undo)
       }
-    }),
-    updateMessageInThread: builder.mutation({
-      query(data) {
-        const { orgId, roomId, sender, threadId, messageData, messageId } = data
-        return {
-          url: `/org/${orgId}/rooms/${roomId}/messages/${threadId}/threads/${messageId}`,
-          method: "PUT",
-          body: {
-            sender_id: sender.sender_id,
-            ...messageData
-          }
-        }
-      },
-      invalidatesTags: ["Messages"],
-      async onQueryStarted(
-        { orgId, roomId, sender, messageData },
-        { dispatch, queryFulfilled }
-      ) {
-        const patchResult = dispatch(
-          messagesApi.util.updateQueryData(
-            "getMessagesInRoom",
-            { orgId, roomId },
-
-            draft => {
-              let foundDraft = draft.indexOf(
-                draft.find(each => each._id === messageData._id)
-              )
-              draft[foundDraft] = { sender, ...messageData }
-            }
-          )
-        )
-        try {
-          await queryFulfilled
-          return
-        } catch {
-          patchResult.undo
-        }
-      }
     })
   })
 })
@@ -226,6 +205,5 @@ export const {
   useSendMessageInRoomMutation,
   useUpdateMessageInRoomMutation,
   useGetMessagesInRoomThreadsQuery,
-  useSendMessageInThreadMutation,
-  useUpdateMessageInThreadMutation
+  useSendMessageInThreadMutation
 } = messagesApi
