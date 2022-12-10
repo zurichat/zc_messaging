@@ -33,6 +33,7 @@ const MessagingBoard = () => {
   const [roomChats, setRoomChats] = useState([])
   const [refresh, setRefresh] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
+  const [down, setDown] = useState(false)
   const [isProcessing, setIsProcessing] = useState({
     status: false,
     message: []
@@ -74,6 +75,7 @@ const MessagingBoard = () => {
       })
     }
     if (roomId && authUser.user_id) {
+      setDown(true)
       subscribeToChannel(roomId, data => {
         if (data.data.data.sender_id !== authUser.user_id) {
           getMessageSender(data.data.data.sender_id).then(sender => {
@@ -112,8 +114,10 @@ const MessagingBoard = () => {
       setRoomName(room?.room_name)
       setPageTitle(generatePageTitle(room?.room_name))
       setPageIndex(1)
+      setDown(true)
       if (pageIndex === 1 && data?.roomMessages) {
         setRoomChats(data?.roomMessages)
+        setDown(true)
       }
     }
   }, [roomId, roomsAvailable])
@@ -249,8 +253,6 @@ const MessagingBoard = () => {
           })
           // message.emojis.splice(emojiIndex, 1)
         } else {
-          console.log("Block 2")
-
           message.emojis[emojiIndex].reactedUsersId.splice(reactedUserIdIndex)
           message.emojis[emojiIndex].count =
             message.emojis[emojiIndex].count - 1
@@ -266,7 +268,6 @@ const MessagingBoard = () => {
     } else {
       // the emoji does not exist
       // create the emoji object and push
-      console.log("Block 1")
 
       const newEmojiObject = {
         name: newEmojiName,
@@ -315,6 +316,10 @@ const MessagingBoard = () => {
     const numPage = Math.ceil(data.total / chatSize)
     if (event.currentTarget.scrollTop === 0 && pageIndex < numPage) {
       setPageIndex(prev => prev + 1)
+      setDown(false)
+      event.currentTarget.scrollTop =
+        (event.currentTarget.scrollHeight - event.currentTarget.clientHeight) /
+        2
     }
   }
   useEffect(() => {
@@ -323,8 +328,6 @@ const MessagingBoard = () => {
     }
   }, [data?.roomMessages])
 
-  //
-  //
   return roomId ? (
     <>
       <Helmet>
@@ -349,6 +352,7 @@ const MessagingBoard = () => {
               onHandleScroll={handleScroll}
               showEmoji={showEmoji}
               setShowEmoji={setShowEmoji}
+              down={down}
             />
           </MessageWrapper>
           {/* <TypingNotice>Omo Jesu is typing</TypingNotice> */}
