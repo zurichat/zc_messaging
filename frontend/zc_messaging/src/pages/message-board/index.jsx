@@ -61,7 +61,7 @@ const MessagingBoard = () => {
         refetchOnMountOrArgChange: true
       }
     )
-
+  // send message endpoint query
   const [sendNewMessageWithFile, { isLoading: isPending }] =
     useSendMessageWithFileMutation()
 
