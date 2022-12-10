@@ -49,6 +49,7 @@ export const messagesApi = createApi({
         return { data: { roomMessages: [], total: 0 } }
       }
     }),
+<<<<<<< HEAD
     sendMessageWithFile: builder.mutation({
       query(data) {
         const { orgId, roomId, messageData } = data
@@ -80,11 +81,13 @@ export const messagesApi = createApi({
         queryFulfilled.catch(patchResult.undo)
       }
     }),
+=======
+>>>>>>> e344030 (fix: refactored messaging endpoint integration)
     sendMessageWithFile: builder.mutation({
       query(data) {
         const { orgId, roomId, messageData } = data
         return {
-          url: `/org/${orgId}/room/${roomId}/files/upload`,
+          url: `/org/${orgId}/rooms/${roomId}/messages`,
           method: "POST",
           headers: {
             token: `${user?.token}`
@@ -155,9 +158,12 @@ export const messagesApi = createApi({
 export const {
   useGetMessagesInRoomQuery,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   useSendMessageInRoomMutation,
 >>>>>>> 7b4f046 (feat: media upload)
+=======
+>>>>>>> e344030 (fix: refactored messaging endpoint integration)
   useSendMessageWithFileMutation,
   useUpdateMessageInRoomMutation
 } = messagesApi

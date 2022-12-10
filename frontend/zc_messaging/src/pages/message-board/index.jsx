@@ -66,9 +66,6 @@ const MessagingBoard = () => {
   const [sendNewMessageWithFile, { isLoading: isPending }] =
     useSendMessageWithFileMutation()
 
-  const [sendNewMessageWithFile, { isLoading: isPending }] =
-    useSendMessageWithFileMutation()
-
   const [updateMessage] = useUpdateMessageInRoomMutation()
 
   useEffect(() => {
