@@ -49,42 +49,11 @@ export const messagesApi = createApi({
         return { data: { roomMessages: [], total: 0 } }
       }
     }),
-    sendMessageInRoom: builder.mutation({
-      query(data) {
-        const { orgId, roomId, sender, messageData } = data
-        return {
-          url: `/org/${orgId}/rooms/${roomId}/messages`,
-          method: "POST",
-          body: {
-            sender_id: sender.sender_id,
-            ...messageData
-          }
-        }
-      },
-      onQueryStarted(
-        { orgId, roomId, sender, messageData },
-        { dispatch, queryFulfilled }
-      ) {
-        const patchResult = dispatch(
-          messagesApi.util.updateQueryData(
-            "getMessagesInRoom",
-            { orgId, roomId },
-            draft => {
-              draft.push({
-                sender,
-                ...messageData
-              })
-            }
-          )
-        )
-        queryFulfilled.catch(patchResult.undo)
-      }
-    }),
     sendMessageWithFile: builder.mutation({
       query(data) {
         const { orgId, roomId, messageData } = data
         return {
-          url: `/org/${orgId}/room/${roomId}/files/upload`,
+          url: `/org/${orgId}/rooms/${roomId}/messages`,
           method: "POST",
           headers: {
             token: `${user?.token}`
@@ -154,7 +123,6 @@ export const messagesApi = createApi({
 
 export const {
   useGetMessagesInRoomQuery,
-  useSendMessageInRoomMutation,
   useSendMessageWithFileMutation,
   useUpdateMessageInRoomMutation
 } = messagesApi

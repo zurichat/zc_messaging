@@ -10,7 +10,6 @@ import getMessageSender from "../../utils/getMessageSender.js"
 import {
   messagesApi,
   useGetMessagesInRoomQuery,
-  useSendMessageInRoomMutation,
   useSendMessageWithFileMutation,
   useUpdateMessageInRoomMutation
 } from "../../redux/services/messages.js"
@@ -30,7 +29,6 @@ const MessagingBoard = () => {
   const [roomChats, setRoomChats] = useState([])
   const [refresh, setRefresh] = useState(false)
   const [fileData, setFileData] = useState(null)
-
   const [showEmoji, setShowEmoji] = useState(false)
   const [isProcessing, setIsProcessing] = useState({
     status: false,
@@ -61,8 +59,6 @@ const MessagingBoard = () => {
         refetchOnMountOrArgChange: true
       }
     )
-  const [sendNewMessage, { isLoading: isSending }] =
-    useSendMessageInRoomMutation()
 
   const [sendNewMessageWithFile, { isLoading: isPending }] =
     useSendMessageWithFileMutation()
@@ -154,51 +150,41 @@ const MessagingBoard = () => {
       ]
       setIsProcessing({ status: true, message: roomChats.concat(newMessages) })
     }
+    var formData = new FormData()
+    formData.append("sender_id", authUser?.user_id)
+    formData.append("timestamp", currentDate.getTime())
+    formData.append("richUiData", JSON.stringify(message))
     if (fileData) {
-      var formData = new FormData()
-      formData.append("sender_id", authUser?.user_id)
-      formData.append("timestamp", currentDate.getTime())
-      formData.append("richUiData", JSON.stringify(message))
       fileData.forEach(file => {
         formData.append("attachments", file)
       })
-      sendNewMessageWithFile({
-        orgId: currentWorkspaceId,
-        roomId,
-        messageData: formData
-      })
-    } else {
-      sendNewMessage({
-        orgId: currentWorkspaceId,
-        roomId,
-        sender: {
-          sender_id: authUser?.user_id,
-          sender_name: authUser?.user_name,
-          sender_image_url: authUser?.user_image_url
-        },
-        messageData: { ...newMessage }
-      })
-        .then(e => {
-          const newMessages = [
-            {
-              ...newMessage,
-              _id: e.data.data.message_id,
-              orgId: currentWorkspaceId,
-              roomId,
-              sender: {
-                sender_id: authUser?.user_id,
-                sender_name: authUser?.user_name,
-                sender_image_url: authUser?.user_image_url
-              }
-            }
-          ]
-          setRoomChats(prev => prev.concat(newMessages))
-          setIsProcessing({ status: false, message: [] })
-        })
-        .catch(() => {
-          setIsProcessing({ status: false, message: [] })
-        })
     }
+
+    sendNewMessageWithFile({
+      orgId: currentWorkspaceId,
+      roomId,
+      messageData: formData
+    })
+      .then(e => {
+        const newMessages = [
+          {
+            ...newMessage,
+            _id: e.data.data.message_id,
+            orgId: currentWorkspaceId,
+            roomId,
+            sender: {
+              sender_id: authUser?.user_id,
+              sender_name: authUser?.user_name,
+              sender_image_url: authUser?.user_image_url
+            }
+          }
+        ]
+        setRoomChats(prev => prev.concat(newMessages))
+        setIsProcessing({ status: false, message: [] })
+      })
+      .catch(() => {
+        setIsProcessing({ status: false, message: [] })
+      })
     return true
   }
 
