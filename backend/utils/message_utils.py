@@ -81,7 +81,7 @@ async def get_room_messages(
     DB = DataStorage(org_id)
 
     skip = await off_set(page, size)
-    options = {"limit": size, "skip": skip, "sort": { "created_at": 1}}
+    options = {"limit": size, "skip": skip, "sort": { "created_at": -1}}
     raw_query = {}
     if created_at:
         date = datetime.datetime.now() - datetime.timedelta(days=created_at)
