@@ -35,6 +35,7 @@ const MessagingBoard = () => {
     message: []
   })
   const chatSize = 15
+  //   Get messages endpoint
   const { data: roomsAvailable, isLoading: IsLoadingRoomsAvailable } =
     useGetRoomsAvailableToUserQuery(
       {
@@ -47,6 +48,7 @@ const MessagingBoard = () => {
         refetchOnMountOrArgChange: true
       }
     )
+  //
   const { data: data, isLoading: isLoadingRoomMessages } =
     useGetMessagesInRoomQuery(
       {
