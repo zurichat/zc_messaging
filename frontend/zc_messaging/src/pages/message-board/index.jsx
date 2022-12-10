@@ -255,6 +255,8 @@ const MessagingBoard = () => {
           })
           // message.emojis.splice(emojiIndex, 1)
         } else {
+          console.log("Block 2")
+
           message.emojis[emojiIndex].reactedUsersId.splice(reactedUserIdIndex)
           message.emojis[emojiIndex].count =
             message.emojis[emojiIndex].count - 1
