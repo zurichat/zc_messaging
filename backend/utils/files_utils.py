@@ -49,7 +49,7 @@ async def upload_files(token: str, attachments: list[UploadFile], org_id: str):
         HTTPException [401]: Token is required for file storage service
         HTTPException [424]: File storage service is not available
         HTTPException [400]: Error uploading the file
-    """    
+    """
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -59,10 +59,7 @@ async def upload_files(token: str, attachments: list[UploadFile], org_id: str):
         )
 
     file_store = FileStorage(organization_id=org_id)
-    files = [
-        file.file for file in attachments
-    ]
-    response = await file_store.files_upload(files, token)
+    response = await file_store.files_upload(attachments, token)
 
     if response is None:
         raise HTTPException(
