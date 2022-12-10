@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { useState, useEffect } from "react"
 import { CommentBoard } from "@zuri/ui"
 import { useParams } from "react-router-dom"
