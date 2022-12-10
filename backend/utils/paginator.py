@@ -9,9 +9,12 @@ async def off_set(page: int, size: int):
 async def page_urls(page: int, size: int, org_id: int, room_id: int, endpoint: str):
 
     DB = DataStorage(org_id)
-    total_count = len(
-        await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id})
-    )
+    messages = await DB.read(settings.MESSAGE_COLLECTION, query={"room_id": room_id})
+
+    if messages is None:
+        total_count = 0
+    else:
+        total_count = len(messages)
 
     paging = {}
 
