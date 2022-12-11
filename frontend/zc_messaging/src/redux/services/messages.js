@@ -21,6 +21,7 @@ export const messagesApi = createApi({
         const getMessagesInRoomResponse = await fetchWithBQ(
           `/org/${orgId}/rooms/${roomId}/messages?page=${pageIndex}&size=15`
         )
+
         if (Array.isArray(getMessagesInRoomResponse?.data?.data?.data)) {
           const workspaceUsers = await getCurrentWorkspaceUsers()
           const roomMessages = getMessagesInRoomResponse.data.data.data
@@ -117,6 +118,86 @@ export const messagesApi = createApi({
           patchResult.undo
         }
       }
+    }),
+    getMessagesInRoomThreads: builder.query({
+      async queryFn(_arg, _queryApi, _extraOptions, fetchWithBQ) {
+        const { orgId, roomId, threadId, pageIndex } = _arg
+        const getMessagesInRoomResponse = await fetchWithBQ(
+          `/org/${orgId}/rooms/${roomId}/messages/${threadId}/threads`
+        )
+        const parent = await fetchWithBQ(
+          `/org/${orgId}/rooms/${roomId}/messages/${threadId}`
+        )
+        if (Array.isArray(getMessagesInRoomResponse?.data?.data)) {
+          const workspaceUsers = await getCurrentWorkspaceUsers()
+          const roomMessages = getMessagesInRoomResponse.data.data
+          const parentMessage = [parent?.data?.data]
+          return {
+            data: {
+              roomMessages: roomMessages
+                .filter(message => message.richUiData && message.timestamp)
+                .map(message => {
+                  const sender = workspaceUsers.find(
+                    user => user._id === message.sender_id
+                  )
+                  return {
+                    ...message,
+                    sender: {
+                      sender_name: sender?.user_name,
+                      sender_image_url: sender?.image_url
+                    }
+                  }
+                }),
+              parentMessage: parentMessage
+                .filter(message => message.richUiData && message.timestamp)
+                .map(message => {
+                  const sender = workspaceUsers.find(
+                    user => user._id === message.sender_id
+                  )
+                  return {
+                    ...message,
+                    sender: {
+                      sender_name: sender?.user_name,
+                      sender_image_url: sender?.image_url
+                    }
+                  }
+                })
+            }
+          }
+        }
+        return { data: { roomMessages: [], parentMessage: [] } }
+      }
+    }),
+    sendMessageInThread: builder.mutation({
+      query(data) {
+        const { orgId, roomId, threadId, sender, messageData } = data
+        return {
+          url: `/org/${orgId}/rooms/${roomId}/messages/${threadId}/threads`,
+          method: "POST",
+          body: {
+            sender_id: sender.sender_id,
+            ...messageData
+          }
+        }
+      },
+      onQueryStarted(
+        { orgId, roomId, sender, messageData },
+        { dispatch, queryFulfilled }
+      ) {
+        const patchResult = dispatch(
+          messagesApi.util.updateQueryData(
+            "getMessagesInRoom",
+            { orgId, roomId },
+            draft => {
+              draft.push({
+                sender,
+                ...messageData
+              })
+            }
+          )
+        )
+        queryFulfilled.catch(patchResult.undo)
+      }
     })
   })
 })
@@ -124,5 +205,7 @@ export const messagesApi = createApi({
 export const {
   useGetMessagesInRoomQuery,
   useSendMessageWithFileMutation,
-  useUpdateMessageInRoomMutation
+  useUpdateMessageInRoomMutation,
+  useGetMessagesInRoomThreadsQuery,
+  useSendMessageInThreadMutation
 } = messagesApi
