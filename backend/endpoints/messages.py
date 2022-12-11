@@ -308,12 +308,6 @@ async def get_messages(
         endpoint=f"/api/v1/org/{org_id}/rooms/{room_id}/messages",
     )
 
-    if response == []:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Room does not exist or no message found",
-        )
-
     if response is None:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
@@ -344,6 +338,73 @@ async def get_messages(
 )   
 
 async def get_single_message(org_id: str, room_id: str, message_id: str):
+    """Fetches a single message.
+
+    Args:
+        org_id (str): A unique identifier of an organization.
+        room_id (str): A unique identifier of the room where messages are fetched from.
+        message_id (str): The id of the message to be retrieved.
+
+    Returns:
+    
+        A dict containing a list of message objects.
+        {
+            "status": "success",
+            "message": "Messages retrieved",
+            "data": {
+                "_id": "61e75bc065934b58b8e5d223",
+                "created_at": "2022-02-02 17:57:02.630439",
+                "edited": true,
+                "emojis": [],
+                "files": [],
+                "message_id": null,
+                "org_id": "637f6f28601ce3fc5dc738f3",
+                "richUiData": {
+                "blocks": [
+                    {
+                        "data": {},
+                        "depth": 0,
+                        "entityRanges": [],
+                        "inlineStyleRanges": [],
+                        "key": "4c3f3",
+                        "text": "sdfuigd",
+                        "type": "unstyled"
+                    }
+                ],
+                "entityMap": {}
+            },
+            "room_id": "637f6f2d601ce3fc5dc738f5",
+            "saved_by": [],
+            "sender_id": "637f6f28601ce3fc5dc738f4",
+            "threads": [
+                {
+                "emojis": [],
+                "richUiData": {
+                    "blocks": [
+                        {
+                            "data": {},
+                            "depth": 0,
+                            "entityRanges": [],
+                            "inlineStyleRanges": [],
+                            "key": "f3s6p",
+                            "text": "It's just Mykie here again!",
+                            "type": "unstyled"
+                        }
+                    ],
+                    "entityMap": {}
+                },
+                "sender_id": "637f6f28601ce3fc5dc738f4",
+                "thread_id": "1504c7aa-77d7-11ed-ae42-ec8eb54be004",
+                "timestamp": 1669917458839
+            }
+        ],
+        "timestamp": 1669999250973
+    }
+}
+
+    Raises:
+        HTTPException [424]: Zc Core failed"""
+
     response = await get_message(org_id, room_id, message_id)
 
     if response == []:

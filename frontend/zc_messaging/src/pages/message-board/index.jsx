@@ -3,24 +3,21 @@ import { useNavigate, useParams, Outlet } from "react-router-dom"
 import { Helmet } from "react-helmet"
 import { MessageBoard, MessageRoomViewHeader } from "@zuri/ui"
 import { subscribeToChannel } from "@zuri/utilities"
-import {
-  Container,
-  MessagingArea,
-  TypingNotice,
-  MessageWrapper
-} from "./MessageBoard.style"
+import { Container, MessagingArea, MessageWrapper } from "./MessageBoard.style"
 import fetchDefaultRoom from "../../utils/fetchDefaultRoom"
 import { useSelector, useDispatch } from "react-redux"
 import getMessageSender from "../../utils/getMessageSender.js"
 import {
   messagesApi,
   useGetMessagesInRoomQuery,
-  useSendMessageInRoomMutation,
+  useSendMessageWithFileMutation,
   useUpdateMessageInRoomMutation
 } from "../../redux/services/messages.js"
 import { useGetRoomsAvailableToUserQuery } from "../../redux/services/rooms"
 import generatePageTitle from "../../utils/generatePageTitle"
+import { BASE_URL } from "../../utils/constants"
 
+//
 const MessagingBoard = () => {
   const { roomId } = useParams()
   const navigateTo = useNavigate()
@@ -32,6 +29,7 @@ const MessagingBoard = () => {
   const [pageIndex, setPageIndex] = useState(1)
   const [roomChats, setRoomChats] = useState([])
   const [refresh, setRefresh] = useState(false)
+  const [fileData, setFileData] = useState(null)
   const [showEmoji, setShowEmoji] = useState(false)
   const [down, setDown] = useState(false)
   const [isProcessing, setIsProcessing] = useState({
@@ -39,6 +37,7 @@ const MessagingBoard = () => {
     message: []
   })
   const chatSize = 15
+  //   Get messages endpoint
   const { data: roomsAvailable, isLoading: IsLoadingRoomsAvailable } =
     useGetRoomsAvailableToUserQuery(
       {
@@ -51,6 +50,7 @@ const MessagingBoard = () => {
         refetchOnMountOrArgChange: true
       }
     )
+  //
   const { data: data, isLoading: isLoadingRoomMessages } =
     useGetMessagesInRoomQuery(
       {
@@ -63,8 +63,9 @@ const MessagingBoard = () => {
         refetchOnMountOrArgChange: true
       }
     )
-  const [sendNewMessage, { isLoading: isSending }] =
-    useSendMessageInRoomMutation()
+  // send message endpoint query
+  const [sendNewMessageWithFile, { isLoading: isPending }] =
+    useSendMessageWithFileMutation()
 
   const [updateMessage] = useUpdateMessageInRoomMutation()
 
@@ -135,36 +136,48 @@ const MessagingBoard = () => {
 
   const sendMessageHandler = async message => {
     const currentDate = new Date()
-    const newMessage = {
-      timestamp: currentDate.getTime(),
-      emojis: [],
-      richUiData: message
-    }
-    const newMessages = [
-      {
-        ...newMessage,
-        _id: generateString(),
-        orgId: currentWorkspaceId,
-        roomId,
-        sender: {
-          sender_id: authUser?.user_id,
-          sender_name: authUser?.user_name,
-          sender_image_url: authUser?.user_image_url
-        }
+    if (message.blocks[0].text) {
+      const newMessage = {
+        timestamp: currentDate.getTime(),
+        emojis: [],
+        richUiData: message
       }
-    ]
-    setIsProcessing({ status: true, message: roomChats.concat(newMessages) })
-    sendNewMessage({
+      const newMessages = [
+        {
+          ...newMessage,
+          _id: generateString(),
+          orgId: currentWorkspaceId,
+          roomId,
+          sender: {
+            sender_id: authUser?.user_id,
+            sender_name: authUser?.user_name,
+            sender_image_url: authUser?.user_image_url
+          }
+        }
+      ]
+      setIsProcessing({ status: true, message: roomChats.concat(newMessages) })
+    }
+    var formData = new FormData()
+    formData.append("sender_id", authUser?.user_id)
+    formData.append("timestamp", currentDate.getTime())
+    formData.append("richUiData", JSON.stringify(message))
+    if (fileData) {
+      fileData.forEach(file => {
+        formData.append("attachments", file)
+      })
+    }
+
+    sendNewMessageWithFile({
       orgId: currentWorkspaceId,
       roomId,
-      sender: {
-        sender_id: authUser?.user_id,
-        sender_name: authUser?.user_name,
-        sender_image_url: authUser?.user_image_url
-      },
-      messageData: { ...newMessage }
+      messageData: formData
     })
       .then(e => {
+        const newMessage = {
+          timestamp: currentDate.getTime(),
+          emojis: [],
+          richUiData: message
+        }
         const newMessages = [
           {
             ...newMessage,
@@ -184,7 +197,6 @@ const MessagingBoard = () => {
       .catch(() => {
         setIsProcessing({ status: false, message: [] })
       })
-
     return true
   }
 
@@ -268,7 +280,6 @@ const MessagingBoard = () => {
     } else {
       // the emoji does not exist
       // create the emoji object and push
-
       const newEmojiObject = {
         name: newEmojiName,
         count: 1,
@@ -309,7 +320,7 @@ const MessagingBoard = () => {
   }
 
   const SendAttachedFileHandler = file => {
-    // do something with the file
+    setFileData(file)
   }
 
   const handleScroll = event => {

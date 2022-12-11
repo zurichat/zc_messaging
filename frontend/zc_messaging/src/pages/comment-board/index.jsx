@@ -15,7 +15,7 @@ const CommentingBoard = () => {
   const [threadMsg, setThreadMsg] = useState([])
   const [showEmoji, setShowEmoji] = useState(false)
   const [parent, setParent] = useState([])
-
+  const [post, setPost] = useState([])
   const { data: data, isLoading: isLoadingMessages } =
     useGetMessagesInRoomThreadsQuery(
       {
@@ -62,6 +62,7 @@ const CommentingBoard = () => {
         }
       }
     ]
+    setPost(newMessages)
     sendNewMessage({
       orgId: currentWorkspaceId,
       roomId,
@@ -89,7 +90,9 @@ const CommentingBoard = () => {
         ]
         setThreadMsg(prev => (prev ? prev.concat(newMessages) : newMessages))
       })
-      .catch(() => {})
+      .catch(() => {
+        setPost([])
+      })
 
     return true
   }
@@ -100,7 +103,6 @@ const CommentingBoard = () => {
       setParent(data?.parentMessage)
     }
   }, [roomId, threadId, data?.roomMessages])
-
   return (
     <>
       <CommentBoard
@@ -111,8 +113,11 @@ const CommentingBoard = () => {
         onSendMessage={sendMessageHandler}
         showEmoji={showEmoji}
         setShowEmoji={setShowEmoji}
+        isSending={isSending}
+        post={post}
       />
     </>
   )
 }
+
 export default CommentingBoard
