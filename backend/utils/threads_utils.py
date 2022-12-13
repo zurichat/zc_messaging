@@ -4,14 +4,14 @@ import json
 from typing import Any, Optional
 from schema.message import Thread
 from schema.message import Message, MessageRequest
-
+from datetime import datetime
 from utils.db import DataStorage
 from utils.message_utils import get_message ,update_message
 from config.settings import settings
 
 # List all messages in a thread
 
-async def get_messages_in_thread(org_id, room_id, message_id):
+async def get_message_threads(org_id, room_id, message_id):
     """Retrives all the messages in a thread.
 
     Args:
@@ -25,13 +25,11 @@ async def get_messages_in_thread(org_id, room_id, message_id):
     """
 
     # fetch message parent of the thread
-    DB = DataStorage(org_id)
-    messages = await get_message(org_id, room_id, message_id)
-    return messages["threads"]
+    message = await get_message(org_id, room_id, message_id)
+    return message["threads"]
 
 
-
-async def add_message_to_thread(org_id, room_id, message_id, request):
+async def add_message_to_thread_list(org_id, room_id, message_id, request: Thread):
     """Adds a message to a thread.
 
     Args:
@@ -51,18 +49,15 @@ async def add_message_to_thread(org_id, room_id, message_id, request):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
         )
-
-    payload = request.dict(exclude_unset=True)
-
     del message["_id"]
 
-    thread= message["threads"]
+    thread_message = request.dict(exclude_unset=True)
+    thread_message["thread_id"] = str(uuid.uuid1())
+    thread_message["created_at"] = str(datetime.utcnow())
 
-    payload["thread_id"] = str(uuid.uuid1())
-
-    thread.append(payload)
+    message["threads"].insert(0, thread_message)
    
     response = await update_message(org_id, message_id, message)
     
-    return response, payload
+    return response, thread_message
 

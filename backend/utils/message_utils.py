@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from typing import Any, Optional
 from config.settings import settings
 from schema.message import Message
@@ -155,7 +155,7 @@ async def create_message(org_id: str, message: Message) -> dict[str, Any]:
     """
 
     db = DataStorage(org_id)
-
+    message.created_at = str(datetime.utcnow())
     return await db.write(settings.MESSAGE_COLLECTION, message.dict())
 
 
