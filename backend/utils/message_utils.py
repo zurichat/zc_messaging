@@ -81,7 +81,7 @@ async def get_room_messages(
     DB = DataStorage(org_id)
 
     skip = await off_set(page, size)
-    options = {"limit": size, "skip": skip, "sort": { "created_at": -1}}
+    options = {"limit": size, "skip": skip, "sort": { "created_at": 1}}
     raw_query = {}
     if created_at:
         date = datetime.datetime.now() - datetime.timedelta(days=created_at)
@@ -91,6 +91,59 @@ async def get_room_messages(
     response = await DB.read(
         settings.MESSAGE_COLLECTION,
         options=options,
+        raw_query=raw_query,
+    )
+
+    if response is None:
+        return []
+
+    if "status_code" in response:
+        return None
+
+    return response
+
+
+async def get_room_messages_for_threads(
+    org_id: str,
+    room_id: str,
+    created_at: int = None,
+) -> Optional[list[dict[str, Any]]]:
+
+    """Gets all messages sent inside  a room.
+    Args:
+        org_id (str): The organization id
+        room_id (str): The room id
+
+    Returns:
+        list[dict]: A list of key value pairs of messages info mapped according to message schema.
+
+        [
+            {
+                "_id": "61e6878165934b58b8e5d1e0",
+                "created_at": "2022-01-18 09:05:32.479911",
+                "edited": false,
+                ...
+            },
+            {
+                "_id": "61e6878165934b58b8e5d1e1",
+                "created_at": "2022-01-18 09:05:32.479911",
+                "edited": true,
+                ...
+            },
+            ...
+        ]
+    """
+
+    DB = DataStorage(org_id)
+
+    raw_query = {}
+    if created_at:
+        date = datetime.datetime.now() - datetime.timedelta(days=created_at)
+        raw_query ={ "room_id": room_id, "created_at": { "$gte":str(date).split()[0]} }
+    else:
+        raw_query = {"room_id": room_id}
+    response = await DB.read(
+        settings.MESSAGE_COLLECTION,
         raw_query=raw_query,
     )
 
