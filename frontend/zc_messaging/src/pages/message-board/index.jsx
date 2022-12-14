@@ -176,6 +176,7 @@ const MessagingBoard = () => {
       setIsProcessing(newMessages)
       setDown(true)
     }
+    setDown(true)
     sendNewMessageWithFile({
       orgId: currentWorkspaceId,
       roomId,
@@ -188,7 +189,7 @@ const MessagingBoard = () => {
             edited: e.data.data.edited,
             emojis: e.data.data.emojis,
             files: e.data.data.files,
-            message_id: e.data.data.message_id,
+            _id: e.data.data.message_id,
             richUiData: e.data.data.richUiData,
             saved_by: e.data.data.saved_by,
             orgId: currentWorkspaceId,
