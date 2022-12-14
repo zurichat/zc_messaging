@@ -89,27 +89,6 @@ class MessageRequest(BaseModel):
     timestamp: int = 0
     created_at: str = str(datetime.utcnow())
 
-    @classmethod
-    def as_form(
-        cls,
-        sender_id: str = Form(str),
-        emojis: List[Emoji] = Form([]),
-        richUiData: Any = Form({}),
-        files: List[AnyHttpUrl] = Form([]),
-        saved_by: List[str] = Form([]),
-        timestamp: int = Form(int),
-        created_at: str = Form(str(datetime.utcnow())),
-    ):
-        return cls(
-            sender_id=sender_id,
-            emojis=emojis,
-            richUiData=richUiData,
-            files=files,
-            saved_by=saved_by,
-            timestamp=timestamp,
-            created_at=created_at
-        )
-
 
 class Thread(MessageRequest):
     """Provide structure for the thread schema
