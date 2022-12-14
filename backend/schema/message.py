@@ -89,7 +89,6 @@ class MessageRequest(BaseModel):
     timestamp: int = 0
     created_at: str = str(datetime.utcnow())
 
-
 class Thread(MessageRequest):
     """Provide structure for the thread schema
 
