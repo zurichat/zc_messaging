@@ -59,10 +59,7 @@ async def upload_files(token: str, attachments: list[UploadFile], org_id: str):
         )
 
     file_store = FileStorage(organization_id=org_id)
-    files = [
-        file.file for file in attachments
-    ]
-    response = await file_store.files_upload(files, token)
+    response = await file_store.files_upload(attachments, token)
 
     if response is None:
         raise HTTPException(

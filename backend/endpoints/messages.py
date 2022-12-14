@@ -336,8 +336,7 @@ async def get_messages(
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )   
-
-async def get_single_message(org_id: str, room_id: str, message_id: str):
+async def get_message_by_id(org_id: str, room_id: str, message_id: str):
     """Fetches a single message.
 
     Args:
@@ -407,10 +406,10 @@ async def get_single_message(org_id: str, room_id: str, message_id: str):
 
     response = await get_message(org_id, room_id, message_id)
 
-    if response == []:
+    if not response:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Room does not exist or no message found",
+            detail="Message not found",
         )
 
     if response is None:
@@ -420,6 +419,8 @@ async def get_single_message(org_id: str, room_id: str, message_id: str):
         )
 
     return JSONResponse(
-        content=ResponseModel.success(data=response, message="Messages retrieved"),
+        content=ResponseModel.success(
+            data=response, message="Message retrieved"
+        ),
         status_code=status.HTTP_200_OK,
     )
