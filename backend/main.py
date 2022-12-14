@@ -35,7 +35,7 @@ app.include_router(
     sync.router, prefix=settings.API_V1_STR, tags=["sync"]
 )  # include urls from sync.py
 app.include_router(
-    detail_file.router, prefix=settings.API_V1_STR, tags=["details_of_files"]
+    detail_file.router, prefix=settings.API_V1_STR, tags=["file details"]
 )  # include urls from detail_file.py
 # app.include_router(
 #     files.router, prefix=settings.API_V1_STR, tags=["files"]
