@@ -136,8 +136,7 @@ async def send_message(
         print("Novu message error", e)
 
     return JSONResponse(
-        content=ResponseModel.success(
-            data=message.dict(), message="new message sent"),
+        content=ResponseModel.success(data=message.dict(), message="new message sent"),
         status_code=status.HTTP_201_CREATED,
     )
 
@@ -326,8 +325,7 @@ async def get_messages(
     }
 
     return JSONResponse(
-        content=ResponseModel.success(
-            data=result, message="Messages retrieved"),
+        content=ResponseModel.success(data=result, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )
 
@@ -337,7 +335,7 @@ async def get_messages(
     response_model=list[Message],
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
-)
+)   
 
 async def get_single_message(org_id: str, room_id: str, message_id: str):
     """Fetches a single message.
@@ -348,7 +346,7 @@ async def get_single_message(org_id: str, room_id: str, message_id: str):
         message_id (str): The id of the message to be retrieved.
 
     Returns:
-
+    
         A dict containing a list of message objects.
         {
             "status": "success",
