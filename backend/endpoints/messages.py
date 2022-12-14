@@ -100,7 +100,6 @@ async def send_message(
     message = Message(
         **request.dict(), org_id=org_id,
         room_id=room_id)
-<<<<<<< HEAD
 
     # Upload file if any
     if attachments:
@@ -111,56 +110,6 @@ async def send_message(
         )
         message.files = file_urls
 
-=======
-
-    # Upload file if any
-    if attachments:
-
-        # Token is required for file storage service
-        if not token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={
-                    "message": "Token is required for file storage service"
-                },
-            )
-
-        file_store = FileStorage(organization_id=org_id)
-        files = [
-            file.file for file in attachments
-        ]
-        response = await file_store.files_upload(files, token)
-
-        if response is None:
-            raise HTTPException(
-                status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                detail={
-                    "status": "error",
-                    "message": "File storage service is not available"
-                },
-            )
-
-        if isinstance(response, str):
-            # Meaning there was an error uploading the file
-            raise HTTPException(
-                status_code=status.HTTP_424_FAILED_DEPENDENCY,
-                detail={
-                    "status": "error",
-                    "message": response
-                },
-            )
-
-        # Extract the urls from the response
-        file_urls = [obj["file_url"] for obj in response]
-
-        # NOTE: Currently, the file storage service returns a list of urls
-        # that also contains the urls of the files that were previously
-        # uploaded. So we need to remove those urls from the list
-        file_urls = file_urls[len(file_urls) - len(attachments):]
-
-        message.files = file_urls
-
->>>>>>> Updated the send message endpoint to upload files
     response = await create_message(org_id=org_id, message=message)
     if not response or response.get("status_code"):
         raise HTTPException(
@@ -180,14 +129,6 @@ async def send_message(
         Events.MESSAGE_CREATE,
         message.dict(),
     )
-<<<<<<< HEAD
-    # instantiate the Notication's function that handles message notification
-    try:
-        await notification.messages_trigger(message_obj=message)
-    except Exception as e:
-        print("Novu message error", e)
-=======
->>>>>>> Updated the send message endpoint to upload files
 
     return JSONResponse(
         content=ResponseModel.success(
@@ -400,7 +341,7 @@ async def get_messages(
     response_model=list[Message],
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
-)   
+)
 
 async def get_single_message(org_id: str, room_id: str, message_id: str):
     """Fetches a single message.
@@ -411,7 +352,7 @@ async def get_single_message(org_id: str, room_id: str, message_id: str):
         message_id (str): The id of the message to be retrieved.
 
     Returns:
-    
+
         A dict containing a list of message objects.
         {
             "status": "success",
