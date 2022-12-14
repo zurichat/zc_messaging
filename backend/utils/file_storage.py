@@ -1,6 +1,7 @@
 
 import requests
 from config.settings import settings
+from fastapi import UploadFile
 
 
 class FileStorage:
@@ -33,7 +34,9 @@ class FileStorage:
         except requests.exceptions.RequestException as exception:
             print(exception)
 
-    async def files_upload(self, files, token: str):
+    async def files_upload(
+        self, files: list[UploadFile], token: str
+    ):
         """
         Uploads files to zc_core.
 
@@ -58,7 +61,13 @@ class FileStorage:
                 }
         """
 
-        files = [("file", file) for file in files]
+        files = [
+            ("file", (
+                file.filename,
+                file.file.read(),
+                file.content_type,
+            )) for file in files
+        ]
         # # NOTE to use when we implement multiple uploads
 
         headers = {
