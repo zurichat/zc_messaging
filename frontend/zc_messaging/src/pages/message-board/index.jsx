@@ -350,9 +350,6 @@ const MessagingBoard = () => {
     ) {
       setPageIndex(prev => prev + 1)
       setDown(false)
-      //   event.currentTarget.scrollTop =
-      //     (event.currentTarget.scrollHeight - event.currentTarget.clientHeight) /
-      //     2
     }
   }
   useEffect(() => {
