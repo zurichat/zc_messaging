@@ -29,6 +29,7 @@ const MessagingBoard = () => {
   const [pageIndex, setPageIndex] = useState(1)
   const [roomChats, setRoomChats] = useState([])
   const [refresh, setRefresh] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
   const [fileData, setFileData] = useState(null)
   const [showEmoji, setShowEmoji] = useState(false)
   const [down, setDown] = useState(false)
@@ -67,6 +68,7 @@ const MessagingBoard = () => {
   const [updateMessage] = useUpdateMessageInRoomMutation()
 
   useEffect(() => {
+    setIsFetching(true)
     if (!roomId) {
       fetchDefaultRoom(currentWorkspaceId, authUser?.user_id).then(result => {
         navigateTo(`/${result.room_id}`, { replace: true })
@@ -347,9 +349,10 @@ const MessagingBoard = () => {
   }
   useEffect(() => {
     if (data?.roomMessages) {
+      setIsFetching(false)
       if (pageIndex === 1) {
         setRoomChats(data?.roomMessages)
-      } else {
+      } else if (pageIndex > 1) {
         setRoomChats(data?.roomMessages.concat(roomChats))
       }
     }
@@ -365,8 +368,8 @@ const MessagingBoard = () => {
           <MessageWrapper>
             <MessageRoomViewHeader name={`#${roomName}`} />
             <MessageBoard
-              isLoadingMessages={isLoadingRoomMessages}
-              messages={roomChats || []}
+              isLoadingMessages={isFetching}
+              messages={isFetching ? [] : roomChats || []}
               onSendMessage={sendMessageHandler}
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}
