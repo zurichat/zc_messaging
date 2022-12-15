@@ -35,7 +35,7 @@ const MessagingBoard = () => {
   const [down, setDown] = useState(false)
   const [isProcessing, setIsProcessing] = useState([])
   const chatSize = 15
-  //   Get messages endpoint
+  //   Get Rooms  endpoint
   const { data: roomsAvailable, isLoading: IsLoadingRoomsAvailable } =
     useGetRoomsAvailableToUserQuery(
       {
@@ -49,18 +49,22 @@ const MessagingBoard = () => {
       }
     )
   // Get messages in a room
-  const { data: data, isLoading: isLoadingRoomMessages } =
-    useGetMessagesInRoomQuery(
-      {
-        orgId: currentWorkspaceId,
-        roomId,
-        pageIndex
-      },
-      {
-        skip: Boolean(!roomId),
-        refetchOnMountOrArgChange: true
-      }
-    )
+  const {
+    data: data,
+    isLoading: isLoadingRoomMessages,
+    isFetching: isPaginating
+  } = useGetMessagesInRoomQuery(
+    {
+      orgId: currentWorkspaceId,
+      roomId,
+      pageIndex
+    },
+    {
+      skip: Boolean(!roomId),
+      refetchOnMountOrArgChange: true
+    }
+  )
+
   // send message endpoint query
   const [sendNewMessageWithFile, { isLoading: isPending }] =
     useSendMessageWithFileMutation()
@@ -339,7 +343,11 @@ const MessagingBoard = () => {
 
   const handleScroll = event => {
     const numPage = Math.ceil(data.total / chatSize)
-    if (event.currentTarget.scrollTop === 0 && pageIndex < numPage) {
+    if (
+      event.currentTarget.scrollTop === 0 &&
+      pageIndex < numPage &&
+      !isPaginating
+    ) {
       setPageIndex(prev => prev + 1)
       setDown(false)
       event.currentTarget.scrollTop =
@@ -352,8 +360,10 @@ const MessagingBoard = () => {
       setIsFetching(false)
       if (pageIndex === 1) {
         setRoomChats(data?.roomMessages)
-      } else if (pageIndex > 1) {
+      } else if (pageIndex > 1 && !isFetching) {
         setRoomChats(data?.roomMessages.concat(roomChats))
+      } else {
+        setRoomChats(data?.roomMessages)
       }
     }
   }, [data?.roomMessages])
@@ -375,7 +385,7 @@ const MessagingBoard = () => {
               onSendAttachedFile={SendAttachedFileHandler}
               currentUserId={authUser?.user_id}
               height={"92vh"}
-              onHandleScroll={handleScroll}
+              onHandleScroll={event => handleScroll(event)}
               showEmoji={showEmoji}
               setShowEmoji={setShowEmoji}
               down={down}
