@@ -32,10 +32,7 @@ const MessagingBoard = () => {
   const [fileData, setFileData] = useState(null)
   const [showEmoji, setShowEmoji] = useState(false)
   const [down, setDown] = useState(false)
-  const [isProcessing, setIsProcessing] = useState({
-    status: false,
-    message: []
-  })
+  const [isProcessing, setIsProcessing] = useState([])
   const chatSize = 15
   //   Get messages endpoint
   const { data: roomsAvailable, isLoading: IsLoadingRoomsAvailable } =
@@ -50,7 +47,7 @@ const MessagingBoard = () => {
         refetchOnMountOrArgChange: true
       }
     )
-  //
+  // Get messages in a room
   const { data: data, isLoading: isLoadingRoomMessages } =
     useGetMessagesInRoomQuery(
       {
@@ -116,10 +113,6 @@ const MessagingBoard = () => {
       setPageTitle(generatePageTitle(room?.room_name))
       setPageIndex(1)
       setDown(true)
-      if (pageIndex === 1 && data?.roomMessages) {
-        setRoomChats(data?.roomMessages)
-        setDown(true)
-      }
     }
   }, [roomId, roomsAvailable])
   const characters =
@@ -136,12 +129,37 @@ const MessagingBoard = () => {
 
   const sendMessageHandler = async message => {
     const currentDate = new Date()
-    if (message.blocks[0].text) {
-      const newMessage = {
-        timestamp: currentDate.getTime(),
-        emojis: [],
-        richUiData: message
-      }
+    const newMessage = {
+      timestamp: currentDate.getTime(),
+      emojis: [],
+      richUiData: message
+    }
+
+    var formData = new FormData()
+    formData.append("sender_id", authUser?.user_id)
+    formData.append("timestamp", currentDate.getTime())
+    formData.append("richUiData", JSON.stringify(message))
+    if (fileData) {
+      fileData.forEach(file => {
+        formData.append("attachments", file)
+      })
+      const newMessages = [
+        {
+          ...newMessage,
+          files: [...fileData],
+          _id: generateString(),
+          orgId: currentWorkspaceId,
+          roomId,
+          sender: {
+            sender_id: authUser?.user_id,
+            sender_name: authUser?.user_name,
+            sender_image_url: authUser?.user_image_url
+          }
+        }
+      ]
+      setIsProcessing(newMessages)
+      setDown(true)
+    } else {
       const newMessages = [
         {
           ...newMessage,
@@ -155,47 +173,41 @@ const MessagingBoard = () => {
           }
         }
       ]
-      setIsProcessing({ status: true, message: roomChats.concat(newMessages) })
+      setIsProcessing(newMessages)
+      setDown(true)
     }
-    var formData = new FormData()
-    formData.append("sender_id", authUser?.user_id)
-    formData.append("timestamp", currentDate.getTime())
-    formData.append("richUiData", JSON.stringify(message))
-    if (fileData) {
-      fileData.forEach(file => {
-        formData.append("attachments", file)
-      })
-    }
-
+    setDown(true)
     sendNewMessageWithFile({
       orgId: currentWorkspaceId,
       roomId,
       messageData: formData
     })
       .then(e => {
-        const newMessage = {
-          timestamp: currentDate.getTime(),
-          emojis: [],
-          richUiData: message
-        }
-        const newMessages = [
+        const msg = [
           {
-            ...newMessage,
+            created_at: e.data.data.created_at,
+            edited: e.data.data.edited,
+            emojis: e.data.data.emojis,
+            files: e.data.data.files,
             _id: e.data.data.message_id,
+            richUiData: e.data.data.richUiData,
+            saved_by: e.data.data.saved_by,
             orgId: currentWorkspaceId,
             roomId,
             sender: {
               sender_id: authUser?.user_id,
               sender_name: authUser?.user_name,
               sender_image_url: authUser?.user_image_url
-            }
+            },
+            threads: e.data.data.threads,
+            timestamp: e.data.data.timestamp
           }
         ]
-        setRoomChats(prev => prev.concat(newMessages))
-        setIsProcessing({ status: false, message: [] })
+        setRoomChats(prev => (prev ? prev.concat(msg) : msg))
+        setDown(true)
       })
       .catch(() => {
-        setIsProcessing({ status: false, message: [] })
+        setIsProcessing([])
       })
     return true
   }
@@ -334,8 +346,12 @@ const MessagingBoard = () => {
     }
   }
   useEffect(() => {
-    if (data?.roomMessages.length) {
-      setRoomChats(prev => data.roomMessages.concat(prev))
+    if (data?.roomMessages) {
+      if (pageIndex === 1) {
+        setRoomChats(data?.roomMessages)
+      } else {
+        setRoomChats(data?.roomMessages.concat(roomChats))
+      }
     }
   }, [data?.roomMessages])
 
@@ -350,11 +366,7 @@ const MessagingBoard = () => {
             <MessageRoomViewHeader name={`#${roomName}`} />
             <MessageBoard
               isLoadingMessages={isLoadingRoomMessages}
-              messages={
-                (isProcessing.status === true
-                  ? isProcessing.message
-                  : roomChats) || []
-              }
+              messages={roomChats || []}
               onSendMessage={sendMessageHandler}
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}
@@ -364,6 +376,8 @@ const MessagingBoard = () => {
               showEmoji={showEmoji}
               setShowEmoji={setShowEmoji}
               down={down}
+              sentMessage={isProcessing}
+              isPending={isPending}
             />
           </MessageWrapper>
           {/* <TypingNotice>Omo Jesu is typing</TypingNotice> */}
