@@ -382,7 +382,7 @@ const MessagingBoard = () => {
               onSendAttachedFile={SendAttachedFileHandler}
               currentUserId={authUser?.user_id}
               height={"92vh"}
-              onHandleScroll={event => handleScroll(event)}
+              onHandleScroll={handleScroll}
               showEmoji={showEmoji}
               setShowEmoji={setShowEmoji}
               down={down}
