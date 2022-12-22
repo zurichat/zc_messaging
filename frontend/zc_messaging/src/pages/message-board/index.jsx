@@ -29,12 +29,13 @@ const MessagingBoard = () => {
   const [pageIndex, setPageIndex] = useState(1)
   const [roomChats, setRoomChats] = useState([])
   const [refresh, setRefresh] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
   const [fileData, setFileData] = useState(null)
   const [showEmoji, setShowEmoji] = useState(false)
   const [down, setDown] = useState(false)
   const [isProcessing, setIsProcessing] = useState([])
   const chatSize = 15
-  //   Get messages endpoint
+  //   Get Rooms  endpoint
   const { data: roomsAvailable, isLoading: IsLoadingRoomsAvailable } =
     useGetRoomsAvailableToUserQuery(
       {
@@ -48,18 +49,22 @@ const MessagingBoard = () => {
       }
     )
   // Get messages in a room
-  const { data: data, isLoading: isLoadingRoomMessages } =
-    useGetMessagesInRoomQuery(
-      {
-        orgId: currentWorkspaceId,
-        roomId,
-        pageIndex
-      },
-      {
-        skip: Boolean(!roomId),
-        refetchOnMountOrArgChange: true
-      }
-    )
+  const {
+    data: data,
+    isLoading: isLoadingRoomMessages,
+    isFetching: isPaginating
+  } = useGetMessagesInRoomQuery(
+    {
+      orgId: currentWorkspaceId,
+      roomId,
+      pageIndex
+    },
+    {
+      skip: Boolean(!roomId),
+      refetchOnMountOrArgChange: true
+    }
+  )
+
   // send message endpoint query
   const [sendNewMessageWithFile, { isLoading: isPending }] =
     useSendMessageWithFileMutation()
@@ -67,6 +72,7 @@ const MessagingBoard = () => {
   const [updateMessage] = useUpdateMessageInRoomMutation()
 
   useEffect(() => {
+    setIsFetching(true)
     if (!roomId) {
       fetchDefaultRoom(currentWorkspaceId, authUser?.user_id).then(result => {
         navigateTo(`/${result.room_id}`, { replace: true })
@@ -337,20 +343,24 @@ const MessagingBoard = () => {
 
   const handleScroll = event => {
     const numPage = Math.ceil(data.total / chatSize)
-    if (event.currentTarget.scrollTop === 0 && pageIndex < numPage) {
+    if (
+      event.currentTarget.scrollTop === 0 &&
+      pageIndex < numPage &&
+      !isPaginating
+    ) {
       setPageIndex(prev => prev + 1)
       setDown(false)
-      event.currentTarget.scrollTop =
-        (event.currentTarget.scrollHeight - event.currentTarget.clientHeight) /
-        2
     }
   }
   useEffect(() => {
     if (data?.roomMessages) {
+      setIsFetching(false)
       if (pageIndex === 1) {
         setRoomChats(data?.roomMessages)
-      } else {
+      } else if (pageIndex > 1 && !isFetching) {
         setRoomChats(data?.roomMessages.concat(roomChats))
+      } else {
+        setRoomChats(data?.roomMessages)
       }
     }
   }, [data?.roomMessages])
@@ -365,8 +375,8 @@ const MessagingBoard = () => {
           <MessageWrapper>
             <MessageRoomViewHeader name={`#${roomName}`} />
             <MessageBoard
-              isLoadingMessages={isLoadingRoomMessages}
-              messages={roomChats || []}
+              isLoadingMessages={isFetching}
+              messages={isFetching ? [] : roomChats || []}
               onSendMessage={sendMessageHandler}
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}
