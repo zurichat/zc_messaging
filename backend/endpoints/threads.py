@@ -5,9 +5,10 @@ from schema.response import ResponseModel
 from schema.thread_response import ThreadResponse
 from fastapi.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
-from utils.message_utils import get_message, get_room_messages, update_message_threads as edit_message_threads
+from utils.message_utils import get_message, get_room_messages
 from utils.room_utils import get_org_rooms
 from utils.threads_utils import get_message_threads, add_message_to_thread_list
+from utils.threads_utils import  update_thread_message as edit_thread_message
 import json
 
 router = APIRouter()
@@ -43,18 +44,33 @@ async def send_thread_message(
             A dict containing data about the message that was edited.
 
             {
-                "status": 201,
-                "event": "thread_message_create",
-                "thread_id": "bd830644-2205-11ec-9853-2ff0a732e3ef",
-                "room_id": "614e1606f31a74e068e4d2e2",
-                "message_id": "6155a0e6be7f31a9275a1eca",
-                "data": {
-                    "sender_id": "61467e181ab13c00bcc15607",
-                    "message": "Checking out the threads",
-                    "created_at": "2021-09-30T15:41:45.685000Z"
-                }
-            }   
-
+            "status": 201,
+            "event": "thread_message_create",
+            "room_id": "637f6f2d601ce3fc5dc738f5",
+            "message_id": "63a6c075d4093d73264466c6",
+            "data": {
+                "sender_id": "637f6f28601ce3fc5dc738f4",
+                "emojis": [],
+                "richUiData": {
+                "blocks": [
+                    {
+                    "key": "f3s6p",
+                    "text": "ho ho ho I'm a thread message on christmas eve!",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                    "data": {}
+                    }
+                ],
+                "entityMap": {}
+                },
+                "timestamp": 1669917458839,
+                "thread_id": "75d6507d-836b-11ed-9fba-40234355d0d0",
+                "created_at": "2022-12-24 09:15:08.019726"
+            }
+            }
+            
         Raises:
             HTTPException [401]: You are not authorized to edit this message.
             HTTPException [404]: Message not found.
@@ -168,42 +184,33 @@ async def update_threads_message(
     org_id: str,
     room_id: str,
     message_id: str,
+    thread_id: str,
     request: MessageRequest,
     background_tasks: BackgroundTasks,
 ):
+    
+    message = await get_message(org_id, room_id, message_id)
 
-    payload = request.dict()
-    loadedMessage = await get_message(org_id, room_id, message_id)
-    loadedMessageThread = loadedMessage['threads']
-    thread_to_add = {"threads": [payload, *loadedMessageThread]}
-
-    if not loadedMessage:
+    if not message:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
         )
 
-    added_thread_message = await edit_message_threads(org_id, message_id, thread_to_add)
+    payload = request.dict(exclude_unset=True)
 
-    if not added_thread_message:
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"thread not added": added_thread_message},
-        )
-
-    # payload["edited"] = True
-    loadedMessage.update(thread_to_add)
+    edited_thread_message = await edit_thread_message(org_id, message_id, thread_id, payload, message)
 
     # Publish to centrifugo in the background.
     background_tasks.add_task(
         centrifugo_client.publish,
         room_id,
         Events.MESSAGE_UPDATE,
-        loadedMessage
+        message
     )
 
     return JSONResponse(
         content=ResponseModel.success(
-            data=loadedMessage, message="Thread Added"),
+            data=message, message="Thread Edited"),
         status_code=status.HTTP_200_OK,
     )
 
