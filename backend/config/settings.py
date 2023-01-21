@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = secrets.token_urlsafe(32)
     PROJECT_NAME: str = "ZC Messaging"
     PLUGIN_KEY: str = "chat.zuri.chat"
-    BASE_URL: str = "https://staging.api.zuri.chat"
+    BASE_URL: str = "https://dev.api.zuri.chat"
     MESSAGE_COLLECTION = "messages"
     ROOM_COLLECTION = "rooms"
 
