@@ -29,15 +29,13 @@ const MessagingBoard = () => {
   const [pageIndex, setPageIndex] = useState(1)
   const [roomChats, setRoomChats] = useState([])
   const [refresh, setRefresh] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
   const [fileData, setFileData] = useState(null)
   const [showEmoji, setShowEmoji] = useState(false)
   const [down, setDown] = useState(false)
-  const [isProcessing, setIsProcessing] = useState({
-    status: false,
-    message: []
-  })
+  const [isProcessing, setIsProcessing] = useState([])
   const chatSize = 15
-  //   Get messages endpoint
+  //   Get Rooms  endpoint
   const { data: roomsAvailable, isLoading: IsLoadingRoomsAvailable } =
     useGetRoomsAvailableToUserQuery(
       {
@@ -50,19 +48,23 @@ const MessagingBoard = () => {
         refetchOnMountOrArgChange: true
       }
     )
-  //
-  const { data: data, isLoading: isLoadingRoomMessages } =
-    useGetMessagesInRoomQuery(
-      {
-        orgId: currentWorkspaceId,
-        roomId,
-        pageIndex
-      },
-      {
-        skip: Boolean(!roomId),
-        refetchOnMountOrArgChange: true
-      }
-    )
+  // Get messages in a room
+  const {
+    data: data,
+    isLoading: isLoadingRoomMessages,
+    isFetching: isPaginating
+  } = useGetMessagesInRoomQuery(
+    {
+      orgId: currentWorkspaceId,
+      roomId,
+      pageIndex
+    },
+    {
+      skip: Boolean(!roomId),
+      refetchOnMountOrArgChange: true
+    }
+  )
+
   // send message endpoint query
   const [sendNewMessageWithFile, { isLoading: isPending }] =
     useSendMessageWithFileMutation()
@@ -70,6 +72,7 @@ const MessagingBoard = () => {
   const [updateMessage] = useUpdateMessageInRoomMutation()
 
   useEffect(() => {
+    setIsFetching(true)
     if (!roomId) {
       fetchDefaultRoom(currentWorkspaceId, authUser?.user_id).then(result => {
         navigateTo(`/${result.room_id}`, { replace: true })
@@ -116,10 +119,6 @@ const MessagingBoard = () => {
       setPageTitle(generatePageTitle(room?.room_name))
       setPageIndex(1)
       setDown(true)
-      if (pageIndex === 1 && data?.roomMessages) {
-        setRoomChats(data?.roomMessages)
-        setDown(true)
-      }
     }
   }, [roomId, roomsAvailable])
   const characters =
@@ -136,12 +135,37 @@ const MessagingBoard = () => {
 
   const sendMessageHandler = async message => {
     const currentDate = new Date()
-    if (message.blocks[0].text) {
-      const newMessage = {
-        timestamp: currentDate.getTime(),
-        emojis: [],
-        richUiData: message
-      }
+    const newMessage = {
+      timestamp: currentDate.getTime(),
+      emojis: [],
+      richUiData: message
+    }
+
+    var formData = new FormData()
+    formData.append("sender_id", authUser?.user_id)
+    formData.append("timestamp", currentDate.getTime())
+    formData.append("richUiData", JSON.stringify(message))
+    if (fileData) {
+      fileData.forEach(file => {
+        formData.append("attachments", file)
+      })
+      const newMessages = [
+        {
+          ...newMessage,
+          files: [...fileData],
+          _id: generateString(),
+          orgId: currentWorkspaceId,
+          roomId,
+          sender: {
+            sender_id: authUser?.user_id,
+            sender_name: authUser?.user_name,
+            sender_image_url: authUser?.user_image_url
+          }
+        }
+      ]
+      setIsProcessing(newMessages)
+      setDown(true)
+    } else {
       const newMessages = [
         {
           ...newMessage,
@@ -155,47 +179,41 @@ const MessagingBoard = () => {
           }
         }
       ]
-      setIsProcessing({ status: true, message: roomChats.concat(newMessages) })
+      setIsProcessing(newMessages)
+      setDown(true)
     }
-    var formData = new FormData()
-    formData.append("sender_id", authUser?.user_id)
-    formData.append("timestamp", currentDate.getTime())
-    formData.append("richUiData", JSON.stringify(message))
-    if (fileData) {
-      fileData.forEach(file => {
-        formData.append("attachments", file)
-      })
-    }
-
+    setDown(true)
     sendNewMessageWithFile({
       orgId: currentWorkspaceId,
       roomId,
       messageData: formData
     })
       .then(e => {
-        const newMessage = {
-          timestamp: currentDate.getTime(),
-          emojis: [],
-          richUiData: message
-        }
-        const newMessages = [
+        const msg = [
           {
-            ...newMessage,
+            created_at: e.data.data.created_at,
+            edited: e.data.data.edited,
+            emojis: e.data.data.emojis,
+            files: e.data.data.files,
             _id: e.data.data.message_id,
+            richUiData: e.data.data.richUiData,
+            saved_by: e.data.data.saved_by,
             orgId: currentWorkspaceId,
             roomId,
             sender: {
               sender_id: authUser?.user_id,
               sender_name: authUser?.user_name,
               sender_image_url: authUser?.user_image_url
-            }
+            },
+            threads: e.data.data.threads,
+            timestamp: e.data.data.timestamp
           }
         ]
-        setRoomChats(prev => prev.concat(newMessages))
-        setIsProcessing({ status: false, message: [] })
+        setRoomChats(prev => (prev ? prev.concat(msg) : msg))
+        setDown(true)
       })
       .catch(() => {
-        setIsProcessing({ status: false, message: [] })
+        setIsProcessing([])
       })
     return true
   }
@@ -325,17 +343,25 @@ const MessagingBoard = () => {
 
   const handleScroll = event => {
     const numPage = Math.ceil(data.total / chatSize)
-    if (event.currentTarget.scrollTop === 0 && pageIndex < numPage) {
+    if (
+      event.currentTarget.scrollTop === 0 &&
+      pageIndex < numPage &&
+      !isPaginating
+    ) {
       setPageIndex(prev => prev + 1)
       setDown(false)
-      event.currentTarget.scrollTop =
-        (event.currentTarget.scrollHeight - event.currentTarget.clientHeight) /
-        2
     }
   }
   useEffect(() => {
-    if (data?.roomMessages.length) {
-      setRoomChats(prev => data.roomMessages.concat(prev))
+    if (data?.roomMessages) {
+      setIsFetching(false)
+      if (pageIndex === 1) {
+        setRoomChats(data?.roomMessages)
+      } else if (pageIndex > 1 && !isFetching) {
+        setRoomChats(data?.roomMessages.concat(roomChats))
+      } else {
+        setRoomChats(data?.roomMessages)
+      }
     }
   }, [data?.roomMessages])
 
@@ -349,12 +375,8 @@ const MessagingBoard = () => {
           <MessageWrapper>
             <MessageRoomViewHeader name={`#${roomName}`} />
             <MessageBoard
-              isLoadingMessages={isLoadingRoomMessages}
-              messages={
-                (isProcessing.status === true
-                  ? isProcessing.message
-                  : roomChats) || []
-              }
+              isLoadingMessages={isFetching}
+              messages={isFetching ? [] : roomChats || []}
               onSendMessage={sendMessageHandler}
               onReact={reactHandler}
               onSendAttachedFile={SendAttachedFileHandler}
@@ -364,6 +386,8 @@ const MessagingBoard = () => {
               showEmoji={showEmoji}
               setShowEmoji={setShowEmoji}
               down={down}
+              sentMessage={isProcessing}
+              isPending={isPending}
             />
           </MessageWrapper>
           {/* <TypingNotice>Omo Jesu is typing</TypingNotice> */}

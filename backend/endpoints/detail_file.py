@@ -5,7 +5,7 @@ from utils.message_utils import get_message
 
 router = APIRouter()
 
-@router.get("/org/{org_id}/rooms/{room_id}/messages/{message_id}")
+@router.get("/org/{org_id}/rooms/{room_id}/messages/{message_id}/file")
 async def details_of_file(org_id: str, room_id: str, message_id: str):
     """
 	An endpoint that returns the details of a file uplaoded to the given room
