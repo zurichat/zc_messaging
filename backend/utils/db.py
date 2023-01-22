@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import requests
 from config.settings import settings
@@ -17,6 +17,7 @@ class DataStorage:
         write_api (str): Zc_core API endpoint for writing (POST) and updating (PUT) data.
         read_api (str): Zc_core API endpoint for reading data.
         delete_api (str): Zc_core API endpoint for deleting data.
+        upload_api (str): Zc_core API endpoint for uploading files.
         get_members_api (str): Zc_core API endpoint for getting members of an organization.
         organization_id (str): The organization id where the operations are to be performed.
         plugin_id (str): The zc_messaging plugin id in the plugins marketplace.
@@ -44,7 +45,8 @@ class DataStorage:
         self.organization_id = organization_id
 
         try:
-            response = requests.get(url=f"{settings.BASE_URL}/marketplace/plugins")
+            response = requests.get(
+                url=f"{settings.BASE_URL}/marketplace/plugins")
             response.raise_for_status()
         except requests.Timeout as timed_out_error:
             raise HTTPException(
@@ -72,7 +74,7 @@ class DataStorage:
             )
             self.plugin_id = plugin.get("id")
 
-    async def write(self, collection_name: str, data: Dict[str, Any]) -> Any:
+    async def write(self, collection_name: str, data: dict[str, Any]) -> Any:
         """Writes data to zc_messaging collections.
 
         Calls the zc_core write endpoint (POST) and writes `data` to `collection_name`.
@@ -125,7 +127,7 @@ class DataStorage:
         return {"status_code": response.status_code, "message": response.json()}
 
     async def update(
-        self, collection_name: str, document_id: str, data: Dict[str, Any]
+        self, collection_name: str, document_id: str, data: dict[str, Any]
     ) -> Any:
         """Updates data to zc_messaging collections.
 
@@ -141,8 +143,8 @@ class DataStorage:
             how many documents were successfully updated.
 
             {
-                    "status": 200,
-                    "message": "success",
+                "status": 200,
+                "message": "success",
                 "data": {
                     "matched_documents": 1,
                     "modified_documents": 1
@@ -152,8 +154,8 @@ class DataStorage:
             In case of error:
 
             {
-                    "status": 200,
-                    "message": "success",
+                "status": 200,
+                "message": "success",
                 "data": {
                     "matched_documents": 0,
                     "modified_documents": 0
@@ -184,8 +186,9 @@ class DataStorage:
         self,
         collection_name: str,
         resource_id: Optional[str] = None,
-        query: Optional[Dict[str, Any]] = None,
-        options: Optional[Dict[str, Any]] = None,
+        query: Optional[dict[str, Any]] = None,
+        options: Optional[dict[str, Any]] = None,
+        raw_query: Optional [dict[str, Any]] = None
     ) -> Any:
         """Reads data from zc_messaging collections.
 
@@ -235,6 +238,7 @@ class DataStorage:
             "object_id": resource_id,
             "filter": query,
             "options": options,
+            "raw_query": raw_query
         }
 
         try:
@@ -295,7 +299,7 @@ class DataStorage:
             return response.json()
         return {"status_code": response.status_code, "message": response.reason}
 
-    async def get_all_members(self) -> Optional[List[Dict[str, Any]]]:
+    async def get_all_members(self) -> Optional[list[dict[str, Any]]]:
         """Gets a list of all members registered in an organisation.
         Calls the zc_core endpoint(GET) and retrieves the list of all members
         for a specific organization id.
@@ -345,8 +349,8 @@ class DataStorage:
             return response.json().get("data")
 
     async def get_member(
-        self, member_id: str, members: List[Dict[str, Any]]
-    ) -> Optional[Dict[str, Any]]:
+        self, member_id: str, members: list[dict[str, Any]]
+    ) -> Optional[dict[str, Any]]:
         """Get the information of a single registered member in an organisation.
 
         Args:

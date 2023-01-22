@@ -123,6 +123,8 @@ class Sidebar:
         starred_rooms = []
         user_rooms = user_rooms or []
         for room in user_rooms:
+            if room.get("is_archived"):
+                continue
             if room.get("room_members").get(member_id).get("closed") is False:
                 room_profile = await self.__get_room_profile(
                     member_id, room, org_members, DB
@@ -149,6 +151,8 @@ class Sidebar:
         public_rooms = await get_org_rooms(org_id, is_private=False)
         if public_rooms:
             for room in public_rooms:
+                if room.get("is_archived"):
+                    continue
                 room_profile = await self.__get_room_profile(
                     member_id, room, org_members, DB
                 )
