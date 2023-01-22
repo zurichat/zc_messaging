@@ -1,4 +1,4 @@
-import { GetWorkspaceUsers } from "@zuri/utilities"
+import { getCurrentWorkspaceUsers } from "@zuri/utilities"
 
 /**
  * @param {string} senderId the ID of the sender
@@ -10,9 +10,9 @@ import { GetWorkspaceUsers } from "@zuri/utilities"
  */
 
 const getMessageSender = async senderId => {
-  const data = await GetWorkspaceUsers()
+  const data = await getCurrentWorkspaceUsers()
 
-  return data.users.find(user => user._id === senderId) || null
+  return data?.find(user => user._id === senderId) || null
 }
 
 export default getMessageSender

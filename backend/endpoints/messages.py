@@ -1,12 +1,17 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Message, MessageRequest
+from fastapi import (APIRouter, BackgroundTasks, Depends, File, Header,
+                     HTTPException, UploadFile, status)
+from schema.message import Message, MessageFormData, MessageRequest
 from schema.response import ResponseModel
 from starlette.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
+from utils.chat_notification import Notification
+from utils.files_utils import upload_files
 from utils.message_utils import create_message, get_message, get_room_messages
 from utils.message_utils import update_message as edit_message
+from utils.paginator import page_urls
 
 router = APIRouter()
+notification = Notification()
 
 
 @router.post(
@@ -21,35 +26,46 @@ router = APIRouter()
 async def send_message(
     org_id: str,
     room_id: str,
-    request: MessageRequest,
     background_tasks: BackgroundTasks,
+    request: MessageRequest = Depends(MessageFormData.as_form),
+    attachments: list[UploadFile] = File([]),
+    token: str = Header(""),
 ):
-    """Creates and sends a message from a user inside a room.
-
-    Registers a new document to the messages database collection while
-    publishing to all members of the room in the background.
+    """
+    Uploads files to the file storage service, then
+    Creates and sends a message from a user inside a room with the file urls.
 
     Args:
-        org_id (str): A unique identifier of an organisation.
-        request (MessageRequest): A pydantic schema that defines the message request parameters.
-        room_id (str): A unique identifier of the room where the message is being sent to.
-        background_tasks (BackgroundTasks): A background task for publishing to all
-                                            members of the room.
+        org_id (str): The organization id
+        room_id (str): The room id
+        background_tasks (BackgroundTasks): Background tasks to run
+        request (MessageRequest, optional): The message request.
+        Defaults to Depends(MessageFormData.as_form).
+        attachments (list[UploadFile], optional): The files to upload.
+        Defaults to File([]).
+        token (str, optional): The user's token. Defaults to Header("").
+
+    Raises:
+        HTTPException [401]: If token is not provided if uploading files.
+        HTTPException [404]: Room does not exist or
+        Sender not a member of this room.
+        HTTPException [424]: If the file storage service is not available or
+        Message not sent.
 
     Returns:
-        A dict containing data about the message that was created.
-
+        In case of success:
+```json
         {
             "status": "success",
-            "message": "new message sent",
+            "message": "New message sent",
             "data": {
-                "sender_id": "619bab3b1a5f54782939d400",
+                "sender_id": "string",
                 "emojis": [],
                 "richUiData": {
                 "blocks": [
                     {
-                    "key": "eljik",
-                    "text": "Larry Gaaga",
+                    "key": "string",
+                    "text": "string",
                     "type": "unstyled",
                     "depth": 0,
                     "inlineStyleRanges": [],
@@ -63,27 +79,45 @@ async def send_message(
                 "saved_by": [],
                 "timestamp": 0,
                 "created_at": "2022-02-01 19:20:55.891264",
-                "room_id": "61e6855e65934b58b8e5d1df",
-                "org_id": "619ba4671a5f54782939d384",
-                "message_id": "61f98d0665934b58b8e5d286",
+                "room_id": "string",
+                "org_id": "string",
+                "message_id": "string",
                 "edited": false,
                 "threads": []
             }
         }
-
-    Raises:
-        HTTPException [404]: Room does not exist || Sender not a member of this room.
-        HTTPException [424]: Message not sent.
+```
+        In case of failure:
+```json
+        {
+            "status": "error",
+            "message": "Error message",
+        }
+```
     """
 
-    message = Message(**request.dict(), org_id=org_id, room_id=room_id)
+    # Validate the sender_id and room_id
+    message = Message(
+        **request.dict(), org_id=org_id,
+        room_id=room_id)
+
+    # Upload file if any
+    if attachments:
+        file_urls = await upload_files(
+            token=token,
+            attachments=attachments,
+            org_id=org_id,
+        )
+        message.files = file_urls
 
     response = await create_message(org_id=org_id, message=message)
-
     if not response or response.get("status_code"):
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"Message not sent": response},
+            detail={
+                "status": "error",
+                "message": "Message not sent"
+            },
         )
 
     message.message_id = response["data"]["object_id"]
@@ -95,6 +129,11 @@ async def send_message(
         Events.MESSAGE_CREATE,
         message.dict(),
     )
+    # instantiate the Notication's function that handles message notification
+    try:
+        await notification.messages_trigger(message_obj=message)
+    except Exception as e:
+        print("Novu message error", e)
 
     return JSONResponse(
         content=ResponseModel.success(data=message.dict(), message="new message sent"),
@@ -215,11 +254,13 @@ async def update_message(
 
 @router.get(
     "/org/{org_id}/rooms/{room_id}/messages",
-    response_model=ResponseModel,
+    response_model=list[Message],
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
-async def get_messages(org_id: str, room_id: str):
+async def get_messages(
+    org_id: str, room_id: str, page: int = 1, size: int = 15, created_at: int = None
+):
     """Fetches all messages sent in a particular room.
 
     Args:
@@ -257,11 +298,118 @@ async def get_messages(org_id: str, room_id: str):
         HTTPException [424]: Zc Core failed
     """
 
-    response = await get_room_messages(org_id, room_id)
-    if response == []:
+    response = await get_room_messages(org_id, room_id, page, size, created_at)
+
+    paging, total_count = await page_urls(
+        page,
+        size,
+        org_id,
+        room_id,
+        endpoint=f"/api/v1/org/{org_id}/rooms/{room_id}/messages",
+    )
+
+    if response is None:
+        raise HTTPException(
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
+            detail="Zc Core failed",
+        )
+
+    result = {
+            "data": response,
+            "created_at": created_at,
+            "page": page,
+            "size": size,
+            "total": total_count,
+            "previous": paging.get('previous'),
+            "next": paging.get('next')
+    }
+
+    return JSONResponse(
+        content=ResponseModel.success(data=result, message="Messages retrieved"),
+        status_code=status.HTTP_200_OK,
+    )
+
+
+@router.get(
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}",
+    response_model=list[Message],
+    status_code=status.HTTP_200_OK,
+    responses={424: {"detail": "ZC Core failed"}},
+)   
+async def get_message_by_id(org_id: str, room_id: str, message_id: str):
+    """Fetches a single message.
+
+    Args:
+        org_id (str): A unique identifier of an organization.
+        room_id (str): A unique identifier of the room where messages are fetched from.
+        message_id (str): The id of the message to be retrieved.
+
+    Returns:
+    
+        A dict containing a list of message objects.
+        {
+            "status": "success",
+            "message": "Messages retrieved",
+            "data": {
+                "_id": "61e75bc065934b58b8e5d223",
+                "created_at": "2022-02-02 17:57:02.630439",
+                "edited": true,
+                "emojis": [],
+                "files": [],
+                "message_id": null,
+                "org_id": "637f6f28601ce3fc5dc738f3",
+                "richUiData": {
+                "blocks": [
+                    {
+                        "data": {},
+                        "depth": 0,
+                        "entityRanges": [],
+                        "inlineStyleRanges": [],
+                        "key": "4c3f3",
+                        "text": "sdfuigd",
+                        "type": "unstyled"
+                    }
+                ],
+                "entityMap": {}
+            },
+            "room_id": "637f6f2d601ce3fc5dc738f5",
+            "saved_by": [],
+            "sender_id": "637f6f28601ce3fc5dc738f4",
+            "threads": [
+                {
+                "emojis": [],
+                "richUiData": {
+                    "blocks": [
+                        {
+                            "data": {},
+                            "depth": 0,
+                            "entityRanges": [],
+                            "inlineStyleRanges": [],
+                            "key": "f3s6p",
+                            "text": "It's just Mykie here again!",
+                            "type": "unstyled"
+                        }
+                    ],
+                    "entityMap": {}
+                },
+                "sender_id": "637f6f28601ce3fc5dc738f4",
+                "thread_id": "1504c7aa-77d7-11ed-ae42-ec8eb54be004",
+                "timestamp": 1669917458839
+            }
+        ],
+        "timestamp": 1669999250973
+    }
+}
+
+    Raises:
+        HTTPException [424]: Zc Core failed"""
+
+    response = await get_message(org_id, room_id, message_id)
+
+    if not response:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Room does not exist or no message found",
+            detail="Message not found",
         )
 
     if response is None:
@@ -271,6 +419,8 @@ async def get_messages(org_id: str, room_id: str):
         )
 
     return JSONResponse(
-        content=ResponseModel.success(data=response, message="Messages retrieved"),
+        content=ResponseModel.success(
+            data=response, message="Message retrieved"
+        ),
         status_code=status.HTTP_200_OK,
     )
