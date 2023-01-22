@@ -3,6 +3,9 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import { getCurrentWorkspaceUsers } from "@zuri/utilities"
 import { BASE_URL } from "../../utils/constants"
 
+//
+const user = JSON.parse(sessionStorage.getItem("user"))
+//
 // Define a service using a base URL and expected endpoints
 export const messagesApi = createApi({
   reducerPath: "messagesApi",
@@ -14,43 +17,49 @@ export const messagesApi = createApi({
   endpoints: builder => ({
     getMessagesInRoom: builder.query({
       async queryFn(_arg, _queryApi, _extraOptions, fetchWithBQ) {
-        const { orgId, roomId } = _arg
+        const { orgId, roomId, pageIndex } = _arg
         const getMessagesInRoomResponse = await fetchWithBQ(
-          `/org/${orgId}/rooms/${roomId}/messages`
+          `/org/${orgId}/rooms/${roomId}/messages?page=${pageIndex}&size=15`
         )
-        if (Array.isArray(getMessagesInRoomResponse?.data?.data)) {
+
+        if (Array.isArray(getMessagesInRoomResponse?.data?.data?.data)) {
           const workspaceUsers = await getCurrentWorkspaceUsers()
-          const roomMessages = getMessagesInRoomResponse.data.data
+          const roomMessages = getMessagesInRoomResponse.data.data.data
+          const chatTotal = getMessagesInRoomResponse.data.data.total
           return {
-            data: roomMessages
-              .filter(message => message.richUiData && message.timestamp)
-              .map(message => {
-                const sender = workspaceUsers.find(
-                  user => user._id === message.sender_id
-                )
-                return {
-                  ...message,
-                  sender: {
-                    sender_name: sender?.user_name,
-                    sender_image_url: sender?.image_url
+            data: {
+              roomMessages: roomMessages
+                .reverse()
+                .filter(message => message.richUiData && message.timestamp)
+                .map(message => {
+                  const sender = workspaceUsers.find(
+                    user => user._id === message.sender_id
+                  )
+                  return {
+                    ...message,
+                    sender: {
+                      sender_name: sender?.user_name,
+                      sender_image_url: sender?.image_url
+                    }
                   }
-                }
-              })
+                }),
+              total: chatTotal
+            }
           }
         }
-        return { data: [] }
+        return { data: { roomMessages: [], total: 0 } }
       }
     }),
-    sendMessageInRoom: builder.mutation({
+    sendMessageWithFile: builder.mutation({
       query(data) {
-        const { orgId, roomId, sender, messageData } = data
+        const { orgId, roomId, messageData } = data
         return {
           url: `/org/${orgId}/rooms/${roomId}/messages`,
           method: "POST",
-          body: {
-            sender_id: sender.sender_id,
-            ...messageData
-          }
+          headers: {
+            token: `${user?.token}`
+          },
+          body: messageData
         }
       },
       onQueryStarted(
@@ -109,12 +118,94 @@ export const messagesApi = createApi({
           patchResult.undo
         }
       }
+    }),
+    getMessagesInRoomThreads: builder.query({
+      async queryFn(_arg, _queryApi, _extraOptions, fetchWithBQ) {
+        const { orgId, roomId, threadId, pageIndex } = _arg
+        const getMessagesInRoomResponse = await fetchWithBQ(
+          `/org/${orgId}/rooms/${roomId}/messages/${threadId}/threads`
+        )
+        const parent = await fetchWithBQ(
+          `/org/${orgId}/rooms/${roomId}/messages/${threadId}`
+        )
+        if (Array.isArray(getMessagesInRoomResponse?.data?.data)) {
+          const workspaceUsers = await getCurrentWorkspaceUsers()
+          const roomMessages = getMessagesInRoomResponse.data.data
+          const parentMessage = [parent?.data?.data]
+          return {
+            data: {
+              roomMessages: roomMessages
+                .filter(message => message.richUiData && message.timestamp)
+                .map(message => {
+                  const sender = workspaceUsers.find(
+                    user => user._id === message.sender_id
+                  )
+                  return {
+                    ...message,
+                    sender: {
+                      sender_name: sender?.user_name,
+                      sender_image_url: sender?.image_url
+                    }
+                  }
+                }),
+              parentMessage: parentMessage
+                .filter(message => message.richUiData && message.timestamp)
+                .map(message => {
+                  const sender = workspaceUsers.find(
+                    user => user._id === message.sender_id
+                  )
+                  return {
+                    ...message,
+                    sender: {
+                      sender_name: sender?.user_name,
+                      sender_image_url: sender?.image_url
+                    }
+                  }
+                })
+            }
+          }
+        }
+        return { data: { roomMessages: [], parentMessage: [] } }
+      }
+    }),
+    sendMessageInThread: builder.mutation({
+      query(data) {
+        const { orgId, roomId, threadId, sender, messageData } = data
+        return {
+          url: `/org/${orgId}/rooms/${roomId}/messages/${threadId}/threads`,
+          method: "POST",
+          body: {
+            sender_id: sender.sender_id,
+            ...messageData
+          }
+        }
+      },
+      onQueryStarted(
+        { orgId, roomId, sender, messageData },
+        { dispatch, queryFulfilled }
+      ) {
+        const patchResult = dispatch(
+          messagesApi.util.updateQueryData(
+            "getMessagesInRoom",
+            { orgId, roomId },
+            draft => {
+              draft.push({
+                sender,
+                ...messageData
+              })
+            }
+          )
+        )
+        queryFulfilled.catch(patchResult.undo)
+      }
     })
   })
 })
 
 export const {
   useGetMessagesInRoomQuery,
-  useSendMessageInRoomMutation,
-  useUpdateMessageInRoomMutation
+  useSendMessageWithFileMutation,
+  useUpdateMessageInRoomMutation,
+  useGetMessagesInRoomThreadsQuery,
+  useSendMessageInThreadMutation
 } = messagesApi

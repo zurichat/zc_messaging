@@ -9,9 +9,9 @@ export const roomsApi = createApi({
   endpoints: builder => ({
     getRoomsAvailableToUser: builder.query({
       async queryFn(_arg, _queryApi, _extraOptions, fetchWithBQ) {
-        const { orgId, userId } = _arg
+        const { orgId, userId, refresh } = _arg
         const getUserSidebarData = await fetchWithBQ(
-          `/sidebar?org=${orgId}&user=${userId}`
+          `/sidebar?org=${orgId}&user=${userId}&refresh=${refresh}`
         )
         const roomsAvailable = {}
         if (Array.isArray(getUserSidebarData?.data?.data)) {
