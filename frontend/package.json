@@ -25,7 +25,8 @@
     "clean": "rimraf dist",
     "build": "concurrently --kill-others-on-fail -m 1 \"yarn run clean\" \"yarn:build:*\"",
     "build:root": "cd root-config && yarn build",
-    "build:messaging": "cd zc_messaging && yarn build"
+    "build:messaging": "cd zc_messaging && yarn build",
+    "postinstall": "yarn run setup"
   },
   "devDependencies": {
     "concurrently": "^6.2.1",

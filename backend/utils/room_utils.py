@@ -1,6 +1,7 @@
 from typing import Any, Optional
-from utils.db import DataStorage
+
 from config.settings import settings
+from utils.db import DataStorage
 
 DEFAULT_DM_IMG = (
     "https://cdn.iconscout.com/icon/free/png-256/"
@@ -127,7 +128,8 @@ async def get_room_members(org_id: str, room_id: str) -> dict[str, dict[str, Any
         room_id (str): The room id.
 
     Returns:
-        dict[str, dict[str, Any]]: A key value pair of room's members info mapped according to RoomMember schema.
+        dict[str, dict[str, Any]]: A key value pair of room's members
+        info mapped according to RoomMember schema.
 
         {
             "619ba4671a5f54782939d385": {
@@ -141,7 +143,8 @@ async def get_room_members(org_id: str, room_id: str) -> dict[str, dict[str, Any
 
     db = DataStorage(org_id)
     query = {"_id": room_id}
-    options = {"sort": {"created_at": -1}, "projection": {"room_members": 1, "_id": 0}}
+    options = {"sort": {"created_at": -1},
+               "projection": {"room_members": 1, "_id": 0}}
 
     response = await db.read(settings.ROOM_COLLECTION, query=query, options=options)
 
@@ -266,3 +269,48 @@ async def remove_room_member(
         raise ConnectionError("Unable to remove room member")
 
     return {"member_id": member_id, "room_id": room_id}
+
+
+async def remove_room(
+        org_id: str, room: str):
+    """Removes a room.
+
+    Args:
+        org_id (str): The organization id
+        room (str): The room to be removed.
+
+   Returns:
+            On success, a dict containing the success status and
+            and how many documents were successfully deleted.
+
+            {
+                "status": 200,
+                "message": "success",
+                "data": {
+                    "deleted_count": 1
+                }
+            }
+
+            In case of error:
+
+            {
+                "status": 200,
+                "message": "success",
+                "data": {
+                    "deleted_count": 0
+                }
+            }
+
+
+
+    Raises:
+        ValueError:room not found.
+        RequestException: ZC Core fails to remove user from room.
+    """
+
+    db = DataStorage(org_id)
+    response = await db.delete(settings.ROOM_COLLECTION, room)
+    if not response or "status_code" in response:
+        return {}
+
+    return response
