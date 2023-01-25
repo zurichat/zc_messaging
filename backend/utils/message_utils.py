@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any, Optional
+
 from config.settings import settings
 from schema.message import Message
 from utils.db import DataStorage
@@ -7,7 +8,9 @@ from utils.paginator import off_set
 
 
 async def get_org_messages(
-    org_id: str, page: int, size: int,
+    org_id: str,
+    page: int,
+    size: int,
 ) -> Optional[list[dict[str, Any]]]:
     """Gets all messages sent in  an organization.
 
@@ -81,11 +84,11 @@ async def get_room_messages(
     DB = DataStorage(org_id)
 
     skip = await off_set(page, size)
-    options = {"limit": size, "skip": skip, "sort": { "created_at": -1}}
+    options = {"limit": size, "skip": skip, "sort": {"created_at": -1}}
     raw_query = {}
     if created_at:
         date = datetime.datetime.now() - datetime.timedelta(days=created_at)
-        raw_query ={ "room_id": room_id, "created_at": { "$gte":str(date).split()[0]} }
+        raw_query = {"room_id": room_id, "created_at": {"$gte": str(date).split()[0]}}
     else:
         raw_query = {"room_id": room_id}
     response = await DB.read(
@@ -176,21 +179,8 @@ async def update_message(
     db = DataStorage(org_id)
     message["edited"] = True
 
-    return await db.update(settings.MESSAGE_COLLECTION, message_id, message)
-
-
-async def update_message_threads(
-    org_id: str, message_id: str, message: dict[str, Any]
-) -> dict[str, Any]:
-    """Updates a message document in the database.
-    Args:
-        org_id (str): The organization id where the message is being updated.
-        message_id (str): The id of the message to be edited.
-        message (dict[str, Any]): The new data.
-    Returns:
-        dict[str, Any]: The response returned by DataStorage's update method.
-    """
-
-    db = DataStorage(org_id)
-
-    return await db.update(settings.MESSAGE_COLLECTION, message_id, message)
+    return await db.update(
+        collection_name=settings.MESSAGE_COLLECTION,
+        document_id=message_id,
+        data=message,
+    )
