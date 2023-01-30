@@ -103,13 +103,8 @@ async def update_thread_message(
         "threads.thread_id": thread_id,
     }
 
-    response = await db.update(
+    return await db.update(
         collection_name=settings.MESSAGE_COLLECTION,
         raw_query=raw_query,
         query=query,
     )
-
-    # if not response or "status_code" in response:
-    #     return None
-
-    return response
