@@ -233,10 +233,14 @@ async def update_thread_message(
         org_id, room_id, message_id, thread_id, payload
     )
 
+    print(updated_thread_message)
+
     if not updated_thread_message:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY, detail="thread not updated"
         )
+
+    message.update(payload)
 
     # Publish to centrifugo in the background.
     background_tasks.add_task(

@@ -129,7 +129,7 @@ class DataStorage:
     async def update(
         self,
         collection_name: str,
-        document_id: str,
+        document_id: Optional[str] = None,
         data: Optional[dict[str, Any]] = None,
         raw_query: Optional[dict[str, Any]] = None,
         query: Optional[dict[str, Any]] = None,
@@ -174,7 +174,7 @@ class DataStorage:
         # to ensure only either one of raw_query or data is sent
         if data and raw_query:
             raise Exception("Either one of data or raw_query is expected")
-
+        print(document_id)
         body = {
             "plugin_id": self.plugin_id,
             "organization_id": self.organization_id,
@@ -191,7 +191,6 @@ class DataStorage:
             return None
         if response.status_code == 200:
             return response.json()
-        print({"status_code": response.status_code, "message": response.json()})
         return {"status_code": response.status_code, "message": response.json()}
 
     async def read(

@@ -81,6 +81,8 @@ async def update_thread_message(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
         )
 
+    # we need to check if the threads exists first before updating
+
     if message["sender_id"] != payload["sender_id"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -89,6 +91,7 @@ async def update_thread_message(
 
     db = DataStorage(org_id)
     payload["edited"] = True
+    payload["thread_id"] = thread_id
 
     raw_query = {
         "$set": {"threads.$": payload},
@@ -102,12 +105,11 @@ async def update_thread_message(
 
     response = await db.update(
         collection_name=settings.MESSAGE_COLLECTION,
-        document_id=message_id,
         raw_query=raw_query,
         query=query,
     )
 
-    if not response or "status_code" in response:
-        return None
+    # if not response or "status_code" in response:
+    #     return None
 
     return response
