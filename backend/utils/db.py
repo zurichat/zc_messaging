@@ -174,7 +174,7 @@ class DataStorage:
         # to ensure only either one of raw_query or data is sent
         if data and raw_query:
             raise Exception("Either one of data or raw_query is expected")
-        print(document_id)
+
         body = {
             "plugin_id": self.plugin_id,
             "organization_id": self.organization_id,

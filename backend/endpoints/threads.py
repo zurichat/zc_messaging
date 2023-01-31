@@ -5,8 +5,8 @@ from schema.response import ResponseModel
 from schema.thread_response import ThreadResponse
 from utils.centrifugo import Events, centrifugo_client
 from utils.message_utils import get_message
-from utils.threads_utils import add_message_to_thread_list, get_message_threads
-from utils.threads_utils import update_thread_message as edit_message_threads
+from utils.threads_utils import (add_message_to_thread_list,
+                                 get_message_threads, update_message_thread)
 
 router = APIRouter()
 
@@ -167,10 +167,10 @@ async def update_thread_message(
     background_tasks: BackgroundTasks,
 ):
 
-    """(Still under development) Updates a thread message in a thread in a room.
+    """Updates a thread message in a thread in a room.
 
-    Edits an existing message document in the messages database collection while
-    publishing to all members of the room in the background.
+    Edits a thread in an existing message document in the messages database collection
+    while publishing to all members of the room in the background.
 
     Args:
         org_id: A unique identifier of the organization.
@@ -185,62 +185,49 @@ async def update_thread_message(
         A dict containing data about the thread that was edited.
 
             {
-                "_id": "61c3aa9478fb01b18fac1465",
-                "created_at": "2021-12-22 22:38:33.075643",
-                "edited": true,
-                "emojis": [
-                {
-                    "count": 1,
-                    "emoji": "👹",
-                    "name": "frown",
-                    "reactedUsersId": [
-                    "619ba4671a5f54782939d385"
+                "status": "success",
+                "message": "Thread Updated",
+                "data": {
+                    "sender_id": "63cb53b42009ec8a16a5774b",
+                    "emojis": [],
+                    "richUiData": {
+                    "blocks": [
+                        {
+                        "data": {},
+                        "depth": 0,
+                        "entityRanges": [],
+                        "inlineStyleRanges": [],
+                        "key": "eljik",
+                        "text": "Steady green like what??",
+                        "type": "unstyled"
+                        }
                     ]
+                    },
+                    "files": [],
+                    "saved_by": [],
+                    "timestamp": 0,
+                    "created_at": "2023-01-31 08:53:04.126997",
+                    "edited": true,
+                    "thread_id": "b39cfddc-a0a7-11ed-b15b-b8819887ed7a"
                 }
-                ],
-                "files": [],
-                "org_id": "619ba4671a5f54782939d384",
-                "richUiData": {
-                "blocks": [
-                    {
-                    "data": {},
-                    "depth": 0,
-                    "entityRanges": [],
-                    "inlineStyleRanges": [],
-                    "key": "eljik",
-                    "text": "HI, I'm mark.. new here",
-                    "type": "unstyled"
-                    }
-                ],
-                "entityMap": {}
-                },
-                "room_id": "619e28c31a5f54782939d59a",
-                "saved_by": [],
-                "sender_id": "619ba4671a5f54782939d385",
-                "text": "string",
             }
-
     Raises:
-        HTTPException [401]: You are not authorized to edit this message.
+        HTTPException [401]: You are not authorized to edit this thread message.
         HTTPException [404]: Message not found.
-        HTTPException [424]: Message not edited.
+        HTTPException [424]: thread not updated.
     """
 
     message = await get_message(org_id, room_id, message_id)
     payload = request.dict(exclude_unset=True)
 
-    updated_thread_message = await edit_message_threads(
+    updated_thread_message = await update_message_thread(
         org_id, room_id, message_id, thread_id, payload
     )
-
-    print(updated_thread_message)
 
     if not updated_thread_message:
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY, detail="thread not updated"
         )
-
-    message.update(payload)
 
     # Publish to centrifugo in the background.
     background_tasks.add_task(
@@ -248,7 +235,7 @@ async def update_thread_message(
     )
 
     return JSONResponse(
-        content=ResponseModel.success(data=message, message="Thread Updated"),
+        content=ResponseModel.success(data=payload, message="Thread Updated"),
         status_code=status.HTTP_200_OK,
     )
 

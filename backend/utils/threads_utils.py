@@ -62,7 +62,7 @@ async def add_message_to_thread_list(org_id, room_id, message_id, request: Threa
     return response, thread_message
 
 
-async def update_thread_message(
+async def update_message_thread(
     org_id, room_id, message_id, thread_id, payload: Thread
 ) -> dict[str, Any]:
     """Updates a message document in the database.
@@ -81,21 +81,17 @@ async def update_thread_message(
             status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
         )
 
-    # we need to check if the threads exists first before updating
-
     if message["sender_id"] != payload["sender_id"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="You are not authorized to edit this message",
+            detail="You are not authorized to edit this thread message",
         )
 
-    db = DataStorage(org_id)
     payload["edited"] = True
     payload["thread_id"] = thread_id
 
     raw_query = {
         "$set": {"threads.$": payload},
-        # "arrayFilters": [ { "thread_id": thread_id } ]
     }
 
     query = {
@@ -103,7 +99,7 @@ async def update_thread_message(
         "threads.thread_id": thread_id,
     }
 
-    return await db.update(
+    return await DataStorage(org_id).update(
         collection_name=settings.MESSAGE_COLLECTION,
         raw_query=raw_query,
         query=query,
