@@ -1,13 +1,13 @@
 import React from "react"
 import ThreadItem from "./ThreadItem"
-import styles from "./threadList.module.css"
+import { Container } from "./threadList.style"
 
 const ThreadList = ({ threadListData }) => (
-  <div className={styles.threadListWrap}>
-    {threadListData.map(thread => (
-      <ThreadItem key={thread.message_id} Thread={thread} />
+  <Container>
+    {threadListData.map((message, index) => (
+      <ThreadItem key={index} Thread={message} />
     ))}
-  </div>
+  </Container>
 )
 
 export default ThreadList

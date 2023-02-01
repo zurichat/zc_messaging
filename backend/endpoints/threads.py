@@ -5,7 +5,7 @@ from schema.response import ResponseModel
 from schema.thread_response import ThreadResponse
 from fastapi.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
-from utils.message_utils import get_message, get_room_messages, update_message_threads as edit_message_threads
+from utils.message_utils import get_message, get_room_messages, update_message_threads as edit_message_threads, get_room_messages_for_threads
 from utils.room_utils import get_org_rooms
 from utils.threads_utils import get_message_threads, add_message_to_thread_list
 import json
@@ -214,7 +214,7 @@ async def update_threads_message(
     status_code=status.HTTP_200_OK,
     responses={424: {"detail": "ZC Core failed"}},
 )
-async def get_threads(org_id: str, member_id: str, page: int = 1, size: int = 15):
+async def get_threads(org_id: str, member_id: str):
     room_response = await get_org_rooms(org_id=org_id, member_id=member_id)
 
     if room_response == []:
@@ -235,7 +235,7 @@ async def get_threads(org_id: str, member_id: str, page: int = 1, size: int = 15
         room_ids.append(room['_id'])
 
     for room_id in room_ids:
-        single_room_resp = await get_room_messages(org_id, room_id, page, size)
+        single_room_resp = await get_room_messages_for_threads(org_id, room_id)
         if single_room_resp == []:
             # Room not found
             pass

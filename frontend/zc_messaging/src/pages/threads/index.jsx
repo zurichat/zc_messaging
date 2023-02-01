@@ -29,16 +29,9 @@ const Threads = () => {
       threads_data
         .then(response => {
           let threads_array = response.data
-          let dumpy_threads_Arr = []
-          for (let i = 0; i < threads_array.length; i++) {
-            for (let j = 0; j < threads_array[i].threadsData.length; j++) {
-              dumpy_threads_Arr.push(threads_array[i].threadsData[j])
-            }
-          }
-          setThreadsData(dumpy_threads_Arr)
+          setThreadsData(threads_array)
         })
         .catch(err => {
-          console.error(err)
           toggleErrShow()
         })
     } else {
@@ -75,7 +68,7 @@ const Threads = () => {
           </div>
         </div>
         <div className="Threads_main_wrapper_45x2c">
-          {threadsData ? (
+          {threadsData.length > 0 ? (
             <ThreadList threadListData={threadsData} />
           ) : (
             <p>Loading...</p>

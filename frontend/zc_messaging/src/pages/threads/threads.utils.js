@@ -12,6 +12,7 @@ const getThreadHandler = async (orgId, senderId) => {
   try {
     if (orgId && senderId) {
       const getThreadRequest = await axios.get(
+        // `${BASE_URL}/org/${orgId}/member/${senderId}/threads`
         `${BASE_URL}/org/${orgId}/member/${senderId}/threads`
       )
       return getThreadRequest.data
