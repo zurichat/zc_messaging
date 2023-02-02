@@ -45,7 +45,3 @@ repos:
           - --disable=R0902
           - --disable=R0903
           - --disable=C0103
-          - --disable=R0913
-          - --disable=C0327
-          - --disable=C0305
-          - --disable=WO622
