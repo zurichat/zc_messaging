@@ -99,8 +99,10 @@ async def update_message_thread(
         "threads.thread_id": thread_id,
     }
 
-    return await DataStorage(org_id).update(
+    response = await DataStorage(org_id).update(
         collection_name=settings.MESSAGE_COLLECTION,
         raw_query=raw_query,
         query=query,
     )
+
+    return response, message

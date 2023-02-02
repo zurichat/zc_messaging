@@ -4,7 +4,6 @@ from schema.message import MessageRequest
 from schema.response import ResponseModel
 from schema.thread_response import ThreadResponse
 from utils.centrifugo import Events, centrifugo_client
-from utils.message_utils import get_message
 from utils.threads_utils import (add_message_to_thread_list,
                                  get_message_threads, update_message_thread)
 
@@ -198,7 +197,7 @@ async def update_thread_message(
                         "entityRanges": [],
                         "inlineStyleRanges": [],
                         "key": "eljik",
-                        "text": "Steady green like what??",
+                        "text": "you're right about that",
                         "type": "unstyled"
                         }
                     ]
@@ -216,11 +215,9 @@ async def update_thread_message(
         HTTPException [404]: Message not found.
         HTTPException [424]: thread not updated.
     """
-
-    message = await get_message(org_id, room_id, message_id)
     payload = request.dict(exclude_unset=True)
 
-    updated_thread_message = await update_message_thread(
+    updated_thread_message, loaded_message = await update_message_thread(
         org_id, room_id, message_id, thread_id, payload
     )
 
@@ -231,7 +228,7 @@ async def update_thread_message(
 
     # Publish to centrifugo in the background.
     background_tasks.add_task(
-        centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, message
+        centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, loaded_message
     )
 
     return JSONResponse(
