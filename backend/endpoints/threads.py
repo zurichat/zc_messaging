@@ -4,7 +4,6 @@ from schema.message import MessageRequest
 from schema.response import ResponseModel
 from schema.thread_response import ThreadResponse
 from utils.centrifugo import Events, centrifugo_client
-from utils.message_utils import get_message
 from utils.threads_utils import (add_message_to_thread_list,
                                  get_message_threads, update_message_thread)
 
@@ -197,7 +196,7 @@ async def update_thread_message(
                         "entityRanges": [],
                         "inlineStyleRanges": [],
                         "key": "eljik",
-                        "text": "Steady green like what??",
+                        "text": "you're right about that",
                         "type": "unstyled"
                         }
                     ]

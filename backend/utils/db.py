@@ -171,8 +171,8 @@ class DataStorage:
             RequestException: Unable to connect to zc_core
         """
 
-        # to ensure only either one of raw_query or data is sent
-        if data and raw_query:
+        # to ensure either one of raw_query or data is sent
+        if len(list(filter(bool(data, raw_query)))) != 1:
             raise Exception("Either one of data or raw_query is expected")
 
         body = {
