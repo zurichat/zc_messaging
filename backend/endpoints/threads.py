@@ -164,7 +164,6 @@ async def update_thread_message(
     message_id: str,
     thread_id: str,
     request: MessageRequest,
-    background_tasks: BackgroundTasks,
 ):
 
     """Updates a thread message in a thread in a room.
@@ -217,7 +216,6 @@ async def update_thread_message(
         HTTPException [424]: thread not updated.
     """
 
-    message = await get_message(org_id, room_id, message_id)
     payload = request.dict(exclude_unset=True)
 
     updated_thread_message = await update_message_thread(
@@ -228,11 +226,6 @@ async def update_thread_message(
         raise HTTPException(
             status_code=status.HTTP_424_FAILED_DEPENDENCY, detail="thread not updated"
         )
-
-    # Publish to centrifugo in the background.
-    background_tasks.add_task(
-        centrifugo_client.publish, room_id, Events.MESSAGE_UPDATE, message
-    )
 
     return JSONResponse(
         content=ResponseModel.success(data=payload, message="Thread Updated"),
