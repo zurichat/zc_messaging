@@ -172,7 +172,7 @@ class DataStorage:
         """
 
         # to ensure either one of raw_query or data is sent
-        if len(list(filter(bool(data, raw_query)))) != 1:
+        if len(list(filter(bool, (data, raw_query)))) != 1:
             raise Exception("Either one of data or raw_query is expected")
 
         body = {
