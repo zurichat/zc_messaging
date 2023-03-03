@@ -12,7 +12,7 @@ from utils.message_utils import get_message, update_message
 
 
 async def get_message_threads(org_id, room_id, message_id):
-    """Retrives all the messages in a thread.
+    """Retrieves all the messages in a thread.
 
     Args:
         org_id (str): The organization id where the message is being updated.
@@ -29,7 +29,7 @@ async def get_message_threads(org_id, room_id, message_id):
     return message["threads"]
 
 async def get_message_thread(org_id, room_id, message_id, thread_id):
-    """Retrives a single the messages in a thread.
+    """Retrieves a single thread message.
 
     Args:
         org_id (str): The organization id where the message is being updated.
@@ -39,7 +39,7 @@ async def get_message_thread(org_id, room_id, message_id, thread_id):
 
 
     Returns:
-        [dict]: Returns an array of thread message objects.
+        [dict]: Returns an array containing a single thread message.
     """
 
     query = {
