@@ -14,7 +14,7 @@ repos:
       - id: pretty-format-json
 
   - repo: https://github.com/psf/black
-    rev: 21.9b0
+    rev: 22.3.0
     hooks:
       - id: black
 
@@ -45,3 +45,5 @@ repos:
           - --disable=R0902
           - --disable=R0903
           - --disable=C0103
+          - --disable=R0913
+

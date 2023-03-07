@@ -1,14 +1,11 @@
-
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from schema.message import Thread, MessageRequest, Message
+from fastapi.responses import JSONResponse
+from schema.message import MessageRequest
 from schema.response import ResponseModel
 from schema.thread_response import ThreadResponse
-from fastapi.responses import JSONResponse
 from utils.centrifugo import Events, centrifugo_client
-from utils.message_utils import get_message, get_room_messages, update_message_threads as edit_message_threads
-from utils.room_utils import get_org_rooms
-from utils.threads_utils import get_message_threads, add_message_to_thread_list
-import json
+from utils.threads_utils import (add_message_to_thread_list,
+                                 get_message_threads, update_message_thread)
 
 router = APIRouter()
 
@@ -23,47 +20,44 @@ router = APIRouter()
     },
 )
 async def send_thread_message(
-    org_id: str, 
-    room_id: str,
-    message_id: str,
-    request: MessageRequest
+    org_id: str, room_id: str, message_id: str, request: MessageRequest
 ):
     """Adds a thread to a parent message.
 
-        Edits an existing message document in the messages database collection while
-        publishing to all members of the room in the background.
+    Edits an existing message document in the messages database collection while
+    publishing to all members of the room in the background.
 
-        Args:
-            org_id: A unique identifier of the organization.
-            room_id: A unique identifier of the room.
-            message_id: A unique identifier of the message that is being edited.
-            request: A pydantic schema that defines the message request parameters.
+    Args:
+        org_id: A unique identifier of the organization.
+        room_id: A unique identifier of the room.
+        message_id: A unique identifier of the message that is being edited.
+        request: A pydantic schema that defines the message request parameters.
 
-        Returns:
-            A dict containing data about the message that was edited.
+    Returns:
+        A dict containing data about the message that was edited.
 
-            {
-                "status": 201,
-                "event": "thread_message_create",
-                "thread_id": "bd830644-2205-11ec-9853-2ff0a732e3ef",
-                "room_id": "614e1606f31a74e068e4d2e2",
-                "message_id": "6155a0e6be7f31a9275a1eca",
-                "data": {
-                    "sender_id": "61467e181ab13c00bcc15607",
-                    "message": "Checking out the threads",
-                    "created_at": "2021-09-30T15:41:45.685000Z"
-                }
-            }   
+        {
+            "status": 201,
+            "event": "thread_message_create",
+            "thread_id": "bd830644-2205-11ec-9853-2ff0a732e3ef",
+            "room_id": "614e1606f31a74e068e4d2e2",
+            "message_id": "6155a0e6be7f31a9275a1eca",
+            "data": {
+                "sender_id": "61467e181ab13c00bcc15607",
+                "message": "Checking out the threads",
+                "created_at": "2021-09-30T15:41:45.685000Z"
+            }
+        }
 
-        Raises:
-            HTTPException [401]: You are not authorized to edit this message.
-            HTTPException [404]: Message not found.
-            HTTPException [424]: Message not edited.
-        """
-    
+    Raises:
+        HTTPException [401]: You are not authorized to edit this message.
+        HTTPException [404]: Message not found.
+        HTTPException [424]: Message not edited.
+    """
+
     response, thread_message = await add_message_to_thread_list(
-                                org_id, room_id, message_id, request
-                            )
+        org_id, room_id, message_id, request
+    )
 
     if response is None:
         raise HTTPException(
@@ -72,12 +66,12 @@ async def send_thread_message(
         )
 
     result = {
-                "status": 201,
-                "event": "thread_message_create",
-                "room_id": room_id,
-                "message_id": message_id,
-                "data": thread_message
-            }   
+        "status": 201,
+        "event": "thread_message_create",
+        "room_id": room_id,
+        "message_id": message_id,
+        "data": thread_message,
+    }
 
     return JSONResponse(
         content=result,
@@ -148,14 +142,13 @@ async def get_thread_messages(org_id: str, room_id: str, message_id: str):
         )
 
     return JSONResponse(
-        content=ResponseModel.success(
-            data=response, message="Messages retrieved"),
+        content=ResponseModel.success(data=response, message="Messages retrieved"),
         status_code=status.HTTP_200_OK,
     )
 
 
 @router.put(
-    "/org/{org_id}/rooms/{room_id}/messages/{message_id}/threads",
+    "/org/{org_id}/rooms/{room_id}/messages/{message_id}/threads/{thread_id}",
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     responses={
@@ -164,96 +157,76 @@ async def get_thread_messages(org_id: str, room_id: str, message_id: str):
         424: {"description": "Message not edited"},
     },
 )
-async def update_threads_message(
+async def update_thread_message(
     org_id: str,
     room_id: str,
     message_id: str,
+    thread_id: str,
     request: MessageRequest,
-    background_tasks: BackgroundTasks,
 ):
 
-    payload = request.dict()
-    loadedMessage = await get_message(org_id, room_id, message_id)
-    loadedMessageThread = loadedMessage['threads']
-    thread_to_add = {"threads": [payload, *loadedMessageThread]}
+    """Updates a thread message in a thread in a room.
 
-    if not loadedMessage:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-        )
+    Edits a thread in an existing message document in the messages database collection
+    while publishing to all members of the room in the background.
 
-    added_thread_message = await edit_message_threads(org_id, message_id, thread_to_add)
+    Args:
+        org_id: A unique identifier of the organization.
+        room_id: A unique identifier of the room.
+        message_id: A unique identifier of the message that is being edited.
+        thread_id: A unique identifier of the thread that is being edited.
+        request: A pydantic schema that defines the message request parameters.
+        background_tasks: A background task for publishing to all
+                          members of the room.
 
-    if not added_thread_message:
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={"thread not added": added_thread_message},
-        )
+    Returns:
+        A dict containing data about the thread that was edited.
 
-    # payload["edited"] = True
-    loadedMessage.update(thread_to_add)
+            {
+                "status": "success",
+                "message": "Thread Updated",
+                "data": {
+                    "sender_id": "63cb53b42009ec8a16a5774b",
+                    "emojis": [],
+                    "richUiData": {
+                    "blocks": [
+                        {
+                        "data": {},
+                        "depth": 0,
+                        "entityRanges": [],
+                        "inlineStyleRanges": [],
+                        "key": "eljik",
+                        "text": "you're right about that",
+                        "type": "unstyled"
+                        }
+                    ]
+                    },
+                    "files": [],
+                    "saved_by": [],
+                    "timestamp": 0,
+                    "created_at": "2023-01-31 08:53:04.126997",
+                    "edited": true,
+                    "thread_id": "b39cfddc-a0a7-11ed-b15b-b8819887ed7a"
+                }
+            }
+    Raises:
+        HTTPException [401]: You are not authorized to edit this thread message.
+        HTTPException [404]: Message not found.
+        HTTPException [424]: thread not updated.
+    """
 
-    # Publish to centrifugo in the background.
-    background_tasks.add_task(
-        centrifugo_client.publish,
-        room_id,
-        Events.MESSAGE_UPDATE,
-        loadedMessage
+    payload = request.dict(exclude_unset=True)
+
+    updated_thread_message = await update_message_thread(
+        org_id, room_id, message_id, thread_id, payload
     )
 
-    return JSONResponse(
-        content=ResponseModel.success(
-            data=loadedMessage, message="Thread Added"),
-        status_code=status.HTTP_200_OK,
-    )
-
-
-@router.get(
-    "/org/{org_id}/member/{member_id}/threads",
-    response_model=ResponseModel,
-    status_code=status.HTTP_200_OK,
-    responses={424: {"detail": "ZC Core failed"}},
-)
-async def get_threads(org_id: str, member_id: str, page: int = 1, size: int = 15):
-    room_response = await get_org_rooms(org_id=org_id, member_id=member_id)
-
-    if room_response == []:
+    if not updated_thread_message:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Member does not exist or Org not found"
+            status_code=status.HTTP_424_FAILED_DEPENDENCY, detail="thread not updated"
         )
 
-    if room_response is None:
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail="Zc Core failed"
-        )
-
-    room_ids = []
-
-    for room in room_response:
-        room_ids.append(room['_id'])
-
-    for room_id in room_ids:
-        single_room_resp = await get_room_messages(org_id, room_id, page, size)
-        if single_room_resp == []:
-            # Room not found
-            pass
-
-        if single_room_resp is None:
-            # Zc Core failed
-            pass
-
-        # Gotten Single Room
-
-    messages_w_thread = []
-
-    for messages in single_room_resp:
-        if messages['threads'] != []:
-            messages_w_thread.append(messages)
-
     return JSONResponse(
-        content=ResponseModel.success(
-            data=messages_w_thread, message="Rooms retrieved"),
+        content=ResponseModel.success(data=payload, message="Thread Updated"),
         status_code=status.HTTP_200_OK,
     )

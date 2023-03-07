@@ -45,8 +45,7 @@ class DataStorage:
         self.organization_id = organization_id
 
         try:
-            response = requests.get(
-                url=f"{settings.BASE_URL}/marketplace/plugins")
+            response = requests.get(url=f"{settings.BASE_URL}/marketplace/plugins")
             response.raise_for_status()
         except requests.Timeout as timed_out_error:
             raise HTTPException(
@@ -124,10 +123,16 @@ class DataStorage:
             return None
         if response.status_code == 201:
             return response.json()
+
         return {"status_code": response.status_code, "message": response.json()}
 
     async def update(
-        self, collection_name: str, document_id: str, data: dict[str, Any]
+        self,
+        collection_name: str,
+        document_id: Optional[str] = None,
+        data: Optional[dict[str, Any]] = None,
+        raw_query: Optional[dict[str, Any]] = None,
+        query: Optional[dict[str, Any]] = None,
     ) -> Any:
         """Updates data to zc_messaging collections.
 
@@ -166,12 +171,18 @@ class DataStorage:
             RequestException: Unable to connect to zc_core
         """
 
+        # to ensure either one of raw_query or data is sent
+        if len(list(filter(bool, (data, raw_query)))) != 1:
+            raise Exception("Either one of data or raw_query is expected")
+
         body = {
             "plugin_id": self.plugin_id,
             "organization_id": self.organization_id,
             "collection_name": collection_name,
             "object_id": document_id,
             "payload": data,
+            "raw_query": raw_query,
+            "filter": query,
         }
 
         try:
@@ -188,7 +199,7 @@ class DataStorage:
         resource_id: Optional[str] = None,
         query: Optional[dict[str, Any]] = None,
         options: Optional[dict[str, Any]] = None,
-        raw_query: Optional [dict[str, Any]] = None
+        raw_query: Optional[dict[str, Any]] = None,
     ) -> Any:
         """Reads data from zc_messaging collections.
 
@@ -238,7 +249,7 @@ class DataStorage:
             "object_id": resource_id,
             "filter": query,
             "options": options,
-            "raw_query": raw_query
+            "raw_query": raw_query,
         }
 
         try:
