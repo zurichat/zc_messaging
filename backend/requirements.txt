@@ -52,7 +52,7 @@ rfc3986==1.5.0
 six==1.16.0
 sniffio==1.2.0
 sortedcontainers==2.4.0
-starlette==0.25.0
+starlette==0.27.0
 toml==0.10.2
 tomli==1.2.2
 trio==0.19.0
