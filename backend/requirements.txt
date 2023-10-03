@@ -57,7 +57,7 @@ toml==0.10.2
 tomli==1.2.2
 trio==0.19.0
 typing-extensions==3.10.0.2
-urllib3==1.26.7
+urllib3==1.26.17
 uvicorn[standard]
 virtualenv==20.9.0
 watchgod==0.7
