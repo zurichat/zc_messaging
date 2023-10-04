@@ -30,7 +30,7 @@
     "eslint": "^7.32.0",
     "file-loader": "^6.2.0",
     "identity-obj-proxy": "^3.0.0",
-    "postcss": "^7",
+    "postcss": "^8",
     "prettier": "^2.3.2",
     "react-is": "^17.0.2",
     "redux-logger": "^3.0.6",
